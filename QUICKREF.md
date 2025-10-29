@@ -194,15 +194,15 @@ go tool cover -html=coverage.out              # View coverage
 
 ## Remaining Implementation Steps
 
-### Phase 6: Backup Engine (Next Priority)
-- [ ] File system watcher (fsnotify)
-- [ ] Automatic backup on file changes
-- [ ] Content-defined chunking for large files
-- [ ] Compression pipeline (zstd)
-- [ ] Background upload queue
-- [ ] Bandwidth throttling
+### ✅ Phase 6: Backup Engine (COMPLETE)
+- [x] File system watcher (fsnotify)
+- [x] Automatic backup on file changes
+- [x] Content-defined chunking for large files
+- [x] Compression pipeline (zstd)
+- [x] Background upload queue
+- [x] Bandwidth throttling
 
-### Phase 7: Client UI (Gio)
+### Phase 7: Client UI (Gio) - Next Priority
 - [ ] System tray icon
 - [ ] Status display (connected, backing up, idle)
 - [ ] Folder selection interface
