@@ -5,21 +5,21 @@ A client-server backup system built in Go, featuring a Gio UI-based client (syst
 
 ## Current Status
 
-**Completed: Phases 1-5 of 10** ✅
+**Completed: Phases 1-6 of 10** ✅
 
 - ✅ **Phase 1**: Core Infrastructure (proto, crypto, config, ZFS wrapper)
 - ✅ **Phase 2**: Database & gRPC Services (SQLite with 8 tables, 24 RPCs)
 - ✅ **Phase 3**: Server Integration (file I/O, admin service, complete server)
 - ✅ **Phase 4**: Basic Client (interactive CLI, file upload with chunking)
 - ✅ **Phase 5**: Docker Testing Environment (ZFS-enabled containers)
+- ✅ **Phase 6**: Automatic Backup Engine (file watching, compression, auto-backup)
 
-**In Progress: Phase 6** 🚧
+**In Progress: Phase 7** �
 
-- ⏳ Automatic backup engine (file watching, compression)
+- ⏳ Gio-based UI (system tray, visual interface)
 
-**Planned: Phases 7-10** 📋
+**Planned: Phases 8-10** 📋
 
-- Phase 7: Gio-based UI (system tray, visual interface)
 - Phase 8: Security hardening (TLS/mTLS, keychain integration)
 - Phase 9: Snapshot automation (cron scheduler, retention policies)
 - Phase 10: Production features (monitoring, optimization, testing)
@@ -392,19 +392,24 @@ backup:
 - `docker/README.md` - Testing guide (350+ lines)
 - `build-docker.ps1`, `test-docker.ps1` - Build/test automation
 
-### ⏳ Phase 6: Backup Engine (IN PROGRESS)
+### ✅ Phase 6: Backup Engine (COMPLETE)
 
-**Status**: Not started
+**Status**: All tasks complete
 
-- [ ] File system watcher (fsnotify)
-- [ ] Automatic backup on file changes
-- [ ] Content-defined chunking for large files
-- [ ] Compression pipeline (zstd)
-- [ ] Background upload queue
-- [ ] Bandwidth throttling
-- [ ] Delta sync optimization
+- [x] File system watcher (fsnotify)
+- [x] Automatic backup on file changes
+- [x] Content-defined chunking for large files
+- [x] Compression pipeline (zstd)
+- [x] Background upload queue
+- [x] Bandwidth throttling
+- [x] Delta sync optimization
 
-### ⏳ Phase 7: Client UI (PLANNED)
+**Deliverables**:
+- `client/backup/watcher.go` - File system watcher (~260 lines)
+- `client/backup/compressor.go` - Compression handler (~195 lines)
+- `client/backup/engine.go` - Backup automation engine (~450 lines)
+
+### ⏳ Phase 7: Client UI (IN PROGRESS)
 
 **Status**: Not started
 

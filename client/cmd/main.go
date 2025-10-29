@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/ed25519"
 	"encoding/base64"
 	"flag"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ioustamora/zfscloud/client"
+	"github.com/ioustamora/zfscloud/client/backup"
 	"github.com/ioustamora/zfscloud/proto"
 	"github.com/ioustamora/zfscloud/shared/config"
 	"github.com/ioustamora/zfscloud/shared/crypto"
@@ -132,6 +134,11 @@ func loadOrGenerateKeys(keyPath string) (ed25519.PrivateKey, ed25519.PublicKey, 
 func runInteractiveMode(c *client.Client, cfg *config.ClientConfig) {
 	scanner := bufio.NewScanner(os.Stdin)
 
+	// Create backup engine (but don't start it yet)
+	var engine *backup.Engine
+	var engineErr error
+	ctx := context.Background()
+
 	fmt.Println("\n=== ZFSCloud Interactive Client ===")
 	fmt.Println("Type 'help' for available commands\n")
 
@@ -196,8 +203,97 @@ func runInteractiveMode(c *client.Client, cfg *config.ClientConfig) {
 		case "status":
 			fmt.Printf("Client ID: %s\n", c.GetClientID())
 			fmt.Printf("Public Key: %s\n", c.GetPublicKey())
+			if engine != nil {
+				stats := engine.GetStats()
+				fmt.Printf("\nBackup Engine:\n")
+				fmt.Printf("  State: %s\n", stats.CurrentState)
+				fmt.Printf("  Files Scanned: %d\n", stats.FilesScanned)
+				fmt.Printf("  Files Uploaded: %d\n", stats.FilesUploaded)
+				fmt.Printf("  Files Failed: %d\n", stats.FilesFailed)
+				fmt.Printf("  Bytes Uploaded: %d\n", stats.BytesUploaded)
+				if !stats.LastBackupTime.IsZero() {
+					fmt.Printf("  Last Backup: %s\n", stats.LastBackupTime.Format(time.RFC3339))
+				}
+				if stats.LastError != nil {
+					fmt.Printf("  Last Error: %v\n", stats.LastError)
+				}
+			} else {
+				fmt.Println("\nBackup Engine: Not initialized")
+			}
+
+		case "auto-start":
+			if engine != nil {
+				fmt.Println("Backup engine already running")
+				continue
+			}
+			if len(cfg.Backup.Folders) == 0 {
+				fmt.Println("Error: No backup folders configured. Edit your config file.")
+				continue
+			}
+			fmt.Println("Starting automatic backup engine...")
+			engine, engineErr = backup.NewEngine(c, cfg)
+			if engineErr != nil {
+				fmt.Printf("Failed to create backup engine: %v\n", engineErr)
+				engine = nil
+				continue
+			}
+			if err := engine.Start(ctx); err != nil {
+				fmt.Printf("Failed to start backup engine: %v\n", err)
+				engine = nil
+				continue
+			}
+			fmt.Println("✓ Backup engine started!")
+			fmt.Printf("  Watching %d folder(s)\n", len(cfg.Backup.Folders))
+			for _, folder := range cfg.Backup.Folders {
+				fmt.Printf("    - %s\n", folder)
+			}
+
+		case "auto-stop":
+			if engine == nil {
+				fmt.Println("Backup engine not running")
+				continue
+			}
+			fmt.Println("Stopping backup engine...")
+			if err := engine.Stop(); err != nil {
+				fmt.Printf("Warning: error stopping engine: %v\n", err)
+			}
+			engine = nil
+			fmt.Println("✓ Backup engine stopped")
+
+		case "auto-pause":
+			if engine == nil {
+				fmt.Println("Backup engine not running")
+				continue
+			}
+			engine.Pause()
+			fmt.Println("✓ Backup engine paused")
+
+		case "auto-resume":
+			if engine == nil {
+				fmt.Println("Backup engine not running")
+				continue
+			}
+			engine.Resume()
+			fmt.Println("✓ Backup engine resumed")
+
+		case "auto-scan":
+			if engine == nil {
+				fmt.Println("Backup engine not running. Use 'auto-start' first.")
+				continue
+			}
+			fmt.Println("Performing initial scan...")
+			if err := engine.PerformInitialScan(ctx); err != nil {
+				fmt.Printf("Scan failed: %v\n", err)
+				continue
+			}
+			stats := engine.GetStats()
+			fmt.Printf("✓ Scan complete: found %d files\n", stats.FilesScanned)
 
 		case "exit", "quit":
+			if engine != nil {
+				fmt.Println("Stopping backup engine...")
+				engine.Stop()
+			}
 			fmt.Println("Goodbye!")
 			return
 
@@ -209,15 +305,28 @@ func runInteractiveMode(c *client.Client, cfg *config.ClientConfig) {
 
 func printHelp() {
 	fmt.Println("Available commands:")
-	fmt.Println("  help                                 - Show this help message")
-	fmt.Println("  register                             - Register with the server")
-	fmt.Println("  heartbeat                            - Send a heartbeat")
-	fmt.Println("  upload <local> [remote]              - Upload a single file")
-	fmt.Println("  upload-dir <local-dir> [remote-dir]  - Upload a directory")
-	fmt.Println("  list [path]                          - List files in backup")
-	fmt.Println("  snapshots                            - List available snapshots")
-	fmt.Println("  status                               - Show client status")
-	fmt.Println("  exit/quit                            - Exit the client")
+	fmt.Println()
+	fmt.Println("  General:")
+	fmt.Println("    help                                 - Show this help message")
+	fmt.Println("    register                             - Register with the server")
+	fmt.Println("    heartbeat                            - Send a heartbeat")
+	fmt.Println("    status                               - Show client and backup status")
+	fmt.Println("    exit/quit                            - Exit the client")
+	fmt.Println()
+	fmt.Println("  Manual Backup:")
+	fmt.Println("    upload <local> [remote]              - Upload a single file")
+	fmt.Println("    upload-dir <local-dir> [remote-dir]  - Upload a directory")
+	fmt.Println()
+	fmt.Println("  Automatic Backup:")
+	fmt.Println("    auto-start                           - Start automatic backup engine")
+	fmt.Println("    auto-stop                            - Stop automatic backup engine")
+	fmt.Println("    auto-pause                           - Pause automatic backups")
+	fmt.Println("    auto-resume                          - Resume automatic backups")
+	fmt.Println("    auto-scan                            - Perform initial full scan")
+	fmt.Println()
+	fmt.Println("  Restore:")
+	fmt.Println("    list [path]                          - List files in backup")
+	fmt.Println("    snapshots                            - List available snapshots")
 }
 
 func handleRegister(c *client.Client, cfg *config.ClientConfig) {

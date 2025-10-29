@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"time"
@@ -72,10 +73,10 @@ func (s *BackupServiceServer) Register(ctx context.Context, req *proto.RegisterR
 		PublicKey:           req.PublicKey,
 		EncryptedPassphrase: req.EncryptedPassphrase,
 		Status:              "pending",
-		Hostname:            req.Metadata.Hostname,
-		Username:            req.Metadata.Username,
-		OS:                  req.Metadata.Os,
-		ClientVersion:       req.Metadata.ClientVersion,
+		Hostname:            sql.NullString{String: req.Metadata.Hostname, Valid: req.Metadata.Hostname != ""},
+		Username:            sql.NullString{String: req.Metadata.Username, Valid: req.Metadata.Username != ""},
+		OS:                  sql.NullString{String: req.Metadata.Os, Valid: req.Metadata.Os != ""},
+		ClientVersion:       sql.NullString{String: req.Metadata.ClientVersion, Valid: req.Metadata.ClientVersion != ""},
 	}
 
 	if err := s.database.CreateRegistration(registration); err != nil {

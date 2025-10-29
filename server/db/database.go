@@ -202,10 +202,10 @@ type User struct {
 	Revoked             bool
 	CreatedAt           time.Time
 	LastSeen            *time.Time
-	Hostname            string
-	Username            string
-	OS                  string
-	ClientVersion       string
+	Hostname            sql.NullString
+	Username            sql.NullString
+	OS                  sql.NullString
+	ClientVersion       sql.NullString
 }
 
 // Registration represents a pending registration
@@ -216,14 +216,14 @@ type Registration struct {
 	PublicKey           []byte
 	EncryptedPassphrase []byte
 	Status              string
-	Hostname            string
-	Username            string
-	OS                  string
-	ClientVersion       string
+	Hostname            sql.NullString
+	Username            sql.NullString
+	OS                  sql.NullString
+	ClientVersion       sql.NullString
 	RequestedAt         time.Time
 	ProcessedAt         *time.Time
-	ProcessedBy         string
-	RejectionReason     string
+	ProcessedBy         sql.NullString
+	RejectionReason     sql.NullString
 }
 
 // Session represents an active client session

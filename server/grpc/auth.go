@@ -149,7 +149,7 @@ func (a *AuthInterceptor) authenticate(ctx context.Context, req interface{}) (st
 		ClientID:  clientID,
 		Timestamp: ts,
 		Nonce:     nonce,
-		Payload:   []byte{}, // TODO: serialize request payload
+		Payload:   []byte(clientID), // Match client's payload
 	}
 
 	if !crypto.Verify(user.PublicKey, sigData, signature) {
