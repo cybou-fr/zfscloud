@@ -38,15 +38,19 @@ func main() {
 		cfg = &config.ClientConfig{
 			Client: config.ClientSettings{
 				ServerAddress: "localhost:50051",
-				ClientID:      fmt.Sprintf("client-%d", time.Now().Unix()),
 			},
 		}
 	}
 
-	// Load or generate keys
-	privateKey, publicKey, err := loadOrGenerateKeys(*keyPath)
+	// Load or generate keys (also returns client ID)
+	privateKey, publicKey, clientID, err := loadOrGenerateKeys(*keyPath)
 	if err != nil {
 		log.Fatalf("Failed to load/generate keys: %v", err)
+	}
+
+	// Use loaded/generated client ID if not in config
+	if cfg.Client.ClientID == "" {
+		cfg.Client.ClientID = clientID
 	}
 
 	log.Printf("Client ID: %s", cfg.Client.ClientID)
@@ -71,47 +75,58 @@ func main() {
 	}
 }
 
-func loadOrGenerateKeys(keyPath string) (ed25519.PrivateKey, ed25519.PublicKey, error) {
+func loadOrGenerateKeys(keyPath string) (ed25519.PrivateKey, ed25519.PublicKey, string, error) {
 	// Check if key file exists
 	if _, err := os.Stat(keyPath); err == nil {
 		// Load existing keys
 		data, err := os.ReadFile(keyPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to read key file: %w", err)
+			return nil, nil, "", fmt.Errorf("failed to read key file: %w", err)
 		}
 
-		// Decode base64
-		keyData, err := base64.StdEncoding.DecodeString(string(data))
+		// Split into lines: first line is client ID, second is private key
+		lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+		if len(lines) != 2 {
+			return nil, nil, "", fmt.Errorf("invalid key file format")
+		}
+
+		clientID := lines[0]
+
+		// Decode base64 private key
+		keyData, err := base64.StdEncoding.DecodeString(lines[1])
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to decode key data: %w", err)
+			return nil, nil, "", fmt.Errorf("failed to decode key data: %w", err)
 		}
 
 		if len(keyData) != ed25519.PrivateKeySize {
-			return nil, nil, fmt.Errorf("invalid key size: %d", len(keyData))
+			return nil, nil, "", fmt.Errorf("invalid key size: %d", len(keyData))
 		}
 
 		privateKey := ed25519.PrivateKey(keyData)
 		publicKey := privateKey.Public().(ed25519.PublicKey)
 
 		log.Printf("Loaded existing keys from %s", keyPath)
-		return privateKey, publicKey, nil
+		return privateKey, publicKey, clientID, nil
 	}
 
 	// Generate new keys
 	log.Println("Generating new Ed25519 key pair...")
 	keyPair, err := crypto.GenerateKeyPair()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate keys: %w", err)
+		return nil, nil, "", fmt.Errorf("failed to generate keys: %w", err)
 	}
 
-	// Save keys
-	keyData := base64.StdEncoding.EncodeToString(keyPair.PrivateKey)
+	// Generate client ID
+	clientID := fmt.Sprintf("client-%d", time.Now().Unix())
+
+	// Save keys: client ID on first line, private key on second line
+	keyData := fmt.Sprintf("%s\n%s", clientID, base64.StdEncoding.EncodeToString(keyPair.PrivateKey))
 	if err := os.WriteFile(keyPath, []byte(keyData), 0600); err != nil {
-		return nil, nil, fmt.Errorf("failed to save keys: %w", err)
+		return nil, nil, "", fmt.Errorf("failed to save keys: %w", err)
 	}
 
 	log.Printf("Saved new keys to %s", keyPath)
-	return keyPair.PrivateKey, keyPair.PublicKey, nil
+	return keyPair.PrivateKey, keyPair.PublicKey, clientID, nil
 }
 
 func runInteractiveMode(c *client.Client, cfg *config.ClientConfig) {

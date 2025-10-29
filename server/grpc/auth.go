@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/ioustamora/zfscloud/server/db"
@@ -88,7 +89,11 @@ func (a *AuthInterceptor) authenticate(ctx context.Context, req interface{}) (st
 	if len(signatureValues) == 0 {
 		return "", status.Error(codes.Unauthenticated, "signature is not provided")
 	}
-	signature := []byte(signatureValues[0])
+	// Decode base64-encoded signature
+	signature, err := base64.StdEncoding.DecodeString(signatureValues[0])
+	if err != nil {
+		return "", status.Error(codes.InvalidArgument, "invalid signature encoding")
+	}
 
 	timestampValues := md.Get("timestamp")
 	if len(timestampValues) == 0 {
@@ -105,9 +110,11 @@ func (a *AuthInterceptor) authenticate(ctx context.Context, req interface{}) (st
 	// Get user from database
 	user, err := a.database.GetUserByClientID(clientID)
 	if err != nil {
+		fmt.Printf("Error getting user by client ID '%s': %v\n", clientID, err)
 		return "", status.Error(codes.Internal, "failed to get user")
 	}
 	if user == nil {
+		fmt.Printf("User not found for client ID: %s\n", clientID)
 		return "", status.Error(codes.Unauthenticated, "user not found")
 	}
 

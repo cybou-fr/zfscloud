@@ -1,0 +1,7 @@
+client:
+  server_address: "localhost:50051"
+  keys_dir: "./data/keys"
+
+backup:
+  chunk_size: 1048576  # 1MB
+  folders: []

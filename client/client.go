@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"crypto/ed25519"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/ioustamora/zfscloud/shared/crypto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // Client represents the ZFSCloud backup client
@@ -136,7 +138,15 @@ func (c *Client) Heartbeat() error {
 		Nonce:     nonce,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Add auth metadata (base64-encode binary values)
+	md := metadata.Pairs(
+		"client-id", c.clientID,
+		"signature", base64.StdEncoding.EncodeToString(signature),
+		"timestamp", fmt.Sprintf("%d", timestamp),
+		"nonce", nonce,
+	)
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	resp, err := c.backupService.Heartbeat(ctx, req)
