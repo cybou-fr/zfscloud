@@ -1,0 +1,31 @@
+server:
+  listen_address: "0.0.0.0:8443"
+  tls_cert: "./certs/server.crt"
+  tls_key: "./certs/server.key"
+  rsa_key_path: "./certs/server-rsa.key"
+
+zfs:
+  pool: "tank/backups"
+  compression: "zstd"
+  deduplication: false
+
+quotas:
+  default_quota_gb: 100
+  max_quota_gb: 1024
+
+snapshots:
+  schedule:
+    hourly: 24
+    daily: 7
+    weekly: 4
+    monthly: 12
+
+security:
+  require_admin_approval: true
+  snapshot_restore_requires_approval: true
+  session_timeout_minutes: 60
+  admin_token: "changeme-generate-secure-token"
+
+database:
+  type: "sqlite"
+  path: "./data/zfscloud.db"

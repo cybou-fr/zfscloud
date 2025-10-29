@@ -1,0 +1,25 @@
+client:
+  server_address: "backup.example.com:8443"
+  server_cert_fingerprint: ""
+  client_id: ""
+  key_path: "./data/client.key"
+
+backup:
+  folders:
+    - "C:\\Users\\username\\Documents"
+    - "C:\\Users\\username\\Pictures"
+  
+  exclude_patterns:
+    - "*.tmp"
+    - "*.cache"
+    - "node_modules/"
+    - ".git/"
+    - "Thumbs.db"
+  
+  schedule:
+    check_interval_minutes: 5
+    backup_on_change: true
+
+bandwidth:
+  limit_mbps: 10
+  throttle_on_metered: true

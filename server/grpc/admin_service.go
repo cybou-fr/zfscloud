@@ -1,0 +1,426 @@
+package grpc
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/ioustamora/zfscloud/proto"
+	"github.com/ioustamora/zfscloud/server/db"
+	"github.com/ioustamora/zfscloud/server/zfs"
+	"github.com/ioustamora/zfscloud/shared/config"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+// AdminServiceServer implements the AdminService gRPC service
+type AdminServiceServer struct {
+	proto.UnimplementedAdminServiceServer
+	database   *db.Database
+	zfsManager *zfs.Manager
+	config     *config.ServerConfig
+}
+
+// NewAdminServiceServer creates a new admin service server
+func NewAdminServiceServer(database *db.Database, zfsManager *zfs.Manager, cfg *config.ServerConfig) *AdminServiceServer {
+	return &AdminServiceServer{
+		database:   database,
+		zfsManager: zfsManager,
+		config:     cfg,
+	}
+}
+
+// validateAdminToken checks if the admin token is valid
+func (s *AdminServiceServer) validateAdminToken(token string) error {
+	if token == "" {
+		return status.Error(codes.Unauthenticated, "admin token is required")
+	}
+	if token != s.config.Security.AdminToken {
+		return status.Error(codes.PermissionDenied, "invalid admin token")
+	}
+	return nil
+}
+
+// ListPendingRegistrations lists all pending registration requests
+func (s *AdminServiceServer) ListPendingRegistrations(ctx context.Context, req *proto.ListPendingRegistrationsRequest) (*proto.ListPendingRegistrationsResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	registrations, err := s.database.ListPendingRegistrations()
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list pending registrations")
+	}
+
+	protoRegs := make([]*proto.PendingRegistration, len(registrations))
+	for i, reg := range registrations {
+		protoRegs[i] = &proto.PendingRegistration{
+			RegistrationId: reg.RegistrationID,
+			ClientId:       reg.ClientID,
+			Metadata: &proto.ClientMetadata{
+				Hostname:      reg.Hostname,
+				Username:      reg.Username,
+				Os:            reg.OS,
+				ClientVersion: reg.ClientVersion,
+			},
+			RequestedAt: timestamppb.New(reg.RequestedAt),
+			PublicKey:   reg.PublicKey,
+		}
+	}
+
+	return &proto.ListPendingRegistrationsResponse{
+		Registrations: protoRegs,
+	}, nil
+}
+
+// ApproveRegistration approves a pending registration
+func (s *AdminServiceServer) ApproveRegistration(ctx context.Context, req *proto.ApproveRegistrationRequest) (*proto.ApproveRegistrationResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Get registration
+	registration, err := s.database.GetRegistrationByID(req.RegistrationId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get registration")
+	}
+	if registration == nil {
+		return nil, status.Error(codes.NotFound, "registration not found")
+	}
+
+	if registration.Status != "pending" {
+		return nil, status.Error(codes.FailedPrecondition, "registration is not pending")
+	}
+
+	// Generate user ID
+	userID := uuid.New().String()
+
+	// Determine quota
+	quotaBytes := s.config.Quotas.DefaultQuotaGB * 1024 * 1024 * 1024
+	if req.QuotaBytes > 0 {
+		quotaBytes = req.QuotaBytes
+	}
+
+	// Create ZFS dataset
+	datasetName := fmt.Sprintf("%s/%s", s.config.ZFS.Pool, userID)
+	_, err = s.zfsManager.CreateDataset(userID, s.config.ZFS.Compression)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to create ZFS dataset: %v", err))
+	}
+
+	// Set quota
+	if err := s.zfsManager.SetQuota(datasetName, quotaBytes); err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to set quota: %v", err))
+	}
+
+	// Create user
+	user := &db.User{
+		UserID:              userID,
+		ClientID:            registration.ClientID,
+		PublicKey:           registration.PublicKey,
+		EncryptedPassphrase: registration.EncryptedPassphrase,
+		ZFSDataset:          datasetName,
+		QuotaBytes:          quotaBytes,
+		Hostname:            registration.Hostname,
+		Username:            registration.Username,
+		OS:                  registration.OS,
+		ClientVersion:       registration.ClientVersion,
+	}
+
+	if err := s.database.CreateUser(user); err != nil {
+		// Cleanup: try to destroy dataset
+		s.zfsManager.DatasetExists(datasetName) // Ignore error
+		return nil, status.Error(codes.Internal, "failed to create user")
+	}
+
+	// Approve registration
+	if err := s.database.ApproveRegistration(req.RegistrationId, "admin"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to approve registration")
+	}
+
+	// Log action
+	s.database.LogAction(userID, registration.ClientID, "registration_approved", fmt.Sprintf("Registration approved by admin, quota: %d bytes", quotaBytes), "")
+
+	return &proto.ApproveRegistrationResponse{
+		Success: true,
+		Message: fmt.Sprintf("Registration approved. User ID: %s", userID),
+		UserId:  userID,
+	}, nil
+}
+
+// RejectRegistration rejects a pending registration
+func (s *AdminServiceServer) RejectRegistration(ctx context.Context, req *proto.RejectRegistrationRequest) (*proto.RejectRegistrationResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Get registration
+	registration, err := s.database.GetRegistrationByID(req.RegistrationId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get registration")
+	}
+	if registration == nil {
+		return nil, status.Error(codes.NotFound, "registration not found")
+	}
+
+	if registration.Status != "pending" {
+		return nil, status.Error(codes.FailedPrecondition, "registration is not pending")
+	}
+
+	// Reject registration
+	if err := s.database.RejectRegistration(req.RegistrationId, "admin", req.Reason); err != nil {
+		return nil, status.Error(codes.Internal, "failed to reject registration")
+	}
+
+	// Log action
+	s.database.LogAction("", registration.ClientID, "registration_rejected", fmt.Sprintf("Registration rejected: %s", req.Reason), "")
+
+	return &proto.RejectRegistrationResponse{
+		Success: true,
+		Message: "Registration rejected",
+	}, nil
+}
+
+// ListUsers lists all users
+func (s *AdminServiceServer) ListUsers(ctx context.Context, req *proto.ListUsersRequest) (*proto.ListUsersResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	users, err := s.database.ListUsers(req.IncludeRevoked)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list users")
+	}
+
+	protoUsers := make([]*proto.UserInfo, len(users))
+	for i, user := range users {
+		protoUsers[i] = &proto.UserInfo{
+			UserId:   user.UserID,
+			ClientId: user.ClientID,
+			Metadata: &proto.ClientMetadata{
+				Hostname:      user.Hostname,
+				Username:      user.Username,
+				Os:            user.OS,
+				ClientVersion: user.ClientVersion,
+			},
+			RegisteredAt: timestamppb.New(user.CreatedAt),
+			QuotaBytes:   user.QuotaBytes,
+			UsedBytes:    user.UsedBytes,
+			Revoked:      user.Revoked,
+			ZfsDataset:   user.ZFSDataset,
+		}
+
+		if user.LastSeen != nil {
+			protoUsers[i].LastSeen = timestamppb.New(*user.LastSeen)
+		}
+	}
+
+	return &proto.ListUsersResponse{
+		Users: protoUsers,
+	}, nil
+}
+
+// RevokeUser revokes a user's access
+func (s *AdminServiceServer) RevokeUser(ctx context.Context, req *proto.RevokeUserRequest) (*proto.RevokeUserResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Get user
+	user, err := s.database.GetUserByUserID(req.UserId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+	if user == nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+
+	// Revoke user
+	if err := s.database.RevokeUser(req.UserId); err != nil {
+		return nil, status.Error(codes.Internal, "failed to revoke user")
+	}
+
+	// Log action
+	s.database.LogAction(req.UserId, user.ClientID, "user_revoked", fmt.Sprintf("User revoked: %s", req.Reason), "")
+
+	return &proto.RevokeUserResponse{
+		Success: true,
+		Message: "User access revoked",
+	}, nil
+}
+
+// ListAllSnapshots lists all snapshots (optionally filtered by user)
+func (s *AdminServiceServer) ListAllSnapshots(ctx context.Context, req *proto.ListAllSnapshotsRequest) (*proto.ListAllSnapshotsResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	var snapshots []*db.Snapshot
+	var err error
+
+	if req.UserId != "" {
+		snapshots, err = s.database.ListSnapshotsByUserID(req.UserId)
+	} else {
+		// TODO: Implement listing all snapshots for all users
+		snapshots = []*db.Snapshot{}
+	}
+
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list snapshots")
+	}
+
+	protoSnapshots := make([]*proto.SnapshotInfo, len(snapshots))
+	for i, snap := range snapshots {
+		protoSnapshots[i] = &proto.SnapshotInfo{
+			SnapshotId:      snap.SnapshotID,
+			SnapshotName:    snap.ZFSSnapshotName,
+			CreatedAt:       timestamppb.New(snap.CreatedAt),
+			SizeBytes:       snap.SizeBytes,
+			ZfsSnapshotName: snap.ZFSSnapshotName,
+		}
+	}
+
+	return &proto.ListAllSnapshotsResponse{
+		Snapshots: protoSnapshots,
+	}, nil
+}
+
+// ApproveRestoreRequest approves a restore request
+func (s *AdminServiceServer) ApproveRestoreRequest(ctx context.Context, req *proto.ApproveRestoreRequestRequest) (*proto.ApproveRestoreRequestResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Get restore request
+	restoreReq, err := s.database.GetRestoreRequestByID(req.RequestId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get restore request")
+	}
+	if restoreReq == nil {
+		return nil, status.Error(codes.NotFound, "restore request not found")
+	}
+
+	if restoreReq.Status != "pending" {
+		return nil, status.Error(codes.FailedPrecondition, "restore request is not pending")
+	}
+
+	// Approve request
+	if err := s.database.ApproveRestoreRequest(req.RequestId, "admin"); err != nil {
+		return nil, status.Error(codes.Internal, "failed to approve restore request")
+	}
+
+	// Log action
+	s.database.LogAction(restoreReq.UserID, restoreReq.ClientID, "restore_approved", fmt.Sprintf("Restore request approved for snapshot %s", restoreReq.SnapshotID), "")
+
+	return &proto.ApproveRestoreRequestResponse{
+		Success: true,
+		Message: "Restore request approved",
+	}, nil
+}
+
+// RejectRestoreRequest rejects a restore request
+func (s *AdminServiceServer) RejectRestoreRequest(ctx context.Context, req *proto.RejectRestoreRequestRequest) (*proto.RejectRestoreRequestResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Get restore request
+	restoreReq, err := s.database.GetRestoreRequestByID(req.RequestId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get restore request")
+	}
+	if restoreReq == nil {
+		return nil, status.Error(codes.NotFound, "restore request not found")
+	}
+
+	if restoreReq.Status != "pending" {
+		return nil, status.Error(codes.FailedPrecondition, "restore request is not pending")
+	}
+
+	// Reject request
+	if err := s.database.RejectRestoreRequest(req.RequestId, "admin", req.Reason); err != nil {
+		return nil, status.Error(codes.Internal, "failed to reject restore request")
+	}
+
+	// Log action
+	s.database.LogAction(restoreReq.UserID, restoreReq.ClientID, "restore_rejected", fmt.Sprintf("Restore request rejected: %s", req.Reason), "")
+
+	return &proto.RejectRestoreRequestResponse{
+		Success: true,
+		Message: "Restore request rejected",
+	}, nil
+}
+
+// UpdateSnapshotPolicy updates the snapshot retention policy
+func (s *AdminServiceServer) UpdateSnapshotPolicy(ctx context.Context, req *proto.UpdateSnapshotPolicyRequest) (*proto.UpdateSnapshotPolicyResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Update config
+	s.config.Snapshots.Schedule.Hourly = int(req.Policy.HourlyRetention)
+	s.config.Snapshots.Schedule.Daily = int(req.Policy.DailyRetention)
+	s.config.Snapshots.Schedule.Weekly = int(req.Policy.WeeklyRetention)
+	s.config.Snapshots.Schedule.Monthly = int(req.Policy.MonthlyRetention)
+
+	// TODO: Save config to file
+
+	// Log action
+	s.database.LogAction("", "", "snapshot_policy_updated", fmt.Sprintf("Policy: hourly=%d, daily=%d, weekly=%d, monthly=%d",
+		req.Policy.HourlyRetention, req.Policy.DailyRetention, req.Policy.WeeklyRetention, req.Policy.MonthlyRetention), "")
+
+	return &proto.UpdateSnapshotPolicyResponse{
+		Success: true,
+		Message: "Snapshot policy updated",
+	}, nil
+}
+
+// GetSystemStatus returns system status information
+func (s *AdminServiceServer) GetSystemStatus(ctx context.Context, req *proto.SystemStatusRequest) (*proto.SystemStatusResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Get user counts
+	allUsers, err := s.database.ListUsers(true)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get users")
+	}
+
+	activeUsers, err := s.database.ListUsers(false)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get active users")
+	}
+
+	// Calculate totals
+	var totalStorage int64
+	var usedStorage int64
+	for _, user := range allUsers {
+		totalStorage += user.QuotaBytes
+		usedStorage += user.UsedBytes
+	}
+
+	// TODO: Get actual snapshot count
+	totalSnapshots := int64(0)
+
+	// TODO: Get ZFS pool status
+	pools := []*proto.PoolStatus{
+		{
+			PoolName:       s.config.ZFS.Pool,
+			TotalBytes:     0,   // TODO: Get from ZFS
+			UsedBytes:      0,   // TODO: Get from ZFS
+			AvailableBytes: 0,   // TODO: Get from ZFS
+			Health:         1.0, // TODO: Get from ZFS
+		},
+	}
+
+	return &proto.SystemStatusResponse{
+		TotalUsers:        int64(len(allUsers)),
+		ActiveUsers:       int64(len(activeUsers)),
+		TotalStorageBytes: totalStorage,
+		UsedStorageBytes:  usedStorage,
+		TotalSnapshots:    totalSnapshots,
+		Pools:             pools,
+	}, nil
+}

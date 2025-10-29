@@ -1,0 +1,475 @@
+syntax = "proto3";
+
+package zfscloud.v1;
+
+option go_package = "github.com/ioustamora/zfscloud/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// Note: Use timestamppb.Timestamp in Go code
+
+// BackupService handles all backup-related operations
+service BackupService {
+  // Client registration and authentication
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc GetRegistrationStatus(RegistrationStatusRequest) returns (RegistrationStatusResponse);
+  
+  // Backup operations
+  rpc GetBackupPolicy(BackupPolicyRequest) returns (BackupPolicyResponse);
+  rpc GetHashIndex(HashIndexRequest) returns (HashIndexResponse);
+  rpc UploadChunk(stream UploadChunkRequest) returns (UploadChunkResponse);
+  rpc CompleteBackup(CompleteBackupRequest) returns (CompleteBackupResponse);
+  
+  // Restore operations
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+  rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
+  
+  // Snapshot operations
+  rpc ListSnapshots(ListSnapshotsRequest) returns (ListSnapshotsResponse);
+  rpc RequestSnapshotRestore(SnapshotRestoreRequest) returns (SnapshotRestoreResponse);
+  rpc GetRestoreRequestStatus(RestoreRequestStatusRequest) returns (RestoreRequestStatusResponse);
+  
+  // Session management
+  rpc LoadDatasetKey(LoadDatasetKeyRequest) returns (LoadDatasetKeyResponse);
+  rpc UnloadDatasetKey(UnloadDatasetKeyRequest) returns (UnloadDatasetKeyResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+// AdminService handles administrative operations
+service AdminService {
+  // User management
+  rpc ListPendingRegistrations(ListPendingRegistrationsRequest) returns (ListPendingRegistrationsResponse);
+  rpc ApproveRegistration(ApproveRegistrationRequest) returns (ApproveRegistrationResponse);
+  rpc RejectRegistration(RejectRegistrationRequest) returns (RejectRegistrationResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc RevokeUser(RevokeUserRequest) returns (RevokeUserResponse);
+  
+  // Snapshot management
+  rpc ListAllSnapshots(ListAllSnapshotsRequest) returns (ListAllSnapshotsResponse);
+  rpc ApproveRestoreRequest(ApproveRestoreRequestRequest) returns (ApproveRestoreRequestResponse);
+  rpc RejectRestoreRequest(RejectRestoreRequestRequest) returns (RejectRestoreRequestResponse);
+  
+  // Configuration
+  rpc UpdateSnapshotPolicy(UpdateSnapshotPolicyRequest) returns (UpdateSnapshotPolicyResponse);
+  rpc GetSystemStatus(SystemStatusRequest) returns (SystemStatusResponse);
+}
+
+// ============================================================================
+// Registration Messages
+// ============================================================================
+
+message RegisterRequest {
+  string client_id = 1;           // Unique client identifier (UUID)
+  bytes public_key = 2;           // Ed25519 public key
+  bytes encrypted_passphrase = 3;  // Dataset passphrase encrypted with server public key
+  ClientMetadata metadata = 4;
+  bytes signature = 5;            // Signature of the request
+  int64 timestamp = 6;            // Unix timestamp for replay protection
+  string nonce = 7;               // Random nonce for replay protection
+}
+
+message ClientMetadata {
+  string hostname = 1;
+  string username = 2;
+  string os = 3;
+  string client_version = 4;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+  string registration_id = 3;
+  RegistrationStatus status = 4;
+}
+
+enum RegistrationStatus {
+  REGISTRATION_STATUS_UNKNOWN = 0;
+  REGISTRATION_STATUS_PENDING = 1;
+  REGISTRATION_STATUS_APPROVED = 2;
+  REGISTRATION_STATUS_REJECTED = 3;
+}
+
+message RegistrationStatusRequest {
+  string client_id = 1;
+  bytes signature = 2;
+  int64 timestamp = 3;
+  string nonce = 4;
+}
+
+message RegistrationStatusResponse {
+  RegistrationStatus status = 1;
+  string message = 2;
+  google.protobuf.Timestamp approved_at = 3;
+}
+
+// ============================================================================
+// Backup Messages
+// ============================================================================
+
+message BackupPolicyRequest {
+  string client_id = 1;
+  bytes signature = 2;
+  int64 timestamp = 3;
+  string nonce = 4;
+}
+
+message BackupPolicyResponse {
+  int64 check_interval_seconds = 1;
+  int64 max_chunk_size_bytes = 2;
+  bool compression_enabled = 3;
+  string compression_algorithm = 4;
+}
+
+message HashIndexRequest {
+  string client_id = 1;
+  string base_path = 2;  // Optional: filter by path
+  bytes signature = 3;
+  int64 timestamp = 4;
+  string nonce = 5;
+}
+
+message HashIndexResponse {
+  repeated FileHash hashes = 1;
+}
+
+message FileHash {
+  string path = 1;
+  bytes hash = 2;  // SHA256 hash
+  int64 size = 3;
+  google.protobuf.Timestamp modified_time = 4;
+}
+
+message UploadChunkRequest {
+  oneof data {
+    ChunkMetadata metadata = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+message ChunkMetadata {
+  string client_id = 1;
+  string file_path = 2;
+  bytes file_hash = 3;
+  int64 file_size = 4;
+  int64 total_chunks = 5;
+  int64 chunk_index = 6;
+  bool compressed = 7;
+  google.protobuf.Timestamp modified_time = 8;
+  bytes signature = 9;
+  int64 timestamp = 10;
+  string nonce = 11;
+}
+
+message UploadChunkResponse {
+  bool success = 1;
+  string message = 2;
+  int64 bytes_received = 3;
+}
+
+message CompleteBackupRequest {
+  string client_id = 1;
+  string backup_id = 2;
+  repeated string file_paths = 3;
+  bytes signature = 4;
+  int64 timestamp = 5;
+  string nonce = 6;
+}
+
+message CompleteBackupResponse {
+  bool success = 1;
+  string message = 2;
+  google.protobuf.Timestamp backup_timestamp = 3;
+}
+
+// ============================================================================
+// Restore Messages
+// ============================================================================
+
+message ListFilesRequest {
+  string client_id = 1;
+  string path = 2;  // Directory path to list
+  bool recursive = 3;
+  bytes signature = 4;
+  int64 timestamp = 5;
+  string nonce = 6;
+}
+
+message ListFilesResponse {
+  repeated FileInfo files = 1;
+}
+
+message FileInfo {
+  string path = 1;
+  int64 size = 2;
+  google.protobuf.Timestamp modified_time = 3;
+  bool is_directory = 4;
+  bytes hash = 5;
+}
+
+message DownloadFileRequest {
+  string client_id = 1;
+  string file_path = 2;
+  bytes signature = 3;
+  int64 timestamp = 4;
+  string nonce = 5;
+}
+
+message DownloadFileResponse {
+  oneof data {
+    FileMetadata metadata = 1;
+    bytes chunk_data = 2;
+  }
+}
+
+message FileMetadata {
+  string path = 1;
+  int64 size = 2;
+  google.protobuf.Timestamp modified_time = 3;
+  bytes hash = 4;
+}
+
+// ============================================================================
+// Snapshot Messages
+// ============================================================================
+
+message ListSnapshotsRequest {
+  string client_id = 1;
+  bytes signature = 2;
+  int64 timestamp = 3;
+  string nonce = 4;
+}
+
+message ListSnapshotsResponse {
+  repeated SnapshotInfo snapshots = 1;
+}
+
+message SnapshotInfo {
+  string snapshot_id = 1;
+  string snapshot_name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  int64 size_bytes = 4;
+  string zfs_snapshot_name = 5;
+}
+
+message SnapshotRestoreRequest {
+  string client_id = 1;
+  string snapshot_id = 2;
+  string restore_path = 3;  // Optional: specific path to restore
+  string reason = 4;
+  bytes signature = 5;
+  int64 timestamp = 6;
+  string nonce = 7;
+}
+
+message SnapshotRestoreResponse {
+  bool success = 1;
+  string message = 2;
+  string request_id = 3;
+  RestoreRequestStatus status = 4;
+}
+
+enum RestoreRequestStatus {
+  RESTORE_REQUEST_STATUS_UNKNOWN = 0;
+  RESTORE_REQUEST_STATUS_PENDING = 1;
+  RESTORE_REQUEST_STATUS_APPROVED = 2;
+  RESTORE_REQUEST_STATUS_REJECTED = 3;
+  RESTORE_REQUEST_STATUS_COMPLETED = 4;
+}
+
+message RestoreRequestStatusRequest {
+  string client_id = 1;
+  string request_id = 2;
+  bytes signature = 3;
+  int64 timestamp = 4;
+  string nonce = 5;
+}
+
+message RestoreRequestStatusResponse {
+  RestoreRequestStatus status = 1;
+  string message = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+// ============================================================================
+// Session Management Messages
+// ============================================================================
+
+message LoadDatasetKeyRequest {
+  string client_id = 1;
+  bytes encrypted_passphrase = 2;  // Passphrase encrypted with server public key
+  bytes signature = 3;
+  int64 timestamp = 4;
+  string nonce = 5;
+}
+
+message LoadDatasetKeyResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UnloadDatasetKeyRequest {
+  string client_id = 1;
+  bytes signature = 2;
+  int64 timestamp = 3;
+  string nonce = 4;
+}
+
+message UnloadDatasetKeyResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message HeartbeatRequest {
+  string client_id = 1;
+  bytes signature = 2;
+  int64 timestamp = 3;
+  string nonce = 4;
+}
+
+message HeartbeatResponse {
+  bool success = 1;
+  int64 server_timestamp = 2;
+}
+
+// ============================================================================
+// Admin Messages
+// ============================================================================
+
+message ListPendingRegistrationsRequest {
+  string admin_token = 1;
+}
+
+message ListPendingRegistrationsResponse {
+  repeated PendingRegistration registrations = 1;
+}
+
+message PendingRegistration {
+  string registration_id = 1;
+  string client_id = 2;
+  ClientMetadata metadata = 3;
+  google.protobuf.Timestamp requested_at = 4;
+  bytes public_key = 5;
+}
+
+message ApproveRegistrationRequest {
+  string admin_token = 1;
+  string registration_id = 2;
+  int64 quota_bytes = 3;  // Optional: override default quota
+}
+
+message ApproveRegistrationResponse {
+  bool success = 1;
+  string message = 2;
+  string user_id = 3;
+}
+
+message RejectRegistrationRequest {
+  string admin_token = 1;
+  string registration_id = 2;
+  string reason = 3;
+}
+
+message RejectRegistrationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListUsersRequest {
+  string admin_token = 1;
+  bool include_revoked = 2;
+}
+
+message ListUsersResponse {
+  repeated UserInfo users = 1;
+}
+
+message UserInfo {
+  string user_id = 1;
+  string client_id = 2;
+  ClientMetadata metadata = 3;
+  google.protobuf.Timestamp registered_at = 4;
+  google.protobuf.Timestamp last_seen = 5;
+  int64 quota_bytes = 6;
+  int64 used_bytes = 7;
+  bool revoked = 8;
+  string zfs_dataset = 9;
+}
+
+message RevokeUserRequest {
+  string admin_token = 1;
+  string user_id = 2;
+  string reason = 3;
+}
+
+message RevokeUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListAllSnapshotsRequest {
+  string admin_token = 1;
+  string user_id = 2;  // Optional: filter by user
+}
+
+message ListAllSnapshotsResponse {
+  repeated SnapshotInfo snapshots = 1;
+}
+
+message ApproveRestoreRequestRequest {
+  string admin_token = 1;
+  string request_id = 2;
+}
+
+message ApproveRestoreRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RejectRestoreRequestRequest {
+  string admin_token = 1;
+  string request_id = 2;
+  string reason = 3;
+}
+
+message RejectRestoreRequestResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UpdateSnapshotPolicyRequest {
+  string admin_token = 1;
+  SnapshotPolicy policy = 2;
+}
+
+message SnapshotPolicy {
+  int32 hourly_retention = 1;
+  int32 daily_retention = 2;
+  int32 weekly_retention = 3;
+  int32 monthly_retention = 4;
+}
+
+message UpdateSnapshotPolicyResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SystemStatusRequest {
+  string admin_token = 1;
+}
+
+message SystemStatusResponse {
+  int64 total_users = 1;
+  int64 active_users = 2;
+  int64 total_storage_bytes = 3;
+  int64 used_storage_bytes = 4;
+  int64 total_snapshots = 5;
+  repeated PoolStatus pools = 6;
+}
+
+message PoolStatus {
+  string pool_name = 1;
+  int64 total_bytes = 2;
+  int64 used_bytes = 3;
+  int64 available_bytes = 4;
+  double health = 5;
+}
