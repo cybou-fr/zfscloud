@@ -14,9 +14,9 @@ import (
 
 // ChunkWriter handles writing chunks to the filesystem
 type ChunkWriter struct {
-	basePath   string
-	currentFile *os.File
-	currentHash []byte
+	basePath     string
+	currentFile  *os.File
+	currentHash  []byte
 	bytesWritten int64
 }
 

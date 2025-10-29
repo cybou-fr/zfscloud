@@ -3,7 +3,56 @@
 ## Overview
 A client-server backup system built in Go, featuring a Gio UI-based client (system tray application) and a ZFS-backed server for secure, encrypted, per-user backups.
 
-## Architecture
+## Current Status
+
+**Completed: Phases 1-5 of 10** ✅
+
+- ✅ **Phase 1**: Core Infrastructure (proto, crypto, config, ZFS wrapper)
+- ✅ **Phase 2**: Database & gRPC Services (SQLite with 8 tables, 24 RPCs)
+- ✅ **Phase 3**: Server Integration (file I/O, admin service, complete server)
+- ✅ **Phase 4**: Basic Client (interactive CLI, file upload with chunking)
+- ✅ **Phase 5**: Docker Testing Environment (ZFS-enabled containers)
+
+**In Progress: Phase 6** 🚧
+
+- ⏳ Automatic backup engine (file watching, compression)
+
+**Planned: Phases 7-10** 📋
+
+- Phase 7: Gio-based UI (system tray, visual interface)
+- Phase 8: Security hardening (TLS/mTLS, keychain integration)
+- Phase 9: Snapshot automation (cron scheduler, retention policies)
+- Phase 10: Production features (monitoring, optimization, testing)
+
+## Working Features
+
+### Server (Fully Functional)
+- ✅ 24 gRPC methods (BackupService: 14, AdminService: 10)
+- ✅ SQLite database with 8 tables
+- ✅ File chunking and storage
+- ✅ ZFS dataset management with encryption
+- ✅ Session management with automatic cleanup
+- ✅ Admin approval workflow
+- ✅ Quota enforcement
+- ✅ Ed25519 request authentication
+
+### Client (Basic Functionality)
+- ✅ Interactive CLI with 9 commands
+- ✅ File upload with 1MB chunking
+- ✅ Directory upload with recursion
+- ✅ SHA-256 hash verification
+- ✅ Ed25519 key generation and signing
+- ✅ Progress tracking
+
+### Docker Environment
+- ✅ File-backed 10GB ZFS pool (no physical disks needed)
+- ✅ Multi-container orchestration
+- ✅ Admin helper with grpcurl
+- ✅ Comprehensive testing guide (350+ lines)
+
+See **[docker/README.md](docker/README.md)** for complete testing workflow.
+
+---
 
 ### Technology Stack
 - **Language**: Go (Golang)
@@ -231,50 +280,181 @@ backup:
 
 ## Implementation Phases
 
-### Phase 1: Core Infrastructure
-- [ ] gRPC service definitions
-- [ ] mTLS setup and certificate management
-- [ ] Client key pair generation and storage
-- [ ] Server registration and approval system
-- [ ] Basic ZFS dataset creation
+### ✅ Phase 1: Core Infrastructure (COMPLETE)
 
-### Phase 2: Backup Engine
-- [ ] File system monitoring
-- [ ] Hash calculation and comparison
-- [ ] Chunking algorithm
-- [ ] Compression pipeline
-- [ ] Data transmission protocol
-- [ ] ZFS dataset writing
+**Status**: All tasks complete
 
-### Phase 3: Client UI
-- [ ] Gio system tray application
+- [x] gRPC service definitions (proto/backup.proto)
+  - BackupService: 14 RPC methods
+  - AdminService: 10 RPC methods
+  - Complete message definitions
+- [x] mTLS setup and certificate management (basic structure)
+- [x] Client key pair generation and storage (Ed25519)
+- [x] Server registration system (basic implementation)
+- [x] ZFS dataset creation wrapper
+- [x] Configuration management (YAML-based)
+- [x] Build scripts (Windows + Unix)
+
+**Deliverables**:
+- `proto/backup.proto` - Protocol definitions
+- `shared/crypto/` - Cryptographic utilities
+- `shared/config/` - Configuration management
+- `server/zfs/manager.go` - ZFS wrapper
+- `build.ps1`, `Makefile` - Build automation
+
+### ✅ Phase 2: Database & gRPC Services (COMPLETE)
+
+**Status**: All tasks complete
+
+- [x] SQLite database schema (8 tables)
+  - users, registrations, sessions, files, chunks, file_hashes, snapshots, restore_requests
+- [x] Database operations (28 operations)
+  - User management, registration workflow, session handling, file metadata
+- [x] BackupService implementation (14 RPCs)
+  - Register, Heartbeat, GetBackupPolicy, UploadChunk, CompleteBackup
+  - ListFiles, DownloadFile, DeleteFile
+  - LoadDatasetKey, UnloadDatasetKey
+  - ListSnapshots, RequestSnapshotRestore
+  - GetQuotaInfo, GetSessionInfo
+- [x] AdminService implementation (10 RPCs)
+  - ListPendingRegistrations, ApproveRegistration, RejectRegistration
+  - ListUsers, UpdateUserQuota
+  - ListRestoreRequests, ApproveRestoreRequest, RejectRestoreRequest
+  - UpdateSnapshotPolicy, GetSystemStatus
+- [x] Request authentication (Ed25519 signature verification)
+- [x] Session management
+
+**Deliverables**:
+- `server/db/database.go` - Database schema and setup
+- `server/db/operations.go` - 28 database operations
+- `server/grpc/backup_service.go` - BackupService implementation
+- `server/grpc/admin_service.go` - AdminService implementation
+- `server/grpc/auth.go` - Authentication middleware
+
+### ✅ Phase 3: Server Integration (COMPLETE)
+
+**Status**: All tasks complete
+
+- [x] File I/O storage layer
+  - Chunk writing to ZFS datasets
+  - File metadata tracking
+  - Hash verification
+- [x] Complete server wiring
+  - gRPC server setup
+  - Service registration
+  - Graceful shutdown
+- [x] AdminService full implementation
+- [x] Main server entry point
+
+**Deliverables**:
+- `server/storage/fileio.go` - File I/O operations
+- `server/grpc/server.go` - gRPC server setup
+- `server/cmd/main.go` - Complete server entry point
+
+### ✅ Phase 4: Basic Client (COMPLETE)
+
+**Status**: All tasks complete
+
+- [x] Interactive CLI application
+  - Command shell with 9 commands
+  - Ed25519 key auto-generation
+  - Metadata collection (hostname, username, OS)
+- [x] gRPC client implementation
+  - Connection management
+  - Request signing
+  - All BackupService RPCs
+- [x] File upload engine
+  - Chunking (1MB default)
+  - Directory recursion
+  - SHA-256 hashing
+  - Progress tracking
+
+**Deliverables**:
+- `client/cmd/main.go` - Interactive CLI (350 lines)
+- `client/client.go` - gRPC client (300 lines)
+- `client/uploader.go` - File upload engine (280 lines)
+
+### ✅ Phase 5: Docker Testing Environment (COMPLETE)
+
+**Status**: All tasks complete
+
+- [x] Server Docker container (Ubuntu + ZFS)
+- [x] File-backed ZFS pool (10GB, no physical disks)
+- [x] Admin helper container (Alpine + grpcurl)
+- [x] Docker Compose orchestration
+- [x] Build scripts for cross-compilation
+- [x] Comprehensive testing guide
+
+**Deliverables**:
+- `docker/Dockerfile.server` - ZFS-enabled server container
+- `docker/Dockerfile.admin` - Admin helper with grpcurl
+- `docker/docker-compose.yml` - Multi-container setup
+- `docker/README.md` - Testing guide (350+ lines)
+- `build-docker.ps1`, `test-docker.ps1` - Build/test automation
+
+### ⏳ Phase 6: Backup Engine (IN PROGRESS)
+
+**Status**: Not started
+
+- [ ] File system watcher (fsnotify)
+- [ ] Automatic backup on file changes
+- [ ] Content-defined chunking for large files
+- [ ] Compression pipeline (zstd)
+- [ ] Background upload queue
+- [ ] Bandwidth throttling
+- [ ] Delta sync optimization
+
+### ⏳ Phase 7: Client UI (PLANNED)
+
+**Status**: Not started
+
+- [ ] Gio system tray integration
+- [ ] Status indicators (connected, backing up, idle)
 - [ ] Folder selection interface
-- [ ] Status display
-- [ ] Configuration management
-- [ ] Basic restore functionality
+- [ ] Visual restore browser
+- [ ] Configuration editor
+- [ ] Progress indicators
+- [ ] Notifications
 
-### Phase 4: Snapshot Management
-- [ ] Automated snapshot scheduling
-- [ ] Retention policy enforcement
-- [ ] Snapshot listing API
-- [ ] Restore request workflow
-- [ ] Admin approval system
+### ⏳ Phase 8: Security Hardening (PLANNED)
 
-### Phase 5: Admin Interface
-- [ ] User approval dashboard
-- [ ] Storage monitoring
-- [ ] Policy configuration
-- [ ] Activity logs
+**Status**: Not started
 
-### Phase 6: Advanced Features
-- [ ] Bandwidth optimization
-- [ ] Delta sync improvements
+- [ ] TLS certificate management
+- [ ] mTLS implementation for production
+- [ ] OS keychain integration (DPAPI/Keychain/Secret Service)
+- [ ] Replay attack prevention improvements
+- [ ] Rate limiting on API endpoints
+- [ ] Audit logging of all operations
+- [ ] Security penetration testing
+
+### ⏳ Phase 9: Snapshot Automation (PLANNED)
+
+**Status**: Not started
+
+- [ ] Cron-based snapshot scheduler
+- [ ] Retention policy enforcement (hourly/daily/weekly/monthly)
+- [ ] Automatic cleanup
+- [ ] Snapshot browsing improvements
+- [ ] Restore workflow enhancements
+- [ ] Append-only snapshots (ransomware protection)
+
+### ⏳ Phase 10: Production Features (PLANNED)
+
+**Status**: Not started
+
+- [ ] Web-based admin dashboard
+- [ ] Monitoring and metrics (Prometheus)
+- [ ] Distributed tracing (OpenTelemetry)
 - [ ] Multi-threaded uploads
-- [ ] Client-side encryption option
+- [ ] Delta sync optimizations
+- [ ] Client-side encryption option (zero-knowledge)
 - [ ] Conflict resolution
-- [ ] Versioning support
+- [ ] Comprehensive test suite (unit + integration)
+- [ ] Performance tuning
+- [ ] Documentation completion
 
-## Technical Considerations
+---
 
 ### Performance
 - Use goroutines for concurrent operations

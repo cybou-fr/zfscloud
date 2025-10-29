@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -161,13 +160,28 @@ func (s *BackupServiceServer) UploadChunk(stream proto.BackupService_UploadChunk
 		return status.Error(codes.NotFound, "user not found")
 	}
 
-	var bytesReceived int64
-	var metadata *proto.ChunkMetadata
+	// Get dataset mount point
+	datasetPath, err := s.zfsManager.GetMountpoint(user.ZFSDataset)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to get dataset mountpoint: %v", err))
+	}
+
+	writer := storage.NewChunkWriter(datasetPath)
+	defer writer.Close()
+
+	var totalBytesReceived int64
+	var currentMetadata *proto.ChunkMetadata
 
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
 			// Client finished sending
+			if currentMetadata != nil {
+				if err := writer.FinishFile(); err != nil {
+					return status.Error(codes.Internal, fmt.Sprintf("failed to finalize file: %v", err))
+				}
+				totalBytesReceived += writer.BytesWritten()
+			}
 			break
 		}
 		if err != nil {
@@ -176,26 +190,46 @@ func (s *BackupServiceServer) UploadChunk(stream proto.BackupService_UploadChunk
 
 		switch data := req.Data.(type) {
 		case *proto.UploadChunkRequest_Metadata:
-			metadata = data.Metadata
+			// Finish previous file if exists
+			if currentMetadata != nil {
+				if err := writer.FinishFile(); err != nil {
+					return status.Error(codes.Internal, fmt.Sprintf("failed to finalize file: %v", err))
+				}
+				totalBytesReceived += writer.BytesWritten()
+			}
+
+			// Start new file
+			currentMetadata = data.Metadata
+			if err := writer.StartFile(data.Metadata); err != nil {
+				return status.Error(codes.Internal, fmt.Sprintf("failed to start file: %v", err))
+			}
+
 		case *proto.UploadChunkRequest_ChunkData:
-			if metadata == nil {
+			if currentMetadata == nil {
 				return status.Error(codes.InvalidArgument, "metadata must be sent before chunk data")
 			}
-			bytesReceived += int64(len(data.ChunkData))
-			// TODO: Write chunk to ZFS dataset
+			if err := writer.WriteChunk(data.ChunkData); err != nil {
+				return status.Error(codes.Internal, fmt.Sprintf("failed to write chunk: %v", err))
+			}
 		}
 	}
 
+	// Calculate actual used space from filesystem
+	usedSpace, err := storage.GetDatasetUsedSpace(datasetPath)
+	if err != nil {
+		// Fall back to estimated space if calculation fails
+		usedSpace = user.UsedBytes + totalBytesReceived
+	}
+
 	// Update user's used space
-	// TODO: Calculate actual used space from ZFS
-	if err := s.database.UpdateUserUsedSpace(user.UserID, user.UsedBytes+bytesReceived); err != nil {
+	if err := s.database.UpdateUserUsedSpace(user.UserID, usedSpace); err != nil {
 		return status.Error(codes.Internal, "failed to update used space")
 	}
 
 	return stream.SendAndClose(&proto.UploadChunkResponse{
 		Success:       true,
 		Message:       "Upload completed successfully",
-		BytesReceived: bytesReceived,
+		BytesReceived: totalBytesReceived,
 	})
 }
 
@@ -228,9 +262,21 @@ func (s *BackupServiceServer) ListFiles(ctx context.Context, req *proto.ListFile
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
 
-	// TODO: Implement actual file listing from ZFS dataset
+	// Get dataset mount point
+	datasetPath, err := s.zfsManager.GetMountpoint(user.ZFSDataset)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to get dataset mountpoint: %v", err))
+	}
+
+	// List files
+	reader := storage.NewFileReader(datasetPath)
+	files, err := reader.ListFiles(req.Path)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to list files: %v", err))
+	}
+
 	return &proto.ListFilesResponse{
-		Files: []*proto.FileInfo{},
+		Files: files,
 	}, nil
 }
 
@@ -246,19 +292,58 @@ func (s *BackupServiceServer) DownloadFile(req *proto.DownloadFileRequest, strea
 		return status.Error(codes.NotFound, "user not found")
 	}
 
-	// TODO: Implement actual file download from ZFS dataset
-	// For now, just send metadata
+	// Get dataset mount point
+	datasetPath, err := s.zfsManager.GetMountpoint(user.ZFSDataset)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to get dataset mountpoint: %v", err))
+	}
+
+	// Get file info
+	reader := storage.NewFileReader(datasetPath)
+	fileInfo, err := reader.GetFileInfo(req.FilePath)
+	if err != nil {
+		return status.Error(codes.NotFound, fmt.Sprintf("file not found: %v", err))
+	}
+
+	// Send metadata first
 	if err := stream.Send(&proto.DownloadFileResponse{
 		Data: &proto.DownloadFileResponse_Metadata{
 			Metadata: &proto.FileMetadata{
-				Path:         req.FilePath,
-				Size:         0,
-				ModifiedTime: timestamppb.Now(),
-				Hash:         []byte{},
+				Path:         fileInfo.Path,
+				Size:         fileInfo.Size,
+				ModifiedTime: timestamppb.Now(), // TODO: Get actual modified time
+				Hash:         fileInfo.Hash,
 			},
 		},
 	}); err != nil {
-		return err
+		return status.Error(codes.Internal, fmt.Sprintf("failed to send metadata: %v", err))
+	}
+
+	// Open and stream file
+	file, err := reader.OpenFile(req.FilePath)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to open file: %v", err))
+	}
+	defer file.Close()
+
+	// Stream file in chunks
+	buffer := make([]byte, 64*1024) // 64KB chunks
+	for {
+		n, err := file.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return status.Error(codes.Internal, fmt.Sprintf("failed to read file: %v", err))
+		}
+
+		if err := stream.Send(&proto.DownloadFileResponse{
+			Data: &proto.DownloadFileResponse_ChunkData{
+				ChunkData: buffer[:n],
+			},
+		}); err != nil {
+			return status.Error(codes.Internal, fmt.Sprintf("failed to send chunk: %v", err))
+		}
 	}
 
 	return nil

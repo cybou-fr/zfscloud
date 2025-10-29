@@ -1,0 +1,14 @@
+server:
+  listen_address: "localhost:50051"
+  data_dir: "./data"
+
+zfs:
+  pool: "tank"
+  default_quota: 10737418240  # 10GB
+
+security:
+  admin_token: "test-admin-token-123"
+  session_timeout: "24h"
+
+database:
+  path: "./data/zfscloud.db"

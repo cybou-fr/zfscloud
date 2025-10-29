@@ -1,12 +1,69 @@
 # ZFSCloud Setup Guide
 
-## Quick Start
+## Quick Start (Docker - Recommended)
 
-This guide will help you get started with ZFSCloud development.
+The fastest way to test ZFSCloud is using Docker, which provides a complete testing environment without requiring native ZFS installation.
+
+### Prerequisites
+- Go 1.23+
+- Docker Desktop (Windows/Mac) or Docker Engine (Linux)
+- Docker Compose
+
+### Steps
+
+1. **Clone and Build**
+   ```powershell
+   cd c:\Users\yosta\dev\zfscloud
+   go mod download
+   
+   # Build server for Docker (Linux)
+   .\build-docker.ps1
+   
+   # Build client for Windows
+   .\build.ps1 client
+   ```
+
+2. **Start Docker Environment**
+   ```powershell
+   # Automated startup
+   .\test-docker.ps1
+   
+   # Or manually
+   cd docker
+   docker-compose up -d
+   docker-compose logs -f zfscloud-server
+   ```
+
+3. **Test Client-Server Communication**
+   ```powershell
+   # Run client
+   .\bin\zfscloud-client.exe
+   
+   # In client shell:
+   register
+   
+   # Approve registration (in another terminal)
+   cd docker
+   docker-compose --profile admin run zfscloud-admin list-registrations
+   docker-compose --profile admin run zfscloud-admin approve-registration <client-id> 10737418240
+   
+   # Upload files
+   upload <file-path>
+   upload-dir <directory-path>
+   
+   # List files
+   list
+   ```
+
+For detailed Docker testing guide, see **[docker/README.md](docker/README.md)** (350+ lines).
+
+---
+
+## Native Setup (Linux Server with ZFS)
+
+If you want to run the server natively on Linux with ZFS (not in Docker):
 
 ## Step 1: Install Prerequisites
-
-### Windows Development (Client)
 
 1. **Install Go 1.23+**
    - Download from: https://go.dev/dl/
@@ -201,23 +258,34 @@ go tool cover -html=coverage.out
 
 ## Project Status
 
-Current implementation includes:
+ZFSCloud has completed 5 of 10 planned phases:
 
-- ✅ Project structure and build system
-- ✅ Protocol Buffer definitions (gRPC API)
-- ✅ Cryptographic utilities (Ed25519, RSA, passphrases)
-- ✅ Configuration management
-- ✅ ZFS management wrapper
-- ✅ Basic server and client entry points
+- ✅ **Phase 1**: Core Infrastructure (proto, crypto, config, ZFS wrapper)
+- ✅ **Phase 2**: Database & gRPC Services (SQLite, 24 RPCs)
+- ✅ **Phase 3**: Server Integration (file I/O, admin service)
+- ✅ **Phase 4**: Basic Client (interactive CLI, file upload)
+- ✅ **Phase 5**: Docker Testing Environment (ZFS containers)
+- ⏳ **Phase 6**: Backup Engine (automatic file watching)
+- ⏳ **Phase 7**: Client UI (Gio-based GUI)
+- ⏳ **Phase 8**: Security Hardening (TLS/mTLS)
+- ⏳ **Phase 9**: Snapshot Automation
+- ⏳ **Phase 10**: Production Features
 
-**Next steps** (see STRUCTURE.md and implementation-plan.md):
+**Current capabilities:**
+- Full client-server communication via gRPC
+- File upload with chunking and verification
+- Directory upload with recursion
+- Admin approval workflow
+- Session management
+- Docker testing environment
 
-1. Generate protobuf Go files
-2. Implement database layer
-3. Implement gRPC services
-4. Build backup engine
-5. Create client UI with Gio
-6. Add comprehensive tests
+**Limitations:**
+- Manual backup only (no automatic file watching yet)
+- CLI only (no GUI)
+- No TLS/mTLS (development mode only)
+- No automatic snapshots (manual ZFS commands)
+
+---
 
 ## Troubleshooting
 

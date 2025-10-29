@@ -1,0 +1,73 @@
+# Admin helper container for running admin commands
+FROM alpine:latest
+
+# Install grpcurl for testing
+RUN apk add --no-cache curl bash jq
+
+# Install grpcurl
+RUN curl -sSL "https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_linux_x86_64.tar.gz" | \
+    tar -xz -C /usr/local/bin grpcurl && \
+    chmod +x /usr/local/bin/grpcurl
+
+# Copy proto files for grpcurl
+COPY proto /proto
+
+# Create helper scripts
+RUN mkdir -p /scripts
+
+# Script to list pending registrations
+RUN echo '#!/bin/bash\n\
+ADMIN_TOKEN="${ADMIN_TOKEN:-change-me-in-production}"\n\
+grpcurl -plaintext \\\n\
+  -d "{\"admin_token\": \"$ADMIN_TOKEN\"}" \\\n\
+  zfscloud-server:50051 \\\n\
+  backup.AdminService/ListPendingRegistrations\n\
+' > /scripts/list-registrations.sh && chmod +x /scripts/list-registrations.sh
+
+# Script to approve registration
+RUN echo '#!/bin/bash\n\
+ADMIN_TOKEN="${ADMIN_TOKEN:-change-me-in-production}"\n\
+REGISTRATION_ID="$1"\n\
+QUOTA_GB="${2:-100}"\n\
+\n\
+if [ -z "$REGISTRATION_ID" ]; then\n\
+  echo "Usage: approve-registration.sh <registration-id> [quota-gb]"\n\
+  exit 1\n\
+fi\n\
+\n\
+QUOTA_BYTES=$((QUOTA_GB * 1024 * 1024 * 1024))\n\
+\n\
+grpcurl -plaintext \\\n\
+  -d "{\n\
+    \"admin_token\": \"$ADMIN_TOKEN\",\n\
+    \"registration_id\": \"$REGISTRATION_ID\",\n\
+    \"quota_bytes\": $QUOTA_BYTES\n\
+  }" \\\n\
+  zfscloud-server:50051 \\\n\
+  backup.AdminService/ApproveRegistration\n\
+' > /scripts/approve-registration.sh && chmod +x /scripts/approve-registration.sh
+
+# Script to list users
+RUN echo '#!/bin/bash\n\
+ADMIN_TOKEN="${ADMIN_TOKEN:-change-me-in-production}"\n\
+grpcurl -plaintext \\\n\
+  -d "{\n\
+    \"admin_token\": \"$ADMIN_TOKEN\",\n\
+    \"include_revoked\": false\n\
+  }" \\\n\
+  zfscloud-server:50051 \\\n\
+  backup.AdminService/ListUsers\n\
+' > /scripts/list-users.sh && chmod +x /scripts/list-users.sh
+
+# Script to get system status
+RUN echo '#!/bin/bash\n\
+ADMIN_TOKEN="${ADMIN_TOKEN:-change-me-in-production}"\n\
+grpcurl -plaintext \\\n\
+  -d "{\"admin_token\": \"$ADMIN_TOKEN\"}" \\\n\
+  zfscloud-server:50051 \\\n\
+  backup.AdminService/GetSystemStatus\n\
+' > /scripts/system-status.sh && chmod +x /scripts/system-status.sh
+
+WORKDIR /scripts
+
+CMD ["/bin/bash"]

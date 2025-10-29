@@ -1,0 +1,48 @@
+# Docker Compose configuration for ZFSCloud testing
+version: '3.8'
+
+services:
+  zfscloud-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.server
+    container_name: zfscloud-server
+    hostname: zfscloud-server
+    privileged: true  # Required for ZFS
+    ports:
+      - "50051:50051"  # gRPC port
+    volumes:
+      - zfscloud-data:/var/lib/zfscloud
+      - ./config/server.yaml:/etc/zfscloud/config.yaml:ro
+    networks:
+      - zfscloud-net
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "zpool", "status", "tank"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Admin helper container for running admin commands
+  zfscloud-admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.admin
+    container_name: zfscloud-admin
+    depends_on:
+      - zfscloud-server
+    networks:
+      - zfscloud-net
+    profiles:
+      - admin  # Only start when explicitly requested
+    command: tail -f /dev/null  # Keep container running
+
+volumes:
+  zfscloud-data:
+    driver: local
+
+networks:
+  zfscloud-net:
+    driver: bridge

@@ -1,0 +1,61 @@
+# ZFS-enabled Docker container for ZFSCloud server
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install ZFS and other dependencies
+RUN apt-get update && apt-get install -y \
+    zfsutils-linux \
+    sqlite3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directories
+RUN mkdir -p /var/lib/zfscloud /etc/zfscloud /zfs-pool
+
+# Create a file for ZFS pool (for testing without real disks)
+RUN truncate -s 10G /zfs-pool/disk.img
+
+# Copy server binary and config
+COPY bin/zfscloud-server /usr/local/bin/zfscloud-server
+COPY server/config.example.yaml /etc/zfscloud/config.yaml
+
+# Make binary executable
+RUN chmod +x /usr/local/bin/zfscloud-server
+
+# Expose gRPC port
+EXPOSE 50051
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Starting ZFSCloud Server..."\n\
+\n\
+# Load ZFS kernel module (if not loaded)\n\
+modprobe zfs || true\n\
+\n\
+# Create ZFS pool if it does not exist\n\
+if ! zpool list tank >/dev/null 2>&1; then\n\
+    echo "Creating ZFS pool..."\n\
+    zpool create -f tank /zfs-pool/disk.img\n\
+    zfs set compression=lz4 tank\n\
+    echo "ZFS pool created successfully"\n\
+else\n\
+    echo "ZFS pool already exists"\n\
+fi\n\
+\n\
+# Import pool if not imported\n\
+zpool import -f tank 2>/dev/null || true\n\
+\n\
+# Show pool status\n\
+echo "ZFS Pool Status:"\n\
+zpool status tank\n\
+zfs list tank\n\
+\n\
+# Start the server\n\
+exec /usr/local/bin/zfscloud-server -config /etc/zfscloud/config.yaml\n\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

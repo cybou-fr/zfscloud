@@ -13,180 +13,255 @@
 
 ## Project Status
 
-### ✅ Phase 1 Complete: Core Infrastructure
+### ✅ Phases 1-5 Complete: Functional Client-Server System
 
 The following components have been implemented:
 
-1. **Project Structure**
-   - Professional directory layout
-   - Go modules configuration
-   - Build scripts (PowerShell + Makefile)
-   - Documentation suite
+**Phase 1: Core Infrastructure**
+- Professional directory layout
+- Go modules configuration
+- Build scripts (PowerShell + shell)
+- Protocol Buffer definitions
+- Cryptographic utilities (Ed25519, RSA, Argon2)
+- Configuration management
+- ZFS wrapper
 
-2. **Protocol Definitions** (`proto/backup.proto`)
-   - BackupService (14 RPC methods)
-   - AdminService (10 RPC methods)
-   - Complete message definitions
-   - Registration, backup, restore, snapshot, and admin workflows
+**Phase 2: Database & gRPC Services**
+- SQLite database with 8 tables
+- 28 database operations
+- BackupService: 14 RPC methods implemented
+- AdminService: 10 RPC methods implemented
+- Complete gRPC server implementation
+- Request authentication and validation
 
-3. **Cryptographic Utilities** (`shared/crypto/`)
-   - Ed25519 key pair generation and management
-   - Request signing and verification
-   - RSA encryption for dataset passphrases
-   - Argon2 key derivation
-   - Secure random generation
+**Phase 3: Server Integration**
+- AdminService implementation (10 RPCs)
+- File I/O storage layer
+- Complete server wiring
+- Session management
+- Main server entry point with graceful shutdown
 
-4. **Configuration Management** (`shared/config/`)
-   - YAML-based configuration for server and client
-   - Type-safe config structures
-   - Sensible defaults
-   - Example configurations
+**Phase 4: Basic Client**
+- Interactive CLI with command shell
+- File upload with chunking (1MB chunks)
+- Directory upload with recursion
+- Ed25519 authentication
+- SHA-256 hash verification
+- 9 commands: register, heartbeat, upload, upload-dir, list, snapshots, status, help, exit
 
-5. **ZFS Management** (`server/zfs/manager.go`)
-   - Dataset creation with encryption
-   - Key loading/unloading
-   - Snapshot operations
-   - Quota management
-   - Space usage monitoring
-
-6. **Application Entry Points**
-   - Server: `server/cmd/main.go`
-   - Client: `client/cmd/main.go`
-   - Configuration loading
-   - Graceful shutdown handling
+**Phase 5: Docker Testing Environment**
+- ZFS-enabled Docker containers
+- File-backed 10GB ZFS pool (no physical disks needed)
+- Docker Compose orchestration
+- Admin helper container with grpcurl
+- Comprehensive testing guide
+- Build scripts for cross-compilation
 
 ## File Inventory
 
-### Core Files
+### Core Documentation
+```text
+implementation-plan.md       Original architecture & design
+README.md                   Project overview & quick start
+SETUP.md                    Setup and installation guide
+STRUCTURE.md               Component documentation
+QUICKREF.md                This quick reference
+SERVER_QUICKSTART.md       Server deployment guide
+docker/README.md           Docker testing guide (350+ lines)
 ```
-implementation-plan.md    Comprehensive architecture & design
-README.md                 Project overview
-SETUP.md                  Setup and installation guide
-STRUCTURE.md             Component documentation
-build.ps1                 Windows build script
+
+### Build & Deployment
+```text
+build.ps1                  Windows build script
 Makefile                  Unix build script
-go.mod                   Go module dependencies
-.gitignore               Git ignore rules
+build-docker.ps1          Docker server build (Linux)
+build-docker.sh           Docker server build (shell)
+test-docker.ps1           Docker test automation
+go.mod                    Go module dependencies
+.gitignore                Git ignore rules
+.dockerignore             Docker build optimization
 ```
 
-### Source Code
-```
-proto/backup.proto                   gRPC service definitions
-shared/crypto/keys.go                Ed25519 cryptography
-shared/crypto/passphrase.go          Passphrase management
-shared/config/server.go              Server configuration
-shared/config/client.go              Client configuration
-server/zfs/manager.go                ZFS operations wrapper
-server/cmd/main.go                   Server entry point
-client/cmd/main.go                   Client entry point
+### Server Source Code (~6,000 lines)
+```text
+proto/backup.proto                          gRPC service definitions (24 RPCs)
+proto/backup/backup.pb.go                   Generated protobuf code
+proto/backup/backup_grpc.pb.go             Generated gRPC code
+
+shared/crypto/keys.go                       Ed25519 cryptography
+shared/crypto/passphrase.go                 Passphrase management
+shared/config/server.go                     Server configuration
+shared/config/client.go                     Client configuration
+
+server/cmd/main.go                          Server entry point
+server/zfs/manager.go                       ZFS operations wrapper
+server/db/database.go                       SQLite database layer
+server/db/operations.go                     28 database operations
+server/grpc/server.go                       gRPC server setup
+server/grpc/backup_service.go               BackupService (14 RPCs)
+server/grpc/admin_service.go                AdminService (10 RPCs)
+server/grpc/auth.go                         Request authentication
+server/storage/fileio.go                    File I/O layer
 ```
 
-### Configuration
+### Client Source Code (~1,000 lines)
+```text
+client/cmd/main.go                          Interactive CLI (350 lines)
+client/client.go                            gRPC client (300 lines)
+client/uploader.go                          File upload engine (280 lines)
 ```
-server/config.example.yaml           Server config template
-client/config.example.yaml           Client config template
+
+### Docker Environment
+```text
+docker/Dockerfile.server                    Server container (Ubuntu + ZFS)
+docker/Dockerfile.admin                     Admin helper (Alpine + grpcurl)
+docker/docker-compose.yml                   Multi-container orchestration
+docker/config/server.yaml                   Docker server config
+docker/scripts/list-registrations.sh        Admin helper scripts
+docker/scripts/approve-registration.sh
+docker/scripts/list-users.sh
+docker/scripts/system-status.sh
+```
+
+### Configuration Templates
+```text
+server/config.example.yaml                  Server config template
+client/config.example.yaml                  Client config template
+docker/config/server.yaml                   Docker-specific config
 ```
 
 ## Quick Commands
 
 ### Build
 ```powershell
-.\build.ps1 all      # Build everything
-.\build.ps1 server   # Build server only
-.\build.ps1 client   # Build client only
+# Build everything
+.\build.ps1 all
+
+# Build individual components
+.\build.ps1 server   # Server only
+.\build.ps1 client   # Client only
 .\build.ps1 proto    # Generate protobuf files
+
+# Build for Docker (Linux)
+.\build-docker.ps1   # Cross-compile server for Linux
 ```
 
-### Run
+### Docker Testing (Recommended)
 ```powershell
-# Server (Linux with ZFS)
+# Quick start
+.\test-docker.ps1
+
+# Or manually
+.\build-docker.ps1
+cd docker
+docker-compose up -d
+docker-compose logs -f zfscloud-server
+
+# Admin operations
+docker-compose --profile admin run zfscloud-admin list-registrations
+docker-compose --profile admin run zfscloud-admin approve-registration <client-id> 10737418240
+docker-compose --profile admin run zfscloud-admin list-users
+```
+
+### Run Native (Linux with ZFS required for server)
+```bash
+# Server (Linux only)
 ./bin/zfscloud-server -config server/config.yaml
 
-# Client
+# Client (Windows/Linux/Mac)
 ./bin/zfscloud-client -config client/config.yaml
+```
+
+### Client Commands (Interactive Mode)
+```text
+register              - Register with server
+heartbeat            - Send heartbeat to maintain session
+upload <file>        - Upload single file
+upload-dir <dir>     - Upload entire directory
+list                 - List backed up files
+snapshots            - List available snapshots
+status               - Show client status
+help                 - Show help
+exit                 - Exit client
 ```
 
 ### Test
 ```powershell
-go test ./...                          # Run tests
-go test -coverprofile=coverage.out ./...   # With coverage
+go test ./...                                   # Run unit tests
+go test -coverprofile=coverage.out ./...       # With coverage
+go tool cover -html=coverage.out              # View coverage
 ```
 
-## Next Implementation Steps
+## Remaining Implementation Steps
 
-### Immediate (Phase 2)
-1. **Generate Protobuf Files**
-   ```powershell
-   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-   .\build.ps1 proto
-   ```
+### Phase 6: Backup Engine (Next Priority)
+- [ ] File system watcher (fsnotify)
+- [ ] Automatic backup on file changes
+- [ ] Content-defined chunking for large files
+- [ ] Compression pipeline (zstd)
+- [ ] Background upload queue
+- [ ] Bandwidth throttling
 
-2. **Database Layer** (`server/db/`)
-   - Schema design (SQLite)
-   - User management
-   - Registration tracking
-   - Session management
-   - Restore request workflow
+### Phase 7: Client UI (Gio)
+- [ ] System tray icon
+- [ ] Status display (connected, backing up, idle)
+- [ ] Folder selection interface
+- [ ] Visual restore browser
+- [ ] Configuration editor
+- [ ] Progress indicators
 
-3. **gRPC Services** (`server/grpc/`)
-   - Implement BackupService
-   - Implement AdminService
-   - Authentication middleware
-   - Request validation
+### Phase 8: Security Hardening
+- [ ] TLS certificate management
+- [ ] mTLS implementation
+- [ ] OS keychain integration (DPAPI/Keychain/Secret Service)
+- [ ] Replay attack prevention improvements
+- [ ] Rate limiting
+- [ ] Audit logging
 
-### Near-term (Phase 3)
-4. **Backup Engine** (`client/backup/`)
-   - File system watcher
-   - Content-defined chunking
-   - SHA256 hashing
-   - Compression (zstd)
-   - Network transmission
+### Phase 9: Snapshot Automation
+- [ ] Cron-based snapshot scheduler
+- [ ] Retention policy enforcement
+- [ ] Automatic cleanup
+- [ ] Snapshot browsing improvements
 
-5. **Client UI** (`client/ui/`)
-   - Gio system tray integration
-   - Status indicators
-   - Configuration interface
-   - File browser for restore
-
-### Medium-term (Phase 4)
-6. **Security Hardening**
-   - TLS certificate management
-   - mTLS implementation
-   - OS keychain integration
-   - Replay attack prevention
-
-7. **Snapshot Scheduler** (`server/scheduler/`)
-   - Cron-based scheduling
-   - Retention policy enforcement
-   - Cleanup automation
-
-8. **Admin Interface** (`server/admin/`)
-   - Web dashboard or CLI
-   - User approval
-   - Monitoring
-   - Configuration
+### Phase 10: Production Features
+- [ ] Web-based admin dashboard
+- [ ] Monitoring and metrics (Prometheus)
+- [ ] Multi-threaded uploads
+- [ ] Delta sync optimizations
+- [ ] Client-side encryption option
+- [ ] Conflict resolution
+- [ ] Comprehensive test suite
 
 ## API Overview
 
-### BackupService RPCs
-- `Register` - Client registration
+### BackupService RPCs (14 methods - all implemented ✅)
+- `Register` - Client registration with public key
+- `Heartbeat` - Keep session alive, auto-creates session
 - `GetBackupPolicy` - Get backup configuration
-- `UploadChunk` - Stream file data to server
+- `UploadChunk` - Stream file data to server (chunked)
+- `CompleteBackup` - Finalize backup with hash verification
 - `ListFiles` - Browse backed up files
-- `DownloadFile` - Restore files
+- `DownloadFile` - Restore files (streaming)
+- `DeleteFile` - Remove backed up file
 - `ListSnapshots` - View available snapshots
-- `RequestSnapshotRestore` - Request snapshot restore
-- `LoadDatasetKey` / `UnloadDatasetKey` - Session management
-- `Heartbeat` - Keep session alive
+- `RequestSnapshotRestore` - Request snapshot restore (requires approval)
+- `LoadDatasetKey` - Unlock ZFS dataset with passphrase
+- `UnloadDatasetKey` - Lock ZFS dataset
+- `GetQuotaInfo` - Check storage usage
+- `GetSessionInfo` - Query session status
 
-### AdminService RPCs
-- `ListPendingRegistrations` - View pending clients
-- `ApproveRegistration` / `RejectRegistration` - Manage clients
-- `ListUsers` - View all users
-- `ApproveRestoreRequest` - Approve snapshot restores
-- `UpdateSnapshotPolicy` - Configure snapshots
-- `GetSystemStatus` - Monitor system health
+### AdminService RPCs (10 methods - all implemented ✅)
+- `ListPendingRegistrations` - View pending client registrations
+- `ApproveRegistration` - Approve client with quota allocation
+- `RejectRegistration` - Reject client registration
+- `ListUsers` - View all registered users
+- `UpdateUserQuota` - Adjust user storage quota
+- `ListRestoreRequests` - View pending snapshot restore requests
+- `ApproveRestoreRequest` - Approve snapshot restore
+- `RejectRestoreRequest` - Reject snapshot restore
+- `UpdateSnapshotPolicy` - Configure automated snapshots
+- `GetSystemStatus` - Monitor system health and storage
 
 ## Security Features
 
@@ -243,66 +318,97 @@ Client → gRPC/mTLS → Server
 
 ## Dependencies
 
-### Core
+### Core (Implemented)
 - `google.golang.org/grpc` - gRPC framework
 - `google.golang.org/protobuf` - Protocol Buffers
 - `golang.org/x/crypto` - Cryptography (Ed25519, Argon2)
 - `gopkg.in/yaml.v3` - YAML configuration
+- `modernc.org/sqlite` - Pure Go SQLite driver
+- `github.com/mattn/go-sqlite3` - CGo SQLite driver (alternative)
 
-### Planned
+### Planned (Phase 6+)
 - `gioui.org` - Cross-platform UI
-- Database driver (SQLite or PostgreSQL)
-- File system notification library
+- `github.com/fsnotify/fsnotify` - File system watcher
+- `github.com/klauspost/compress` - Compression (zstd)
+- `github.com/prometheus/client_golang` - Metrics
 
 ## Resources
 
-- **Documentation**: `implementation-plan.md`, `SETUP.md`, `STRUCTURE.md`
-- **Examples**: `server/config.example.yaml`, `client/config.example.yaml`
-- **Source**: All source in `client/`, `server/`, `shared/`, `proto/`
+- **Documentation**: 
+  - `implementation-plan.md` - Original architecture
+  - `SETUP.md` - Installation guide
+  - `STRUCTURE.md` - Component details
+  - `SERVER_QUICKSTART.md` - Server deployment
+  - `docker/README.md` - Docker testing guide (350+ lines)
+- **Examples**: 
+  - `server/config.example.yaml` - Server config template
+  - `client/config.example.yaml` - Client config template
+  - `docker/config/server.yaml` - Docker config
+- **Source**: 
+  - `client/` - Client application (1,000 lines)
+  - `server/` - Server application (6,000 lines)
+  - `shared/` - Shared libraries (crypto, config)
+  - `proto/` - Protocol definitions + generated code
+  - `docker/` - Docker testing environment
 
-## Development Notes
+## Design Decisions
 
-### Current Limitations
-- Proto files need to be generated (requires protoc)
-- Database layer not implemented
-- gRPC services not implemented
-- UI not implemented
-- No tests yet
+- **Go**: Performance, concurrency, excellent ZFS tooling
+- **gRPC**: Efficient binary protocol, strongly-typed, streaming support
+- **Ed25519**: Fast signatures, secure, small keys (32 bytes)
+- **SQLite**: Zero-config database, perfect for single-server deployments
+- **ZFS**: Built-in encryption, snapshots, deduplication, compression
+- **Docker**: Easy testing without native ZFS installation
+- **Gio** (planned): Native performance, cross-platform UI
 
-### Design Decisions
-- **Go**: Performance, concurrency, ZFS tooling
-- **gRPC**: Efficient, strongly-typed, streaming support
-- **Ed25519**: Fast, secure, small keys
-- **ZFS**: Built-in encryption, snapshots, deduplication
-- **Gio**: Native performance, cross-platform
+## Testing Strategy
 
-### Code Quality
-- Type-safe configuration
-- Error handling with wrapped errors
-- Graceful shutdown patterns
-- Logging ready (TODO: structured logging)
+### Docker Testing (Current)
+- File-backed ZFS pool (10GB) - no physical disks needed
+- Privileged container for kernel module access
+- Admin helper with grpcurl for API testing
+- Comprehensive testing guide with step-by-step workflow
 
-## Contribution Guidelines
-
-When extending the codebase:
-
-1. Follow existing patterns
-2. Add error handling
-3. Document public APIs
-4. Write tests
-5. Update relevant .md files
-6. Use TODO comments for future work
+### Native Testing
+- Requires Linux with ZFS installed
+- Direct binary execution
+- Useful for development and debugging
 
 ## Project Metrics
 
-- **Lines of Protocol Buffer**: ~450
-- **Lines of Go Code**: ~800+
-- **Documentation**: ~2000 lines
-- **Configuration Examples**: Complete
-- **Build Scripts**: Windows + Unix
+- **Total Lines of Code**: ~13,500 (including generated protobuf)
+- **Server Code**: ~6,000 lines (database, gRPC, storage, ZFS)
+- **Client Code**: ~1,000 lines (CLI, uploader, gRPC client)
+- **Shared Libraries**: ~500 lines (crypto, config)
+- **Generated Code**: ~5,500 lines (protobuf)
+- **Documentation**: ~3,000+ lines across 7 markdown files
+- **Build Scripts**: 5 scripts (Windows + Unix + Docker)
+- **Docker Environment**: 8 files (Dockerfiles, compose, scripts, config)
+
+## Current Capabilities
+
+### Working Features ✅
+- Full client-server communication via gRPC
+- Client registration workflow (pending → approved)
+- File upload with chunking (1MB chunks)
+- Directory upload with recursion
+- SHA-256 hash verification
+- Session management with heartbeat
+- Admin approval operations
+- ZFS dataset management
+- Docker testing environment
+- Interactive CLI with 9 commands
+
+### Limitations
+- Manual backup (no automatic file watching yet)
+- No GUI (CLI only)
+- No TLS/mTLS (development only)
+- No automatic snapshots (manual ZFS commands)
+- No bandwidth throttling
+- Basic error handling (needs improvement)
 
 ---
 
-**Status**: Phase 1 Complete ✅  
-**Next**: Generate protobuf files, implement database layer  
-**Timeline**: Core features targeting Phase 6 completion
+**Status**: Phase 5 Complete ✅ (Phases 1-5 of 10)  
+**Next**: Phase 6 - Backup Engine (automatic file watching, compression)  
+**Testing**: Docker environment ready (see `docker/README.md`)
