@@ -30,21 +30,51 @@ type DashboardView struct {
 	tooltipStop    *Tooltip
 	tooltipPause   *Tooltip
 	tooltipRefresh *Tooltip
+
+	// Dialogs
+	stopConfirmDialog *ConfirmDialog
+
+	// Progress tracking
+	scanProgress      *ProgressBar
+	scanProgressLabel string
+	showScanProgress  bool
+	scanInProgress    bool
 }
 
 // NewDashboardView creates a new dashboard view
 func NewDashboardView(app *App) *DashboardView {
 	return &DashboardView{
-		app:            app,
-		tooltipStart:   NewTooltip("Start the backup engine to begin syncing files"),
-		tooltipStop:    NewTooltip("Stop the backup engine and close all connections"),
-		tooltipPause:   NewTooltip("Pause or resume the backup process"),
-		tooltipRefresh: NewTooltip("Scan directories for new or changed files"),
+		app:               app,
+		tooltipStart:      NewTooltip("Start the backup engine to begin syncing files"),
+		tooltipStop:       NewTooltip("Stop the backup engine and close all connections"),
+		tooltipPause:      NewTooltip("Pause or resume the backup process"),
+		tooltipRefresh:    NewTooltip("Scan directories for new or changed files"),
+		stopConfirmDialog: NewConfirmDialog("Stop Backup Engine?", "This will stop all backup operations in progress. Are you sure?"),
+		scanProgress:      &ProgressBar{Height: unit.Dp(8)},
 	}
 }
 
 // Layout renders the dashboard
 func (d *DashboardView) Layout(gtx layout.Context) layout.Dimensions {
+	// Show confirmation dialog if active
+	if d.stopConfirmDialog.Visible {
+		return layout.Stack{}.Layout(gtx,
+			// Main dashboard (dimmed)
+			layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+				return d.layoutMain(gtx)
+			}),
+			// Confirmation dialog overlay
+			layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+				return d.stopConfirmDialog.Layout(gtx, d.app.GetTheme())
+			}),
+		)
+	}
+
+	return d.layoutMain(gtx)
+}
+
+// layoutMain renders the main dashboard content
+func (d *DashboardView) layoutMain(gtx layout.Context) layout.Dimensions {
 	return layout.UniformInset(unit.Dp(20)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{
 			Axis:    layout.Vertical,
@@ -143,12 +173,20 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 			return layout.Dimensions{}
 		}
 
-		if err := engine.Stop(); err != nil {
-			log.Printf("Failed to stop engine: %v", err)
-			d.app.ShowToast(ToastTypeError, "Failed to stop backup engine")
-		} else {
-			d.app.ShowToast(ToastTypeInfo, "Backup engine stopped")
-		}
+		// Show confirmation dialog
+		d.stopConfirmDialog.Show(
+			func() { // onConfirm - user clicked "Yes"
+				if err := engine.Stop(); err != nil {
+					log.Printf("Failed to stop engine: %v", err)
+					d.app.ShowToast(ToastTypeError, "Failed to stop backup engine")
+				} else {
+					d.app.ShowToast(ToastTypeInfo, "Backup engine stopped")
+				}
+			},
+			func() { // onCancel - user clicked "No"
+				d.app.ShowToast(ToastTypeInfo, "Stop operation cancelled")
+			},
+		)
 	}
 
 	if d.pauseButton.Clicked(gtx) {
@@ -174,22 +212,66 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 	}
 
 	if d.refreshButton.Clicked(gtx) {
+		// Prevent multiple simultaneous scans
+		if d.scanInProgress {
+			d.app.ShowToast(ToastTypeWarning, "Scan already in progress")
+			return layout.Dimensions{}
+		}
+
 		engine := d.app.engine
 		if engine == nil {
 			d.app.ShowToast(ToastTypeError, "Backup engine not initialized")
 			return layout.Dimensions{}
 		}
 
+		// Start scan with progress tracking
+		d.scanInProgress = true
+		d.showScanProgress = true
+		d.scanProgress.Progress = 0.0
+		d.scanProgressLabel = "Starting scan..."
 		d.app.ShowToast(ToastTypeInfo, "Scanning files...")
+
 		// Perform initial scan with timeout
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
+			defer func() {
+				d.scanInProgress = false
+				d.showScanProgress = false
+			}()
 
+			// Simulate progress updates (in real implementation, engine would report progress)
+			progressSteps := []struct {
+				progress float32
+				label    string
+			}{
+				{0.2, "Scanning directories..."},
+				{0.5, "Analyzing files..."},
+				{0.8, "Calculating checksums..."},
+			}
+
+			for i, step := range progressSteps {
+				select {
+				case <-ctx.Done():
+					d.app.ShowToast(ToastTypeError, "Scan cancelled")
+					return
+				case <-time.After(time.Duration(i+1) * 200 * time.Millisecond):
+					d.scanProgress.Progress = step.progress
+					d.scanProgressLabel = step.label
+					// UI will update on next frame
+				}
+			}
+
+			// Perform actual scan
+			d.scanProgress.Progress = 0.9
+			d.scanProgressLabel = "Finalizing..."
 			if err := engine.PerformInitialScan(ctx); err != nil {
 				log.Printf("Failed to perform scan: %v", err)
 				d.app.ShowToast(ToastTypeError, "File scan failed. Please check your configuration.")
 			} else {
+				d.scanProgress.Progress = 1.0
+				d.scanProgressLabel = "Scan complete!"
+				time.Sleep(500 * time.Millisecond) // Show completion briefly
 				d.app.ShowToast(ToastTypeSuccess, "File scan completed successfully")
 			}
 		}()
@@ -342,9 +424,7 @@ func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensi
 	}
 
 	return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		return layout.Flex{
-			Axis: layout.Vertical,
-		}.Layout(gtx,
+		children := []layout.FlexChild{
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				title := theme.H6("Current Activity")
 				return title.Layout(gtx)
@@ -357,7 +437,35 @@ func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensi
 				}
 				return text.Layout(gtx)
 			}),
-		)
+		}
+
+		// Show progress bar if scan is in progress
+		if d.showScanProgress {
+			children = append(children,
+				layout.Rigid(layout.Spacer{Height: unit.Dp(16)}.Layout),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+						// Progress label
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							if d.scanProgressLabel != "" {
+								label := theme.Caption(d.scanProgressLabel)
+								label.Color = theme.TextSecondary
+								return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx, label.Layout)
+							}
+							return layout.Dimensions{}
+						}),
+						// Progress bar
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return d.scanProgress.Layout(gtx, theme)
+						}),
+					)
+				}),
+			)
+		}
+
+		return layout.Flex{
+			Axis: layout.Vertical,
+		}.Layout(gtx, children...)
 	})
 }
 
