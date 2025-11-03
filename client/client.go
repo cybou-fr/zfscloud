@@ -138,6 +138,29 @@ func (c *Client) Register(metadata *proto.ClientMetadata, encryptedPassphrase []
 	return nil
 }
 
+// GetServerPublicKey retrieves the server's RSA public key for encrypting passphrases
+func (c *Client) GetServerPublicKey() ([]byte, error) {
+	if c.backupService == nil {
+		return nil, fmt.Errorf("not connected to server")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req := &proto.ServerPublicKeyRequest{}
+
+	resp, err := c.backupService.GetServerPublicKey(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get server public key: %w", err)
+	}
+
+	if len(resp.PublicKey) == 0 {
+		return nil, fmt.Errorf("server returned empty public key")
+	}
+
+	return resp.PublicKey, nil
+}
+
 // Heartbeat sends a heartbeat to keep the session alive
 func (c *Client) Heartbeat() error {
 	nonce, err := crypto.GenerateNonce()

@@ -354,9 +354,28 @@ func handleRegister(c *client.Client, cfg *config.ClientConfig) {
 		return
 	}
 
-	// TODO: Encrypt passphrase with server's public key
-	// For now, just use it directly (INSECURE - needs server public key)
-	encryptedPassphrase := []byte(passphrase)
+	// Get server's RSA public key
+	fmt.Println("Fetching server's public key...")
+	serverPubKey, err := c.GetServerPublicKey()
+	if err != nil {
+		fmt.Printf("Error fetching server public key: %v\n", err)
+		fmt.Println("Cannot securely encrypt passphrase. Registration aborted.")
+		return
+	}
+
+	// Encrypt passphrase with server's public key
+	fmt.Println("Encrypting passphrase...")
+	encryptedPassphrase, err := crypto.EncryptPassphrase(passphrase, serverPubKey)
+	if err != nil {
+		fmt.Printf("Error encrypting passphrase: %v\n", err)
+		return
+	}
+
+	// TODO: Store passphrase securely in OS keychain
+	// For now, just log that it should be stored
+	fmt.Println("⚠️  WARNING: Passphrase not yet stored in OS keychain")
+	fmt.Println("⚠️  You will need to provide it manually when reconnecting")
+	fmt.Printf("⚠️  Passphrase (SAVE THIS SECURELY): %s\n", base64.StdEncoding.EncodeToString(passphrase))
 
 	if err := c.Register(metadata, encryptedPassphrase); err != nil {
 		fmt.Printf("Registration failed: %v\n", err)
