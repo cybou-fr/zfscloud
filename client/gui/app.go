@@ -201,36 +201,39 @@ func (a *App) layoutNavBar(gtx layout.Context) layout.Dimensions {
 	})
 }
 
-// layoutNavButtons renders the navigation buttons
+// layoutNavButtons renders the navigation buttons with icons
 func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
 	return layout.Flex{
 		Axis:    layout.Horizontal,
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(a.theme.Theme, &a.navDashboard, "Dashboard")
-			if a.currentView == ViewDashboard {
-				btn.Background = a.theme.Primary
-			}
-			return btn.Layout(gtx)
+			return a.navButton(gtx, &a.navDashboard, IconDashboard, "Dashboard", ViewDashboard)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(a.theme.Theme, &a.navSettings, "Settings")
-			if a.currentView == ViewSettings {
-				btn.Background = a.theme.Primary
-			}
-			return btn.Layout(gtx)
+			return a.navButton(gtx, &a.navFiles, IconFiles, "Files", ViewFiles)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(a.theme.Theme, &a.navFiles, "Files")
-			if a.currentView == ViewFiles {
-				btn.Background = a.theme.Primary
-			}
-			return btn.Layout(gtx)
+			return a.navButton(gtx, &a.navSettings, IconSettings, "Settings", ViewSettings)
 		}),
 	)
+}
+
+// navButton renders a single navigation button with icon
+func (a *App) navButton(gtx layout.Context, btn *widget.Clickable, iconType IconType, text string, view View) layout.Dimensions {
+	// Get icon symbol and create button text
+	iconSymbol := IconSymbols[iconType]
+	buttonText := iconSymbol + " " + text
+
+	button := material.Button(a.theme.Theme, btn, buttonText)
+	if a.currentView == view {
+		button.Background = a.theme.Primary
+		button.Color = a.theme.OnPrimary
+	}
+
+	return button.Layout(gtx)
 }
 
 // layoutContent renders the main content based on current view

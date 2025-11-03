@@ -68,9 +68,11 @@ func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensio
 	theme := d.app.GetTheme()
 
 	statusText := "Disconnected from server"
+	statusIcon := IconSymbols[IconDisconnected]
 	indicatorColor := theme.StatusDisconnected
 	if stats.Connected {
 		statusText = "Connected to server"
+		statusIcon = IconSymbols[IconConnected]
 		indicatorColor = theme.StatusConnected
 	}
 
@@ -89,7 +91,7 @@ func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensio
 			}),
 			layout.Rigid(layout.Spacer{Width: unit.Dp(12)}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				label := theme.H6(statusText)
+				label := theme.H6(statusIcon + " " + statusText)
 				return label.Layout(gtx)
 			}),
 		)
@@ -161,7 +163,7 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		Spacing: layout.SpaceEvenly,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &d.startButton, "Start Backup")
+			btn := material.Button(theme.Theme, &d.startButton, IconSymbols[IconStart]+" Start Backup")
 			btn.Background = theme.Success
 			btn.Color = theme.OnPrimary
 			if stats.EngineRunning {
@@ -172,7 +174,7 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &d.stopButton, "Stop")
+			btn := material.Button(theme.Theme, &d.stopButton, IconSymbols[IconStop]+" Stop")
 			btn.Background = theme.Error
 			btn.Color = theme.OnPrimary
 			if !stats.EngineRunning {
@@ -182,9 +184,9 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			text := "Pause"
+			text := IconSymbols[IconPause] + " Pause"
 			if stats.EngineState == "paused" {
-				text = "Resume"
+				text = IconSymbols[IconResume] + " Resume"
 			}
 			btn := material.Button(theme.Theme, &d.pauseButton, text)
 			btn.Background = theme.Warning
@@ -196,7 +198,7 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &d.refreshButton, "Scan Now")
+			btn := material.Button(theme.Theme, &d.refreshButton, IconSymbols[IconRefresh]+" Scan Now")
 			btn.Background = theme.Info
 			btn.Color = theme.OnPrimary
 			if !stats.Connected {

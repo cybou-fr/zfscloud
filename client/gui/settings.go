@@ -41,12 +41,18 @@ type SettingsView struct {
 	maxWorkers widget.Editor
 	chunkSize  widget.Editor
 	maxRetries widget.Editor
+
+	// Validation
+	validator        *Validator
+	validationErrors map[string]string
 }
 
 // NewSettingsView creates a new settings view
 func NewSettingsView(app *App) *SettingsView {
 	s := &SettingsView{
-		app: app,
+		app:              app,
+		validator:        NewValidator(),
+		validationErrors: make(map[string]string),
 	}
 	s.LoadSettings()
 	return s
@@ -156,11 +162,11 @@ func (s *SettingsView) layoutServerSettings(gtx layout.Context) layout.Dimension
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return s.textField(gtx, &s.serverAddr, "Server Address", "localhost")
+			return s.validatedTextField(gtx, &s.serverAddr, "Server Address", "localhost:9090", "serverAddr")
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return s.textField(gtx, &s.serverPort, "Server Port", "50051")
+			return s.textField(gtx, &s.serverPort, "Server Port", "9090")
 		}),
 	)
 }
@@ -217,15 +223,15 @@ func (s *SettingsView) layoutBackupSettings(gtx layout.Context) layout.Dimension
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return s.textAreaField(gtx, &s.backupFolders, "Backup Folders (one per line)", "/home/user/Documents\n/home/user/Pictures")
+			return s.validatedTextAreaField(gtx, &s.backupFolders, "Backup Folders (one per line)", "C:\\Users\\Documents\nC:\\Users\\Pictures", "backupFolders")
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return s.textAreaField(gtx, &s.excludePaths, "Exclude Patterns (one per line)", "*.tmp\n*.log\n.git")
+			return s.validatedTextAreaField(gtx, &s.excludePaths, "Exclude Patterns (one per line)", "*.tmp\n*.log\n.git", "excludePaths")
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return s.textField(gtx, &s.scanInterval, "Scan Interval (seconds)", "300")
+			return s.validatedTextField(gtx, &s.scanInterval, "Scan Interval (minutes)", "5", "scanInterval")
 		}),
 	)
 }
@@ -273,14 +279,14 @@ func (s *SettingsView) layoutActions(gtx layout.Context) layout.Dimensions {
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &s.testButton, "Test Connection")
+			btn := material.Button(theme.Theme, &s.testButton, IconSymbols[IconTest]+" Test Connection")
 			btn.Background = theme.Info
 			btn.Color = theme.OnPrimary
 			return btn.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &s.saveButton, "Save Settings")
+			btn := material.Button(theme.Theme, &s.saveButton, IconSymbols[IconSave]+" Save Settings")
 			btn.Background = theme.Success
 			btn.Color = theme.OnPrimary
 			return btn.Layout(gtx)
@@ -288,12 +294,27 @@ func (s *SettingsView) layoutActions(gtx layout.Context) layout.Dimensions {
 	)
 }
 
-// textField renders a single-line text input field
+// textField renders a single-line text input field with validation
 func (s *SettingsView) textField(gtx layout.Context, editor *widget.Editor, label, hint string) layout.Dimensions {
+	return s.validatedTextField(gtx, editor, label, hint, "")
+}
+
+// validatedTextField renders a text field with validation error display
+func (s *SettingsView) validatedTextField(gtx layout.Context, editor *widget.Editor, label, hint, fieldKey string) layout.Dimensions {
 	editor.SingleLine = true
 	editor.Submit = false
 	theme := s.app.GetTheme()
 
+	// Check if there's a validation error for this field
+	hasError := false
+	errorMsg := ""
+	if fieldKey != "" {
+		if msg, exists := s.validationErrors[fieldKey]; exists {
+			hasError = true
+			errorMsg = msg
+		}
+	}
+
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
@@ -304,16 +325,47 @@ func (s *SettingsView) textField(gtx layout.Context, editor *widget.Editor, labe
 		layout.Rigid(layout.Spacer{Height: unit.Dp(4)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			e := material.Editor(theme.Theme, editor, hint)
+			// Highlight with error color if validation failed
+			if hasError {
+				e.Color = theme.Error
+			}
 			return e.Layout(gtx)
+		}),
+		// Show error message if validation failed
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			if !hasError {
+				return layout.Dimensions{}
+			}
+			return layout.Inset{Top: unit.Dp(2)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				errorLabel := material.Body2(theme.Theme, errorMsg)
+				errorLabel.Color = theme.Error
+				errorLabel.TextSize = unit.Sp(12)
+				return errorLabel.Layout(gtx)
+			})
 		}),
 	)
 }
 
-// textAreaField renders a multi-line text input field
+// textAreaField renders a multi-line text input field with validation
 func (s *SettingsView) textAreaField(gtx layout.Context, editor *widget.Editor, label, hint string) layout.Dimensions {
+	return s.validatedTextAreaField(gtx, editor, label, hint, "")
+}
+
+// validatedTextAreaField renders a text area with validation error display
+func (s *SettingsView) validatedTextAreaField(gtx layout.Context, editor *widget.Editor, label, hint, fieldKey string) layout.Dimensions {
 	editor.SingleLine = false
 	editor.Submit = false
 	theme := s.app.GetTheme()
+
+	// Check if there's a validation error for this field
+	hasError := false
+	errorMsg := ""
+	if fieldKey != "" {
+		if msg, exists := s.validationErrors[fieldKey]; exists {
+			hasError = true
+			errorMsg = msg
+		}
+	}
 
 	return layout.Flex{
 		Axis: layout.Vertical,
@@ -325,9 +377,24 @@ func (s *SettingsView) textAreaField(gtx layout.Context, editor *widget.Editor, 
 		layout.Rigid(layout.Spacer{Height: unit.Dp(4)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			e := material.Editor(theme.Theme, editor, hint)
+			if hasError {
+				e.Color = theme.Error
+			}
 			// Set minimum height for text area
 			gtx.Constraints.Min.Y = gtx.Dp(unit.Dp(80))
 			return e.Layout(gtx)
+		}),
+		// Show error message if validation failed
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			if !hasError {
+				return layout.Dimensions{}
+			}
+			return layout.Inset{Top: unit.Dp(2)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				errorLabel := material.Body2(theme.Theme, errorMsg)
+				errorLabel.Color = theme.Error
+				errorLabel.TextSize = unit.Sp(12)
+				return errorLabel.Layout(gtx)
+			})
 		}),
 	)
 }
@@ -339,9 +406,58 @@ func (s *SettingsView) saveSettings() {
 		return
 	}
 
+	// Clear previous validation errors
+	s.validationErrors = make(map[string]string)
+
+	// Validate all fields
+	if result := s.validator.ValidateServerAddress(s.serverAddr.Text()); !result.Valid {
+		s.validationErrors["serverAddr"] = result.Message
+		s.app.ShowToast(ToastTypeError, result.Message)
+		return
+	}
+
+	if result := s.validator.ValidateBackupFolders(s.backupFolders.Text()); !result.Valid {
+		s.validationErrors["backupFolders"] = result.Message
+		s.app.ShowToast(ToastTypeError, result.Message)
+		return
+	}
+
+	if result := s.validator.ValidateExcludePatterns(s.excludePaths.Text()); !result.Valid {
+		s.validationErrors["excludePaths"] = result.Message
+		s.app.ShowToast(ToastTypeError, result.Message)
+		return
+	}
+
+	if s.scanInterval.Text() != "" {
+		if result := s.validator.ValidatePositiveInt(s.scanInterval.Text(), "Scan interval"); !result.Valid {
+			s.validationErrors["scanInterval"] = result.Message
+			s.app.ShowToast(ToastTypeError, result.Message)
+			return
+		}
+	}
+
+	// Validate TLS paths if TLS is enabled
+	if s.tlsEnabled.Value {
+		if result := s.validator.ValidateFilePath(s.tlsCertPath.Text(), true); !result.Valid {
+			s.validationErrors["tlsCertPath"] = result.Message
+			s.app.ShowToast(ToastTypeError, "TLS Certificate: "+result.Message)
+			return
+		}
+		if result := s.validator.ValidateFilePath(s.tlsKeyPath.Text(), true); !result.Valid {
+			s.validationErrors["tlsKeyPath"] = result.Message
+			s.app.ShowToast(ToastTypeError, "TLS Key: "+result.Message)
+			return
+		}
+		if result := s.validator.ValidateFilePath(s.tlsCACertPath.Text(), true); !result.Valid {
+			s.validationErrors["tlsCACertPath"] = result.Message
+			s.app.ShowToast(ToastTypeError, "TLS CA Certificate: "+result.Message)
+			return
+		}
+	}
+
 	cfg := s.app.config
 
-	// Update config from form fields
+	// Update config from form fields (all validated now)
 	cfg.Client.ServerAddress = s.serverAddr.Text()
 	cfg.Client.TLS.Enabled = s.tlsEnabled.Value
 	cfg.Client.TLS.CertFile = s.tlsCertPath.Text()
