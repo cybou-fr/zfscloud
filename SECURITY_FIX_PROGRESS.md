@@ -1,6 +1,6 @@
 # ZFS Encryption Security Fix - Implementation Progress
 
-## Current Status: SERVER-SIDE COMPLETE ✅ | CLIENT-SIDE PENDING ⏳
+## Current Status: SERVER-SIDE COMPLETE ✅ | CLIENT-SIDE COMPLETE ✅ | KEYCHAIN STORAGE PENDING ⏳
 
 ---
 
@@ -169,57 +169,76 @@ adminService := grpc.NewAdminServiceServer(database, zfsManager, cfg, rsaPrivate
 
 ---
 
-## Changes Pending ⏳
+## Changes Completed (Client-Side) ✅
 
-### Client Side (client/cmd/main.go)
+### Client Side - Encryption (client/cmd/main.go + client/client.go)
 
-**handleRegister function** (lines 330-410):
+**handleRegister function** (client/cmd/main.go lines 350-385) - ✅ FIXED:
 
-Current INSECURE code:
 ```go
 // Generate passphrase for ZFS encryption
 passphrase, err := crypto.GeneratePassphrase()
 
-// TODO: Encrypt passphrase with server's public key
-// For now, just use it directly (INSECURE - needs server public key)
-encryptedPassphrase := []byte(passphrase) // ← PLAINTEXT!
-```
-
-Required changes:
-```go
-// 1. Fetch server's public RSA key
-serverPubKey, err := getServerPublicKey(c)
+// Get server's RSA public key
+serverPubKey, err := c.GetServerPublicKey()
 if err != nil {
     fmt.Printf("Error fetching server public key: %v\n", err)
+    fmt.Println("Cannot securely encrypt passphrase. Registration aborted.")
     return
 }
 
-// 2. Encrypt passphrase with server's public key
+// Encrypt passphrase with server's public key
 encryptedPassphrase, err := crypto.EncryptPassphrase(passphrase, serverPubKey)
 if err != nil {
     fmt.Printf("Error encrypting passphrase: %v\n", err)
     return
 }
 
-// 3. Store passphrase securely in OS keychain
-err = storePassphraseInKeychain(c.GetClientID(), passphrase)
-if err != nil {
-    fmt.Printf("Error storing passphrase: %v\n", err)
-    return
+// TODO: Store passphrase securely in OS keychain
+fmt.Println("⚠️  WARNING: Passphrase not yet stored in OS keychain")
+fmt.Printf("⚠️  Passphrase (SAVE THIS): %s\n", base64.StdEncoding.EncodeToString(passphrase))
+```
+
+**GetServerPublicKey method** (client/client.go) - ✅ IMPLEMENTED:
+
+```go
+func (c *Client) GetServerPublicKey() ([]byte, error) {
+    if c.backupService == nil {
+        return nil, fmt.Errorf("not connected to server")
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    req := &proto.ServerPublicKeyRequest{}
+    resp, err := c.backupService.GetServerPublicKey(ctx, req)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get server public key: %w", err)
+    }
+
+    return resp.PublicKey, nil
 }
 ```
 
-**New function needed**:
+## Changes Pending ⏳
+
+### Keychain Storage (Not Yet Implemented)
+
+**Required files to create:**
+
+- `client/keychain_windows.go` - Windows DPAPI storage
+- `client/keychain_linux.go` - Linux Secret Service storage
+- `client/keychain_darwin.go` - macOS Keychain storage
+
+**Functions needed:**
+
 ```go
-func getServerPublicKey(c *client.Client) ([]byte, error) {
-    // Call GetServerPublicKey RPC
-    // Return public key PEM bytes
+func storePassphraseInKeychain(clientID string, passphrase []byte) error {
+    // Platform-specific implementation
 }
 
-func storePassphraseInKeychain(clientID string, passphrase []byte) error {
-    // Windows: Use DPAPI (Data Protection API)
-    // Linux: Use Secret Service API (gnome-keyring, kwallet)
-    // macOS: Use Keychain
+func loadPassphraseFromKeychain(clientID string) ([]byte, error) {
+    // Platform-specific implementation
 }
 ```
 
@@ -240,11 +259,11 @@ func storePassphraseInKeychain(clientID string, passphrase []byte) error {
 
 ### Client
 
-- ❌ `client/cmd/main.go` - Fix handleRegister (plaintext transmission)
-- ❌ `client/client.go` - Add GetServerPublicKey method
-- ❌ `client/keychain_windows.go` - NEW: Windows DPAPI storage
-- ❌ `client/keychain_linux.go` - NEW: Linux Secret Service storage
-- ❌ `client/keychain_darwin.go` - NEW: macOS Keychain storage
+- ✅ `client/cmd/main.go` - FIXED handleRegister (now encrypts passphrase)
+- ✅ `client/client.go` - ADDED GetServerPublicKey method
+- ⏳ `client/keychain_windows.go` - PENDING: Windows DPAPI storage
+- ⏳ `client/keychain_linux.go` - PENDING: Linux Secret Service storage
+- ⏳ `client/keychain_darwin.go` - PENDING: macOS Keychain storage
 
 ---
 
@@ -376,4 +395,4 @@ encryptedPassphrase := []byte(passphrase)  // INSECURE!
 - ZFS dataset encrypted with AES-256-GCM
 - Client controls encryption keys
 
-**Completion**: 70% (server-side done, client-side pending)
+**Completion**: 90% (server + client encryption done, keychain storage pending)

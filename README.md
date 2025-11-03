@@ -19,7 +19,7 @@ A secure client-server backup system built in Go with ZFS backend storage and us
 - ✅ File system watcher with incremental backups
 - ✅ Docker deployment support
 
-**Security Status:** ⚠️ Server-side encryption complete, client-side fixes pending (see [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md))
+**Security Status:** ✅ Passphrase encryption complete (server + client), ⏳ OS keychain storage pending (see [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md))
 
 ## Features
 
@@ -210,8 +210,8 @@ See [SETUP.md](./SETUP.md) for detailed instructions.
 | Snapshot Scheduler | ✅ Complete |
 | TLS/mTLS Security | ✅ Complete |
 | Docker Deployment | ✅ Complete |
-| Server-side Encryption | ✅ Complete |
-| Client-side Encryption | ⏳ Pending (see SECURITY_FIX_PROGRESS.md) |
+| Passphrase Encryption | ✅ Complete (server + client) |
+| OS Keychain Storage | ⏳ Pending (manual passphrase backup required) |
 
 ## 🛠️ Technology Stack
 
