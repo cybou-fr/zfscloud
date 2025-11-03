@@ -4,7 +4,7 @@ A secure client-server backup system built in Go with ZFS backend storage and en
 
 ## 🚀 Project Status
 
-**Phase 6 Complete** ✅ - Automatic backup engine ready
+**Phase 7 Started** 🔨 - GUI implementation in progress (40% complete)
 
 - ✅ Project structure and build system
 - ✅ gRPC protocol definitions (28 RPC methods)
@@ -19,8 +19,11 @@ A secure client-server backup system built in Go with ZFS backend storage and en
 - ✅ File system watcher with real-time change detection
 - ✅ Automatic backup engine with compression
 - ✅ Docker testing environment
+- ✅ Phase 8: Security hardening with TLS/mTLS (ECDSA P-256)
+- ✅ Phase 9: Snapshot automation (4-tier scheduling with retention)
+- 🔨 Phase 7: GUI with Gio UI framework (dashboard, settings, files)
 
-**Next Steps**: Build Gio UI → Implement TLS/mTLS → Add snapshot automation
+**Next Steps**: Complete GUI polish → Add system tray → Implement file browser
 
 ## Features
 
@@ -83,9 +86,28 @@ See **[docker/README.md](./docker/README.md)** for complete Docker testing guide
 # Build server
 go build -o bin/zfscloud-server ./server/cmd
 
-# Build client
+# Build CLI client
 go build -o bin/zfscloud-client ./client/cmd
+
+# Build GUI client (NEW!)
+go build -o bin/zfscloud-gui ./client/gui/cmd
 ```
+
+### GUI Client
+
+The new GUI provides an intuitive interface for managing backups:
+
+```powershell
+# Run the GUI
+.\bin\zfscloud-gui.exe
+```
+
+Features:
+- **Dashboard**: Real-time statistics and backup controls
+- **Settings**: Configure server, TLS, folders, and advanced options
+- **Files**: Browse and restore backed up files (coming soon)
+
+See **[client/gui/README.md](./client/gui/README.md)** for detailed GUI documentation.
 
 ### Development
 
