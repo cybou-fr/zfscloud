@@ -1,309 +1,606 @@
-# ZFSCloud - Quick Reference
+# ZFSCloud - Quick Reference# ZFSCloud - Quick Reference
 
-## Project Overview
 
-**ZFSCloud** is a secure, encrypted backup system with:
-- Client-server architecture using gRPC
-- ZFS backend with native encryption
-- Per-user encrypted datasets
-- Ed25519 authentication
-- Incremental deduplication
-- Automated snapshots
-- Admin approval workflow
 
-## Project Status
+## Overview## What is ZFSCloud?
 
-### ✅ Phases 1-5 Complete: Functional Client-Server System
 
-The following components have been implemented:
 
-**Phase 1: Core Infrastructure**
-- Professional directory layout
-- Go modules configuration
-- Build scripts (PowerShell + shell)
-- Protocol Buffer definitions
-- Cryptographic utilities (Ed25519, RSA, Argon2)
-- Configuration management
-- ZFS wrapper
+Secure backup system with ZFS backend and user-controlled encryption.Secure, encrypted backup system with:
 
-**Phase 2: Database & gRPC Services**
-- SQLite database with 8 tables
-- 28 database operations
-- BackupService: 14 RPC methods implemented
-- AdminService: 10 RPC methods implemented
-- Complete gRPC server implementation
-- Request authentication and validation
 
-**Phase 3: Server Integration**
-- AdminService implementation (10 RPCs)
-- File I/O storage layer
-- Complete server wiring
-- Session management
-- Main server entry point with graceful shutdown
 
-**Phase 4: Basic Client**
-- Interactive CLI with command shell
-- File upload with chunking (1MB chunks)
-- Directory upload with recursion
-- Ed25519 authentication
-- SHA-256 hash verification
-- 9 commands: register, heartbeat, upload, upload-dir, list, snapshots, status, help, exit
+**Key Features:**- Client-server architecture using gRPC
 
-**Phase 5: Docker Testing Environment**
-- ZFS-enabled Docker containers
-- File-backed 10GB ZFS pool (no physical disks needed)
-- Docker Compose orchestration
-- Admin helper container with grpcurl
-- Comprehensive testing guide
-- Build scripts for cross-compilation
+- ZFS backend with native encryption (AES-256-GCM)
 
-## File Inventory
+- Client-server gRPC architecture- Per-user encrypted datasets
 
-### Core Documentation
-```text
-implementation-plan.md       Original architecture & design
-README.md                   Project overview & quick start
-SETUP.md                    Setup and installation guide
-STRUCTURE.md               Component documentation
-QUICKREF.md                This quick reference
-SERVER_QUICKSTART.md       Server deployment guide
-docker/README.md           Docker testing guide (350+ lines)
-```
+- Per-user encrypted ZFS datasets (AES-256-GCM)- Ed25519 + RSA authentication
 
-### Build & Deployment
-```text
-build.ps1                  Windows build script
-Makefile                  Unix build script
-build-docker.ps1          Docker server build (Linux)
-build-docker.sh           Docker server build (shell)
-test-docker.ps1           Docker test automation
-go.mod                    Go module dependencies
-.gitignore                Git ignore rules
-.dockerignore             Docker build optimization
-```
+- Ed25519 authentication + RSA passphrase encryption- TLS/mTLS transport security
 
-### Server Source Code (~6,000 lines)
-```text
-proto/backup.proto                          gRPC service definitions (24 RPCs)
-proto/backup/backup.pb.go                   Generated protobuf code
-proto/backup/backup_grpc.pb.go             Generated gRPC code
+- TLS/mTLS transport security- Automated snapshots with retention policies
 
-shared/crypto/keys.go                       Ed25519 cryptography
-shared/crypto/passphrase.go                 Passphrase management
-shared/config/server.go                     Server configuration
-shared/config/client.go                     Client configuration
+- Automated snapshots with 4-tier retention- GUI and CLI clients
 
-server/cmd/main.go                          Server entry point
-server/zfs/manager.go                       ZFS operations wrapper
-server/db/database.go                       SQLite database layer
-server/db/operations.go                     28 database operations
-server/grpc/server.go                       gRPC server setup
-server/grpc/backup_service.go               BackupService (14 RPCs)
-server/grpc/admin_service.go                AdminService (10 RPCs)
-server/grpc/auth.go                         Request authentication
-server/storage/fileio.go                    File I/O layer
-```
-
-### Client Source Code (~1,000 lines)
-```text
-client/cmd/main.go                          Interactive CLI (350 lines)
-client/client.go                            gRPC client (300 lines)
-client/uploader.go                          File upload engine (280 lines)
-```
-
-### Docker Environment
-```text
-docker/Dockerfile.server                    Server container (Ubuntu + ZFS)
-docker/Dockerfile.admin                     Admin helper (Alpine + grpcurl)
-docker/docker-compose.yml                   Multi-container orchestration
-docker/config/server.yaml                   Docker server config
-docker/scripts/list-registrations.sh        Admin helper scripts
-docker/scripts/approve-registration.sh
-docker/scripts/list-users.sh
-docker/scripts/system-status.sh
-```
-
-### Configuration Templates
-```text
-server/config.example.yaml                  Server config template
-client/config.example.yaml                  Client config template
-docker/config/server.yaml                   Docker-specific config
-```
+- GUI client (Gio) + CLI client
 
 ## Quick Commands
 
+## Quick Start
+
 ### Build
-```powershell
-# Build everything
-.\build.ps1 all
 
-# Build individual components
-.\build.ps1 server   # Server only
-.\build.ps1 client   # Client only
-.\build.ps1 proto    # Generate protobuf files
+### Build
 
-# Build for Docker (Linux)
-.\build-docker.ps1   # Cross-compile server for Linux
-```
-
-### Docker Testing (Recommended)
-```powershell
-# Quick start
-.\test-docker.ps1
-
-# Or manually
-.\build-docker.ps1
-cd docker
-docker-compose up -d
-docker-compose logs -f zfscloud-server
-
-# Admin operations
-docker-compose --profile admin run zfscloud-admin list-registrations
-docker-compose --profile admin run zfscloud-admin approve-registration <client-id> 10737418240
-docker-compose --profile admin run zfscloud-admin list-users
-```
-
-### Run Native (Linux with ZFS required for server)
 ```bash
-# Server (Linux only)
+
+```bash# Build everything
+
+# Build all componentsgo build -o bin/zfscloud-server ./server/cmd
+
+go build -o bin/zfscloud-server ./server/cmdgo build -o bin/zfscloud-client ./client/cmd
+
+go build -o bin/zfscloud-client ./client/cmd
+
+# Or use PowerShell script
+
+# Or use build script.\build.ps1 all
+
+.\build.ps1 all```
+
+```
+
+### Run Server
+
+### Run
+
+```bash
+
+```bash./bin/zfscloud-server -config server/config.yaml
+
+# Server (Linux with ZFS required)```
+
 ./bin/zfscloud-server -config server/config.yaml
 
-# Client (Windows/Linux/Mac)
-./bin/zfscloud-client -config client/config.yaml
+### Run GUI Client
+
+# GUI Client
+
+./bin/zfscloud-client```bash
+
+./bin/zfscloud-client
+
+# CLI Client# Automatically loads client-config.yaml
+
+./bin/zfscloud-client -cli```
+
+```
+
+### Run CLI Client
+
+### Docker Testing
+
+```bash
+
+```bash./bin/zfscloud-client -cli
+
+# Build and start```
+
+.\build-docker.ps1
+
+cd docker**Phase 5: Docker Testing Environment**
+
+docker-compose up -d- ZFS-enabled Docker containers
+
+- File-backed 10GB ZFS pool (no physical disks needed)
+
+# Run client- Docker Compose orchestration
+
+.\bin\zfscloud-client.exe- Admin helper container with grpcurl
+
+```- Comprehensive testing guide
+
+- Build scripts for cross-compilation
+
+## CLI Commands
+
+## File Inventory
+
+### Registration & Authentication
+
+### Core Documentation
+
+```bash```text
+
+register                    # Register new client (admin approval required)implementation-plan.md       Original architecture & design
+
+status                      # Check registration statusREADME.md                   Project overview & quick start
+
+heartbeat                   # Send keepaliveSETUP.md                    Setup and installation guide
+
+```STRUCTURE.md               Component documentation
+
+QUICKREF.md                This quick reference
+
+### Backup OperationsSERVER_QUICKSTART.md       Server deployment guide
+
+docker/README.md           Docker testing guide (350+ lines)
+
+```bash```
+
+upload <file>               # Upload single file
+
+upload-dir <dir>            # Upload directory recursively### Build & Deployment
+
+list [path]                 # List backed up files```text
+
+download <file> <dest>      # Download filebuild.ps1                  Windows build script
+
+```Makefile                  Unix build script
+
+build-docker.ps1          Docker server build (Linux)
+
+### Snapshotsbuild-docker.sh           Docker server build (shell)
+
+test-docker.ps1           Docker test automation
+
+```bashgo.mod                    Go module dependencies
+
+snapshots                   # List available snapshots.gitignore                Git ignore rules
+
+restore-request <snapshot>  # Request snapshot restore (admin approval required).dockerignore             Docker build optimization
+
+``````
+
+
+
+### Admin Commands### Server Source Code (~6,000 lines)
+
+```text
+
+```bashproto/backup.proto                          gRPC service definitions (24 RPCs)
+
+admin list-pending          # List pending registrationsproto/backup/backup.pb.go                   Generated protobuf code
+
+admin approve <id>          # Approve registrationproto/backup/backup_grpc.pb.go             Generated gRPC code
+
+admin reject <id> <reason>  # Reject registration
+
+admin list-users            # List all usersshared/crypto/keys.go                       Ed25519 cryptography
+
+admin revoke <id> <reason>  # Revoke user accessshared/crypto/passphrase.go                 Passphrase management
+
+```shared/config/server.go                     Server configuration
+
+shared/config/client.go                     Client configuration
+
+## Configuration
+
+server/cmd/main.go                          Server entry point
+
+### Server Config (server/config.yaml)server/zfs/manager.go                       ZFS operations wrapper
+
+server/db/database.go                       SQLite database layer
+
+```yamlserver/db/operations.go                     28 database operations
+
+server:server/grpc/server.go                       gRPC server setup
+
+  listen_address: "0.0.0.0:50051"server/grpc/backup_service.go               BackupService (14 RPCs)
+
+  admin_token: "your-admin-token"server/grpc/admin_service.go                AdminService (10 RPCs)
+
+  rsa_key_path: "server-rsa-key.pem"  # Auto-generated if missingserver/grpc/auth.go                         Request authentication
+
+  tls:server/storage/fileio.go                    File I/O layer
+
+    enabled: true```
+
+    cert_file: "certs/server-cert.pem"
+
+    key_file: "certs/server-key.pem"### Client Source Code (~1,000 lines)
+
+    ca_file: "certs/ca-cert.pem"```text
+
+client/cmd/main.go                          Interactive CLI (350 lines)
+
+database:client/client.go                            gRPC client (300 lines)
+
+  path: "/var/lib/zfscloud/zfscloud.db"client/uploader.go                          File upload engine (280 lines)
+
+```
+
+zfs:
+
+  pool: "tank"### Docker Environment
+
+  compression: "lz4"```text
+
+docker/Dockerfile.server                    Server container (Ubuntu + ZFS)
+
+snapshots:docker/Dockerfile.admin                     Admin helper (Alpine + grpcurl)
+
+  enabled: truedocker/docker-compose.yml                   Multi-container orchestration
+
+  schedule: "0 * * * *"  # Every hourdocker/config/server.yaml                   Docker server config
+
+  retention:docker/scripts/list-registrations.sh        Admin helper scripts
+
+    hourly: 24docker/scripts/approve-registration.sh
+
+    daily: 7docker/scripts/list-users.sh
+
+    weekly: 4docker/scripts/system-status.sh
+
+    monthly: 12```
+
+```
+
+### Configuration Templates
+
+### Client Config (client-config.yaml)```text
+
+server/config.example.yaml                  Server config template
+
+```yamlclient/config.example.yaml                  Client config template
+
+client:docker/config/server.yaml                   Docker-specific config
+
+  server_address: "localhost:50051"```
+
+  client_id: "auto-generated-uuid"
+
+  metadata:## Quick Commands
+
+    hostname: "my-computer"
+
+    username: "user"### Build
+
+```powershell
+
+  tls:# Build everything
+
+    enabled: true.\build.ps1 all
+
+    cert_file: "certs/client-cert.pem"
+
+    key_file: "certs/client-key.pem"# Build individual components
+
+    ca_file: "certs/ca-cert.pem".\build.ps1 server   # Server only
+
+.\build.ps1 client   # Client only
+
+backup:.\build.ps1 proto    # Generate protobuf files
+
+  folders:
+
+    - "C:\\Users\\user\\Documents"# Build for Docker (Linux)
+
+  check_interval_seconds: 300.\build-docker.ps1   # Cross-compile server for Linux
+
+  max_workers: 4```
+
+
+
+bandwidth:### Docker Testing (Recommended)
+
+  limit_mbps: 0  # 0 = unlimited```powershell
+
+```# Quick start
+
+.\test-docker.ps1
+
+## Project Structure
+
+# Or manually
+
+```text.\build-docker.ps1
+
+zfscloud/cd docker
+
+├── server/              # Server applicationdocker-compose up -d
+
+│   ├── cmd/             # Server entry pointdocker-compose logs -f zfscloud-server
+
+│   ├── db/              # Database layer (SQLite)
+
+│   ├── grpc/            # gRPC service implementations# Admin operations
+
+│   ├── storage/         # File I/O operationsdocker-compose --profile admin run zfscloud-admin list-registrations
+
+│   ├── snapshot/        # Snapshot schedulerdocker-compose --profile admin run zfscloud-admin approve-registration <client-id> 10737418240
+
+│   ├── security/        # TLS/crypto utilitiesdocker-compose --profile admin run zfscloud-admin list-users
+
+│   └── zfs/             # ZFS command wrapper```
+
+├── client/              # Client application
+
+│   ├── cmd/             # Client entry point### Run Native (Linux with ZFS required for server)
+
+│   ├── gui/             # Gio UI implementation```bash
+
+│   └── uploader.go      # Backup engine# Server (Linux only)
+
+├── proto/               # gRPC protocol definitions./bin/zfscloud-server -config server/config.yaml
+
+├── shared/              # Shared libraries
+
+│   ├── crypto/          # Ed25519, RSA, Argon2# Client (Windows/Linux/Mac)
+
+│   └── config/          # YAML config management./bin/zfscloud-client -config client/config.yaml
+
+└── docker/              # Docker deployment```
+
 ```
 
 ### Client Commands (Interactive Mode)
-```text
+
+## Architecture```text
+
 register              - Register with server
-heartbeat            - Send heartbeat to maintain session
-upload <file>        - Upload single file
-upload-dir <dir>     - Upload entire directory
-list                 - List backed up files
-snapshots            - List available snapshots
-status               - Show client status
-help                 - Show help
-exit                 - Exit client
+
+```textheartbeat            - Send heartbeat to maintain session
+
+Client (GUI/CLI)upload <file>        - Upload single file
+
+  │ Generate 256-bit passphraseupload-dir <dir>     - Upload entire directory
+
+  │ Encrypt with server RSA public keylist                 - List backed up files
+
+  │ Ed25519 signature authenticationsnapshots            - List available snapshots
+
+  ↓ gRPC over mTLS (TLS 1.3)status               - Show client status
+
+Serverhelp                 - Show help
+
+  │ Decrypt passphrase with RSA private keyexit                 - Exit client
+
+  │ Verify Ed25519 signature```
+
+  ↓ ZFS commands
+
+ZFS Pool### Test
+
+  └─ tank/user-<uuid>  (encrypted with user passphrase)```powershell
+
+     ├─ Snapshots (hourly/daily/weekly/monthly)go test ./...                                   # Run unit tests
+
+     └─ Backup filesgo test -coverprofile=coverage.out ./...       # With coverage
+
+```go tool cover -html=coverage.out              # View coverage
+
 ```
 
-### Test
-```powershell
-go test ./...                                   # Run unit tests
-go test -coverprofile=coverage.out ./...       # With coverage
-go tool cover -html=coverage.out              # View coverage
-```
+## Security Model
 
 ## Remaining Implementation Steps
 
+### Authentication
+
 ### ✅ Phase 6: Backup Engine (COMPLETE)
-- [x] File system watcher (fsnotify)
-- [x] Automatic backup on file changes
-- [x] Content-defined chunking for large files
+
+- **Ed25519 signatures**: All client requests signed with private key- [x] File system watcher (fsnotify)
+
+- **RSA encryption**: User passphrases encrypted with server public key (4096-bit)- [x] Automatic backup on file changes
+
+- **Admin tokens**: Admin operations require secret token- [x] Content-defined chunking for large files
+
 - [x] Compression pipeline (zstd)
-- [x] Background upload queue
+
+### Encryption Layers- [x] Background upload queue
+
 - [x] Bandwidth throttling
 
-### Phase 7: Client UI (Gio) - Next Priority
-- [ ] System tray icon
-- [ ] Status display (connected, backing up, idle)
-- [ ] Folder selection interface
-- [ ] Visual restore browser
-- [ ] Configuration editor
-- [ ] Progress indicators
+1. **Transport**: TLS 1.3 with mTLS (optional)
 
-### Phase 8: Security Hardening
-- [ ] TLS certificate management
+2. **Dataset**: ZFS native encryption (AES-256-GCM)### Phase 7: Client UI (Gio) - Next Priority
+
+3. **Passphrase**: User-controlled, stored encrypted- [ ] System tray icon
+
+- [ ] Status display (connected, backing up, idle)
+
+### User-Controlled Encryption- [ ] Folder selection interface
+
+- [ ] Visual restore browser
+
+- Client generates random 256-bit passphrase- [ ] Configuration editor
+
+- Client encrypts passphrase with server RSA public key- [ ] Progress indicators
+
+- Server decrypts only when creating dataset or loading key
+
+- Server never stores plaintext passphrase### Phase 8: Security Hardening
+
+- Client stores passphrase in OS keychain- [ ] TLS certificate management
+
 - [ ] mTLS implementation
-- [ ] OS keychain integration (DPAPI/Keychain/Secret Service)
+
+**Status**: Server-side complete ✅, client-side pending ⏳- [ ] OS keychain integration (DPAPI/Keychain/Secret Service)
+
 - [ ] Replay attack prevention improvements
-- [ ] Rate limiting
+
+See [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md) for details.- [ ] Rate limiting
+
 - [ ] Audit logging
 
-### Phase 9: Snapshot Automation
-- [ ] Cron-based snapshot scheduler
-- [ ] Retention policy enforcement
-- [ ] Automatic cleanup
-- [ ] Snapshot browsing improvements
+## Common Tasks
 
-### Phase 10: Production Features
-- [ ] Web-based admin dashboard
-- [ ] Monitoring and metrics (Prometheus)
-- [ ] Multi-threaded uploads
-- [ ] Delta sync optimizations
-- [ ] Client-side encryption option
-- [ ] Conflict resolution
+### Phase 9: Snapshot Automation
+
+### Generate Certificates- [ ] Cron-based snapshot scheduler
+
+- [ ] Retention policy enforcement
+
+```bash- [ ] Automatic cleanup
+
+# Auto-generate (server does this on first run if tls.auto_generate = true)- [ ] Snapshot browsing improvements
+
+# Or manually:
+
+cd certs### Phase 10: Production Features
+
+openssl genrsa -out ca-key.pem 4096- [ ] Web-based admin dashboard
+
+openssl req -new -x509 -days 3650 -key ca-key.pem -out ca-cert.pem- [ ] Monitoring and metrics (Prometheus)
+
+openssl genrsa -out server-key.pem 4096- [ ] Multi-threaded uploads
+
+openssl req -new -key server-key.pem -out server-req.pem- [ ] Delta sync optimizations
+
+openssl x509 -req -in server-req.pem -CA ca-cert.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -days 365- [ ] Client-side encryption option
+
+```- [ ] Conflict resolution
+
 - [ ] Comprehensive test suite
+
+### Check ZFS Encryption
 
 ## API Overview
 
-### BackupService RPCs (14 methods - all implemented ✅)
-- `Register` - Client registration with public key
-- `Heartbeat` - Keep session alive, auto-creates session
-- `GetBackupPolicy` - Get backup configuration
-- `UploadChunk` - Stream file data to server (chunked)
-- `CompleteBackup` - Finalize backup with hash verification
-- `ListFiles` - Browse backed up files
-- `DownloadFile` - Restore files (streaming)
-- `DeleteFile` - Remove backed up file
-- `ListSnapshots` - View available snapshots
-- `RequestSnapshotRestore` - Request snapshot restore (requires approval)
-- `LoadDatasetKey` - Unlock ZFS dataset with passphrase
-- `UnloadDatasetKey` - Lock ZFS dataset
-- `GetQuotaInfo` - Check storage usage
-- `GetSessionInfo` - Query session status
+```bash
 
-### AdminService RPCs (10 methods - all implemented ✅)
+# List datasets### BackupService RPCs (14 methods - all implemented ✅)
+
+zfs list -r tank- `Register` - Client registration with public key
+
+- `Heartbeat` - Keep session alive, auto-creates session
+
+# Check encryption status- `GetBackupPolicy` - Get backup configuration
+
+zfs get encryption,keylocation,keystatus tank/user-<uuid>- `UploadChunk` - Stream file data to server (chunked)
+
+- `CompleteBackup` - Finalize backup with hash verification
+
+# Should show:- `ListFiles` - Browse backed up files
+
+# encryption: aes-256-gcm- `DownloadFile` - Restore files (streaming)
+
+# keylocation: prompt- `DeleteFile` - Remove backed up file
+
+# keystatus: available (if loaded) or unavailable (if unloaded)- `ListSnapshots` - View available snapshots
+
+```- `RequestSnapshotRestore` - Request snapshot restore (requires approval)
+
+- `LoadDatasetKey` - Unlock ZFS dataset with passphrase
+
+### View Snapshots- `UnloadDatasetKey` - Lock ZFS dataset
+
+- `GetQuotaInfo` - Check storage usage
+
+```bash- `GetSessionInfo` - Query session status
+
+zfs list -t snapshot -r tank/user-<uuid>
+
+```### AdminService RPCs (10 methods - all implemented ✅)
+
 - `ListPendingRegistrations` - View pending client registrations
-- `ApproveRegistration` - Approve client with quota allocation
+
+### Database Inspection- `ApproveRegistration` - Approve client with quota allocation
+
 - `RejectRegistration` - Reject client registration
-- `ListUsers` - View all registered users
-- `UpdateUserQuota` - Adjust user storage quota
+
+```bash- `ListUsers` - View all registered users
+
+sqlite3 /var/lib/zfscloud/zfscloud.db- `UpdateUserQuota` - Adjust user storage quota
+
 - `ListRestoreRequests` - View pending snapshot restore requests
-- `ApproveRestoreRequest` - Approve snapshot restore
-- `RejectRestoreRequest` - Reject snapshot restore
-- `UpdateSnapshotPolicy` - Configure automated snapshots
-- `GetSystemStatus` - Monitor system health and storage
+
+# Useful queries- `ApproveRestoreRequest` - Approve snapshot restore
+
+SELECT * FROM users;- `RejectRestoreRequest` - Reject snapshot restore
+
+SELECT * FROM registrations WHERE status = 'pending';- `UpdateSnapshotPolicy` - Configure automated snapshots
+
+SELECT * FROM snapshots ORDER BY created_at DESC LIMIT 10;- `GetSystemStatus` - Monitor system health and storage
+
+```
 
 ## Security Features
 
-### Authentication
-- Ed25519 public key cryptography
-- Request signing with timestamp + nonce
-- Replay attack prevention (5-minute window)
+## Troubleshooting
 
-### Encryption
-- **Transport**: TLS 1.3 with mTLS
+### Authentication
+
+### Client can't connect- Ed25519 public key cryptography
+
+- Request signing with timestamp + nonce
+
+1. Check server is running: `systemctl status zfscloud-server`- Replay attack prevention (5-minute window)
+
+2. Check firewall: `sudo ufw allow 50051/tcp`
+
+3. Verify TLS certificates are valid### Encryption
+
+4. Check client config has correct server address- **Transport**: TLS 1.3 with mTLS
+
 - **At-Rest**: ZFS native encryption (AES-256-GCM)
-- **Dataset Keys**: Client-generated, RSA-encrypted
+
+### Registration stuck pending- **Dataset Keys**: Client-generated, RSA-encrypted
+
 - **Zero-Knowledge**: Optional client-side encryption
 
-### Access Control
-- Admin approval for registration
+1. Check admin approvals: `admin list-pending`
+
+2. Approve: `admin approve <registration-id>`### Access Control
+
+3. Check server logs for errors- Admin approval for registration
+
 - Admin approval for snapshot restores
-- Per-user dataset isolation
+
+### Backup not starting- Per-user dataset isolation
+
 - Quota enforcement
 
-## Architecture Highlights
+1. Verify registration is approved: `status`
 
-### Client-Server Communication
+2. Check watch folders exist and are readable## Architecture Highlights
+
+3. View logs in GUI error panel
+
+4. Test connection: Settings → Test Connection### Client-Server Communication
+
 ```
-Client → gRPC/mTLS → Server
+
+### Dataset key won't loadClient → gRPC/mTLS → Server
+
          ↓
-    Ed25519 Auth
-         ↓
-    Request Processing
-         ↓
+
+1. Check ZFS key status: `zfs get keystatus tank/user-<uuid>`    Ed25519 Auth
+
+2. Verify encrypted passphrase in database         ↓
+
+3. Check server RSA private key exists and is readable    Request Processing
+
+4. See server logs for decryption errors         ↓
+
     ZFS Dataset (encrypted)
+
+## Documentation```
+
+
+
+- **[README.md](./README.md)** - Project overview### Dataset Lifecycle
+
+- **[SETUP.md](./SETUP.md)** - Detailed setup guide```
+
+- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - GUI manual1. Client generates passphrase
+
+- **[SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)** - Encryption implementation status2. Client encrypts with server RSA public key
+
+- **[implementation-plan.md](./implementation-plan.md)** - Complete architecture3. Server creates ZFS dataset (encryption=on)
+
+- **[DOCKER_TESTING_GUIDE.md](./DOCKER_TESTING_GUIDE.md)** - Docker deployment4. Client connects → server loads key
+
+5. Backup operations
+
+## License6. Client disconnects → server unloads key
+
 ```
 
-### Dataset Lifecycle
-```
-1. Client generates passphrase
-2. Client encrypts with server RSA public key
-3. Server creates ZFS dataset (encryption=on)
-4. Client connects → server loads key
-5. Backup operations
-6. Client disconnects → server unloads key
-```
+MIT License
 
 ### Backup Flow
 ```

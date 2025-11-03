@@ -129,30 +129,20 @@ go test ./...
 
 ## 📚 Documentation
 
+**📋 [DOCS.md](./DOCS.md)** - Complete documentation index
+
 ### Quick Start
 
-- **[QUICKSTART_GUI.md](./QUICKSTART_GUI.md)** - GUI client quick start (5 minutes) ⭐
-- **[docker/README.md](./docker/README.md)** - Docker testing environment
-- **[QUICK_TEST.md](./QUICK_TEST.md)** - Manual testing guide
-
-### User Guides
-
-- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - Complete GUI manual
-- **[SETUP.md](./SETUP.md)** - Installation and configuration
+- **[QUICKSTART_GUI.md](./QUICKSTART_GUI.md)** - 5-minute GUI tutorial ⭐
+- **[SETUP.md](./SETUP.md)** - Installation guide
 - **[QUICKREF.md](./QUICKREF.md)** - Command reference
 
-### Security & Architecture
+### Key Documents
 
-- **[SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)** - User-controlled encryption implementation
-- **[ZFS_ENCRYPTION_FIX.md](./ZFS_ENCRYPTION_FIX.md)** - Encryption architecture
-- **[implementation-plan.md](./implementation-plan.md)** - System design
-- **[STRUCTURE.md](./STRUCTURE.md)** - Code structure
-
-### Deployment
-
-- **[DEPLOYMENT_PACKAGE.md](./DEPLOYMENT_PACKAGE.md)** - Production deployment guide
-- **[DOCKER_TESTING_GUIDE.md](./DOCKER_TESTING_GUIDE.md)** - Docker setup and testing
-- **[SERVER_QUICKSTART.md](./SERVER_QUICKSTART.md)** - Server deployment
+- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - GUI manual
+- **[SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)** - Encryption status
+- **[implementation-plan.md](./implementation-plan.md)** - Architecture
+- **[docker/README.md](./docker/README.md)** - Docker testing
 
 ## 🎯 Quick Start
 
