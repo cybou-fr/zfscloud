@@ -5,33 +5,54 @@ package client
 
 import (
 	"fmt"
+
+	"github.com/zalando/go-keyring"
+)
+
+const (
+	keyringService = "zfscloud"
 )
 
 // storePassphraseInKeychain stores the passphrase securely using macOS Keychain
-// TODO: Implement using macOS Keychain Access API
 func storePassphraseInKeychain(clientID string, passphrase []byte) error {
-	// For now, fall back to file storage with warning
-	fmt.Println("⚠️  WARNING: macOS Keychain integration not yet implemented")
-	fmt.Println("⚠️  Passphrase will be stored in encrypted file instead")
-
-	// Use file-based storage as fallback
-	// In production, this should use macOS Keychain Access
-	return storeEncryptedDataToFile(clientID, passphrase)
+	err := keyring.Set(keyringService, clientID, string(passphrase))
+	if err != nil {
+		fmt.Printf("⚠️  WARNING: Could not store passphrase in macOS keychain: %v\n", err)
+		fmt.Println("⚠️  Passphrase will be stored in encrypted file instead")
+		return storeEncryptedDataToFile(clientID, passphrase)
+	}
+	return nil
 }
 
 // loadPassphraseFromKeychain loads the passphrase from macOS Keychain
 func loadPassphraseFromKeychain(clientID string) ([]byte, error) {
-	// For now, fall back to file storage
-	return loadEncryptedDataFromFile(clientID)
+	secret, err := keyring.Get(keyringService, clientID)
+	if err != nil {
+		fmt.Printf("⚠️  WARNING: Could not load passphrase from macOS keychain: %v\n", err)
+		fmt.Println("⚠️  Attempting to load from encrypted file instead")
+		return loadEncryptedDataFromFile(clientID)
+	}
+	return []byte(secret), nil
 }
 
 // deletePassphraseFromKeychain removes the stored passphrase
 func deletePassphraseFromKeychain(clientID string) error {
-	return deleteEncryptedDataFile(clientID)
+	err := keyring.Delete(keyringService, clientID)
+	if err != nil {
+		fmt.Printf("⚠️  WARNING: Could not delete passphrase from macOS keychain: %v\n", err)
+		fmt.Println("⚠️  Attempting to delete from encrypted file instead")
+		return deleteEncryptedDataFile(clientID)
+	}
+	return nil
 }
 
 // hasStoredPassphrase checks if a passphrase is stored for the client ID
 func hasStoredPassphrase(clientID string) bool {
-	_, err := loadEncryptedDataFromFile(clientID)
+	_, err := keyring.Get(keyringService, clientID)
+	if err == nil {
+		return true
+	}
+	// If not in keyring, check file as fallback
+	_, err = loadEncryptedDataFromFile(clientID)
 	return err == nil
 }

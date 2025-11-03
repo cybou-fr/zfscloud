@@ -7,13 +7,12 @@
 package proto
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -130,6 +129,94 @@ func (RestoreRequestStatus) EnumDescriptor() ([]byte, []int) {
 	return file_proto_backup_proto_rawDescGZIP(), []int{1}
 }
 
+type ServerPublicKeyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerPublicKeyRequest) Reset() {
+	*x = ServerPublicKeyRequest{}
+	mi := &file_proto_backup_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerPublicKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerPublicKeyRequest) ProtoMessage() {}
+
+func (x *ServerPublicKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_backup_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerPublicKeyRequest.ProtoReflect.Descriptor instead.
+func (*ServerPublicKeyRequest) Descriptor() ([]byte, []int) {
+	return file_proto_backup_proto_rawDescGZIP(), []int{0}
+}
+
+type ServerPublicKeyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PublicKey     []byte                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"` // RSA public key in PEM format
+	KeyId         string                 `protobuf:"bytes,2,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`             // Key identifier for key rotation
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServerPublicKeyResponse) Reset() {
+	*x = ServerPublicKeyResponse{}
+	mi := &file_proto_backup_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServerPublicKeyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerPublicKeyResponse) ProtoMessage() {}
+
+func (x *ServerPublicKeyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_backup_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerPublicKeyResponse.ProtoReflect.Descriptor instead.
+func (*ServerPublicKeyResponse) Descriptor() ([]byte, []int) {
+	return file_proto_backup_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ServerPublicKeyResponse) GetPublicKey() []byte {
+	if x != nil {
+		return x.PublicKey
+	}
+	return nil
+}
+
+func (x *ServerPublicKeyResponse) GetKeyId() string {
+	if x != nil {
+		return x.KeyId
+	}
+	return ""
+}
+
 type RegisterRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	ClientId            string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`                                  // Unique client identifier (UUID)
@@ -145,7 +232,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_proto_backup_proto_msgTypes[0]
+	mi := &file_proto_backup_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -157,7 +244,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[0]
+	mi := &file_proto_backup_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -170,7 +257,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{0}
+	return file_proto_backup_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RegisterRequest) GetClientId() string {
@@ -234,7 +321,7 @@ type ClientMetadata struct {
 
 func (x *ClientMetadata) Reset() {
 	*x = ClientMetadata{}
-	mi := &file_proto_backup_proto_msgTypes[1]
+	mi := &file_proto_backup_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -246,7 +333,7 @@ func (x *ClientMetadata) String() string {
 func (*ClientMetadata) ProtoMessage() {}
 
 func (x *ClientMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[1]
+	mi := &file_proto_backup_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -259,7 +346,7 @@ func (x *ClientMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientMetadata.ProtoReflect.Descriptor instead.
 func (*ClientMetadata) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{1}
+	return file_proto_backup_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ClientMetadata) GetHostname() string {
@@ -302,7 +389,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_proto_backup_proto_msgTypes[2]
+	mi := &file_proto_backup_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -314,7 +401,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[2]
+	mi := &file_proto_backup_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -327,7 +414,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{2}
+	return file_proto_backup_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RegisterResponse) GetSuccess() bool {
@@ -370,7 +457,7 @@ type RegistrationStatusRequest struct {
 
 func (x *RegistrationStatusRequest) Reset() {
 	*x = RegistrationStatusRequest{}
-	mi := &file_proto_backup_proto_msgTypes[3]
+	mi := &file_proto_backup_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -382,7 +469,7 @@ func (x *RegistrationStatusRequest) String() string {
 func (*RegistrationStatusRequest) ProtoMessage() {}
 
 func (x *RegistrationStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[3]
+	mi := &file_proto_backup_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -395,7 +482,7 @@ func (x *RegistrationStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistrationStatusRequest.ProtoReflect.Descriptor instead.
 func (*RegistrationStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{3}
+	return file_proto_backup_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RegistrationStatusRequest) GetClientId() string {
@@ -437,7 +524,7 @@ type RegistrationStatusResponse struct {
 
 func (x *RegistrationStatusResponse) Reset() {
 	*x = RegistrationStatusResponse{}
-	mi := &file_proto_backup_proto_msgTypes[4]
+	mi := &file_proto_backup_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -449,7 +536,7 @@ func (x *RegistrationStatusResponse) String() string {
 func (*RegistrationStatusResponse) ProtoMessage() {}
 
 func (x *RegistrationStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[4]
+	mi := &file_proto_backup_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -462,7 +549,7 @@ func (x *RegistrationStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistrationStatusResponse.ProtoReflect.Descriptor instead.
 func (*RegistrationStatusResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{4}
+	return file_proto_backup_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RegistrationStatusResponse) GetStatus() RegistrationStatus {
@@ -498,7 +585,7 @@ type BackupPolicyRequest struct {
 
 func (x *BackupPolicyRequest) Reset() {
 	*x = BackupPolicyRequest{}
-	mi := &file_proto_backup_proto_msgTypes[5]
+	mi := &file_proto_backup_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -510,7 +597,7 @@ func (x *BackupPolicyRequest) String() string {
 func (*BackupPolicyRequest) ProtoMessage() {}
 
 func (x *BackupPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[5]
+	mi := &file_proto_backup_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -523,7 +610,7 @@ func (x *BackupPolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupPolicyRequest.ProtoReflect.Descriptor instead.
 func (*BackupPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{5}
+	return file_proto_backup_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BackupPolicyRequest) GetClientId() string {
@@ -566,7 +653,7 @@ type BackupPolicyResponse struct {
 
 func (x *BackupPolicyResponse) Reset() {
 	*x = BackupPolicyResponse{}
-	mi := &file_proto_backup_proto_msgTypes[6]
+	mi := &file_proto_backup_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -578,7 +665,7 @@ func (x *BackupPolicyResponse) String() string {
 func (*BackupPolicyResponse) ProtoMessage() {}
 
 func (x *BackupPolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[6]
+	mi := &file_proto_backup_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -591,7 +678,7 @@ func (x *BackupPolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupPolicyResponse.ProtoReflect.Descriptor instead.
 func (*BackupPolicyResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{6}
+	return file_proto_backup_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *BackupPolicyResponse) GetCheckIntervalSeconds() int64 {
@@ -635,7 +722,7 @@ type HashIndexRequest struct {
 
 func (x *HashIndexRequest) Reset() {
 	*x = HashIndexRequest{}
-	mi := &file_proto_backup_proto_msgTypes[7]
+	mi := &file_proto_backup_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -647,7 +734,7 @@ func (x *HashIndexRequest) String() string {
 func (*HashIndexRequest) ProtoMessage() {}
 
 func (x *HashIndexRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[7]
+	mi := &file_proto_backup_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -660,7 +747,7 @@ func (x *HashIndexRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HashIndexRequest.ProtoReflect.Descriptor instead.
 func (*HashIndexRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{7}
+	return file_proto_backup_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *HashIndexRequest) GetClientId() string {
@@ -707,7 +794,7 @@ type HashIndexResponse struct {
 
 func (x *HashIndexResponse) Reset() {
 	*x = HashIndexResponse{}
-	mi := &file_proto_backup_proto_msgTypes[8]
+	mi := &file_proto_backup_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -719,7 +806,7 @@ func (x *HashIndexResponse) String() string {
 func (*HashIndexResponse) ProtoMessage() {}
 
 func (x *HashIndexResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[8]
+	mi := &file_proto_backup_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -732,7 +819,7 @@ func (x *HashIndexResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HashIndexResponse.ProtoReflect.Descriptor instead.
 func (*HashIndexResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{8}
+	return file_proto_backup_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *HashIndexResponse) GetHashes() []*FileHash {
@@ -754,7 +841,7 @@ type FileHash struct {
 
 func (x *FileHash) Reset() {
 	*x = FileHash{}
-	mi := &file_proto_backup_proto_msgTypes[9]
+	mi := &file_proto_backup_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +853,7 @@ func (x *FileHash) String() string {
 func (*FileHash) ProtoMessage() {}
 
 func (x *FileHash) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[9]
+	mi := &file_proto_backup_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,7 +866,7 @@ func (x *FileHash) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileHash.ProtoReflect.Descriptor instead.
 func (*FileHash) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{9}
+	return file_proto_backup_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *FileHash) GetPath() string {
@@ -823,7 +910,7 @@ type UploadChunkRequest struct {
 
 func (x *UploadChunkRequest) Reset() {
 	*x = UploadChunkRequest{}
-	mi := &file_proto_backup_proto_msgTypes[10]
+	mi := &file_proto_backup_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -835,7 +922,7 @@ func (x *UploadChunkRequest) String() string {
 func (*UploadChunkRequest) ProtoMessage() {}
 
 func (x *UploadChunkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[10]
+	mi := &file_proto_backup_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -848,7 +935,7 @@ func (x *UploadChunkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadChunkRequest.ProtoReflect.Descriptor instead.
 func (*UploadChunkRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{10}
+	return file_proto_backup_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UploadChunkRequest) GetData() isUploadChunkRequest_Data {
@@ -911,7 +998,7 @@ type ChunkMetadata struct {
 
 func (x *ChunkMetadata) Reset() {
 	*x = ChunkMetadata{}
-	mi := &file_proto_backup_proto_msgTypes[11]
+	mi := &file_proto_backup_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -923,7 +1010,7 @@ func (x *ChunkMetadata) String() string {
 func (*ChunkMetadata) ProtoMessage() {}
 
 func (x *ChunkMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[11]
+	mi := &file_proto_backup_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -936,7 +1023,7 @@ func (x *ChunkMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChunkMetadata.ProtoReflect.Descriptor instead.
 func (*ChunkMetadata) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{11}
+	return file_proto_backup_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ChunkMetadata) GetClientId() string {
@@ -1027,7 +1114,7 @@ type UploadChunkResponse struct {
 
 func (x *UploadChunkResponse) Reset() {
 	*x = UploadChunkResponse{}
-	mi := &file_proto_backup_proto_msgTypes[12]
+	mi := &file_proto_backup_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1039,7 +1126,7 @@ func (x *UploadChunkResponse) String() string {
 func (*UploadChunkResponse) ProtoMessage() {}
 
 func (x *UploadChunkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[12]
+	mi := &file_proto_backup_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1052,7 +1139,7 @@ func (x *UploadChunkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadChunkResponse.ProtoReflect.Descriptor instead.
 func (*UploadChunkResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{12}
+	return file_proto_backup_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UploadChunkResponse) GetSuccess() bool {
@@ -1090,7 +1177,7 @@ type CompleteBackupRequest struct {
 
 func (x *CompleteBackupRequest) Reset() {
 	*x = CompleteBackupRequest{}
-	mi := &file_proto_backup_proto_msgTypes[13]
+	mi := &file_proto_backup_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1102,7 +1189,7 @@ func (x *CompleteBackupRequest) String() string {
 func (*CompleteBackupRequest) ProtoMessage() {}
 
 func (x *CompleteBackupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[13]
+	mi := &file_proto_backup_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1115,7 +1202,7 @@ func (x *CompleteBackupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteBackupRequest.ProtoReflect.Descriptor instead.
 func (*CompleteBackupRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{13}
+	return file_proto_backup_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CompleteBackupRequest) GetClientId() string {
@@ -1171,7 +1258,7 @@ type CompleteBackupResponse struct {
 
 func (x *CompleteBackupResponse) Reset() {
 	*x = CompleteBackupResponse{}
-	mi := &file_proto_backup_proto_msgTypes[14]
+	mi := &file_proto_backup_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1183,7 +1270,7 @@ func (x *CompleteBackupResponse) String() string {
 func (*CompleteBackupResponse) ProtoMessage() {}
 
 func (x *CompleteBackupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[14]
+	mi := &file_proto_backup_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1196,7 +1283,7 @@ func (x *CompleteBackupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteBackupResponse.ProtoReflect.Descriptor instead.
 func (*CompleteBackupResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{14}
+	return file_proto_backup_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CompleteBackupResponse) GetSuccess() bool {
@@ -1234,7 +1321,7 @@ type ListFilesRequest struct {
 
 func (x *ListFilesRequest) Reset() {
 	*x = ListFilesRequest{}
-	mi := &file_proto_backup_proto_msgTypes[15]
+	mi := &file_proto_backup_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1246,7 +1333,7 @@ func (x *ListFilesRequest) String() string {
 func (*ListFilesRequest) ProtoMessage() {}
 
 func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[15]
+	mi := &file_proto_backup_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1259,7 +1346,7 @@ func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFilesRequest.ProtoReflect.Descriptor instead.
 func (*ListFilesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{15}
+	return file_proto_backup_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListFilesRequest) GetClientId() string {
@@ -1313,7 +1400,7 @@ type ListFilesResponse struct {
 
 func (x *ListFilesResponse) Reset() {
 	*x = ListFilesResponse{}
-	mi := &file_proto_backup_proto_msgTypes[16]
+	mi := &file_proto_backup_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1325,7 +1412,7 @@ func (x *ListFilesResponse) String() string {
 func (*ListFilesResponse) ProtoMessage() {}
 
 func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[16]
+	mi := &file_proto_backup_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1338,7 +1425,7 @@ func (x *ListFilesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFilesResponse.ProtoReflect.Descriptor instead.
 func (*ListFilesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{16}
+	return file_proto_backup_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListFilesResponse) GetFiles() []*FileInfo {
@@ -1361,7 +1448,7 @@ type FileInfo struct {
 
 func (x *FileInfo) Reset() {
 	*x = FileInfo{}
-	mi := &file_proto_backup_proto_msgTypes[17]
+	mi := &file_proto_backup_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1373,7 +1460,7 @@ func (x *FileInfo) String() string {
 func (*FileInfo) ProtoMessage() {}
 
 func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[17]
+	mi := &file_proto_backup_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1386,7 +1473,7 @@ func (x *FileInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileInfo.ProtoReflect.Descriptor instead.
 func (*FileInfo) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{17}
+	return file_proto_backup_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *FileInfo) GetPath() string {
@@ -1437,7 +1524,7 @@ type DownloadFileRequest struct {
 
 func (x *DownloadFileRequest) Reset() {
 	*x = DownloadFileRequest{}
-	mi := &file_proto_backup_proto_msgTypes[18]
+	mi := &file_proto_backup_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1449,7 +1536,7 @@ func (x *DownloadFileRequest) String() string {
 func (*DownloadFileRequest) ProtoMessage() {}
 
 func (x *DownloadFileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[18]
+	mi := &file_proto_backup_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1462,7 +1549,7 @@ func (x *DownloadFileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadFileRequest.ProtoReflect.Descriptor instead.
 func (*DownloadFileRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{18}
+	return file_proto_backup_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DownloadFileRequest) GetClientId() string {
@@ -1513,7 +1600,7 @@ type DownloadFileResponse struct {
 
 func (x *DownloadFileResponse) Reset() {
 	*x = DownloadFileResponse{}
-	mi := &file_proto_backup_proto_msgTypes[19]
+	mi := &file_proto_backup_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1525,7 +1612,7 @@ func (x *DownloadFileResponse) String() string {
 func (*DownloadFileResponse) ProtoMessage() {}
 
 func (x *DownloadFileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[19]
+	mi := &file_proto_backup_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1538,7 +1625,7 @@ func (x *DownloadFileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadFileResponse.ProtoReflect.Descriptor instead.
 func (*DownloadFileResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{19}
+	return file_proto_backup_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DownloadFileResponse) GetData() isDownloadFileResponse_Data {
@@ -1594,7 +1681,7 @@ type FileMetadata struct {
 
 func (x *FileMetadata) Reset() {
 	*x = FileMetadata{}
-	mi := &file_proto_backup_proto_msgTypes[20]
+	mi := &file_proto_backup_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1606,7 +1693,7 @@ func (x *FileMetadata) String() string {
 func (*FileMetadata) ProtoMessage() {}
 
 func (x *FileMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[20]
+	mi := &file_proto_backup_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1619,7 +1706,7 @@ func (x *FileMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileMetadata.ProtoReflect.Descriptor instead.
 func (*FileMetadata) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{20}
+	return file_proto_backup_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *FileMetadata) GetPath() string {
@@ -1662,7 +1749,7 @@ type ListSnapshotsRequest struct {
 
 func (x *ListSnapshotsRequest) Reset() {
 	*x = ListSnapshotsRequest{}
-	mi := &file_proto_backup_proto_msgTypes[21]
+	mi := &file_proto_backup_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1674,7 +1761,7 @@ func (x *ListSnapshotsRequest) String() string {
 func (*ListSnapshotsRequest) ProtoMessage() {}
 
 func (x *ListSnapshotsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[21]
+	mi := &file_proto_backup_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1687,7 +1774,7 @@ func (x *ListSnapshotsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSnapshotsRequest.ProtoReflect.Descriptor instead.
 func (*ListSnapshotsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{21}
+	return file_proto_backup_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListSnapshotsRequest) GetClientId() string {
@@ -1727,7 +1814,7 @@ type ListSnapshotsResponse struct {
 
 func (x *ListSnapshotsResponse) Reset() {
 	*x = ListSnapshotsResponse{}
-	mi := &file_proto_backup_proto_msgTypes[22]
+	mi := &file_proto_backup_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1739,7 +1826,7 @@ func (x *ListSnapshotsResponse) String() string {
 func (*ListSnapshotsResponse) ProtoMessage() {}
 
 func (x *ListSnapshotsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[22]
+	mi := &file_proto_backup_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1752,7 +1839,7 @@ func (x *ListSnapshotsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSnapshotsResponse.ProtoReflect.Descriptor instead.
 func (*ListSnapshotsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{22}
+	return file_proto_backup_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListSnapshotsResponse) GetSnapshots() []*SnapshotInfo {
@@ -1775,7 +1862,7 @@ type SnapshotInfo struct {
 
 func (x *SnapshotInfo) Reset() {
 	*x = SnapshotInfo{}
-	mi := &file_proto_backup_proto_msgTypes[23]
+	mi := &file_proto_backup_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1787,7 +1874,7 @@ func (x *SnapshotInfo) String() string {
 func (*SnapshotInfo) ProtoMessage() {}
 
 func (x *SnapshotInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[23]
+	mi := &file_proto_backup_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1800,7 +1887,7 @@ func (x *SnapshotInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotInfo.ProtoReflect.Descriptor instead.
 func (*SnapshotInfo) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{23}
+	return file_proto_backup_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *SnapshotInfo) GetSnapshotId() string {
@@ -1853,7 +1940,7 @@ type SnapshotRestoreRequest struct {
 
 func (x *SnapshotRestoreRequest) Reset() {
 	*x = SnapshotRestoreRequest{}
-	mi := &file_proto_backup_proto_msgTypes[24]
+	mi := &file_proto_backup_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1865,7 +1952,7 @@ func (x *SnapshotRestoreRequest) String() string {
 func (*SnapshotRestoreRequest) ProtoMessage() {}
 
 func (x *SnapshotRestoreRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[24]
+	mi := &file_proto_backup_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1878,7 +1965,7 @@ func (x *SnapshotRestoreRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotRestoreRequest.ProtoReflect.Descriptor instead.
 func (*SnapshotRestoreRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{24}
+	return file_proto_backup_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *SnapshotRestoreRequest) GetClientId() string {
@@ -1942,7 +2029,7 @@ type SnapshotRestoreResponse struct {
 
 func (x *SnapshotRestoreResponse) Reset() {
 	*x = SnapshotRestoreResponse{}
-	mi := &file_proto_backup_proto_msgTypes[25]
+	mi := &file_proto_backup_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1954,7 +2041,7 @@ func (x *SnapshotRestoreResponse) String() string {
 func (*SnapshotRestoreResponse) ProtoMessage() {}
 
 func (x *SnapshotRestoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[25]
+	mi := &file_proto_backup_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1967,7 +2054,7 @@ func (x *SnapshotRestoreResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotRestoreResponse.ProtoReflect.Descriptor instead.
 func (*SnapshotRestoreResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{25}
+	return file_proto_backup_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *SnapshotRestoreResponse) GetSuccess() bool {
@@ -2011,7 +2098,7 @@ type RestoreRequestStatusRequest struct {
 
 func (x *RestoreRequestStatusRequest) Reset() {
 	*x = RestoreRequestStatusRequest{}
-	mi := &file_proto_backup_proto_msgTypes[26]
+	mi := &file_proto_backup_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2023,7 +2110,7 @@ func (x *RestoreRequestStatusRequest) String() string {
 func (*RestoreRequestStatusRequest) ProtoMessage() {}
 
 func (x *RestoreRequestStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[26]
+	mi := &file_proto_backup_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2036,7 +2123,7 @@ func (x *RestoreRequestStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreRequestStatusRequest.ProtoReflect.Descriptor instead.
 func (*RestoreRequestStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{26}
+	return file_proto_backup_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RestoreRequestStatusRequest) GetClientId() string {
@@ -2085,7 +2172,7 @@ type RestoreRequestStatusResponse struct {
 
 func (x *RestoreRequestStatusResponse) Reset() {
 	*x = RestoreRequestStatusResponse{}
-	mi := &file_proto_backup_proto_msgTypes[27]
+	mi := &file_proto_backup_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2097,7 +2184,7 @@ func (x *RestoreRequestStatusResponse) String() string {
 func (*RestoreRequestStatusResponse) ProtoMessage() {}
 
 func (x *RestoreRequestStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[27]
+	mi := &file_proto_backup_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2110,7 +2197,7 @@ func (x *RestoreRequestStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestoreRequestStatusResponse.ProtoReflect.Descriptor instead.
 func (*RestoreRequestStatusResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{27}
+	return file_proto_backup_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *RestoreRequestStatusResponse) GetStatus() RestoreRequestStatus {
@@ -2147,7 +2234,7 @@ type LoadDatasetKeyRequest struct {
 
 func (x *LoadDatasetKeyRequest) Reset() {
 	*x = LoadDatasetKeyRequest{}
-	mi := &file_proto_backup_proto_msgTypes[28]
+	mi := &file_proto_backup_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2159,7 +2246,7 @@ func (x *LoadDatasetKeyRequest) String() string {
 func (*LoadDatasetKeyRequest) ProtoMessage() {}
 
 func (x *LoadDatasetKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[28]
+	mi := &file_proto_backup_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2172,7 +2259,7 @@ func (x *LoadDatasetKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoadDatasetKeyRequest.ProtoReflect.Descriptor instead.
 func (*LoadDatasetKeyRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{28}
+	return file_proto_backup_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *LoadDatasetKeyRequest) GetClientId() string {
@@ -2220,7 +2307,7 @@ type LoadDatasetKeyResponse struct {
 
 func (x *LoadDatasetKeyResponse) Reset() {
 	*x = LoadDatasetKeyResponse{}
-	mi := &file_proto_backup_proto_msgTypes[29]
+	mi := &file_proto_backup_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2232,7 +2319,7 @@ func (x *LoadDatasetKeyResponse) String() string {
 func (*LoadDatasetKeyResponse) ProtoMessage() {}
 
 func (x *LoadDatasetKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[29]
+	mi := &file_proto_backup_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2245,7 +2332,7 @@ func (x *LoadDatasetKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoadDatasetKeyResponse.ProtoReflect.Descriptor instead.
 func (*LoadDatasetKeyResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{29}
+	return file_proto_backup_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *LoadDatasetKeyResponse) GetSuccess() bool {
@@ -2274,7 +2361,7 @@ type UnloadDatasetKeyRequest struct {
 
 func (x *UnloadDatasetKeyRequest) Reset() {
 	*x = UnloadDatasetKeyRequest{}
-	mi := &file_proto_backup_proto_msgTypes[30]
+	mi := &file_proto_backup_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2286,7 +2373,7 @@ func (x *UnloadDatasetKeyRequest) String() string {
 func (*UnloadDatasetKeyRequest) ProtoMessage() {}
 
 func (x *UnloadDatasetKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[30]
+	mi := &file_proto_backup_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2299,7 +2386,7 @@ func (x *UnloadDatasetKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnloadDatasetKeyRequest.ProtoReflect.Descriptor instead.
 func (*UnloadDatasetKeyRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{30}
+	return file_proto_backup_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UnloadDatasetKeyRequest) GetClientId() string {
@@ -2340,7 +2427,7 @@ type UnloadDatasetKeyResponse struct {
 
 func (x *UnloadDatasetKeyResponse) Reset() {
 	*x = UnloadDatasetKeyResponse{}
-	mi := &file_proto_backup_proto_msgTypes[31]
+	mi := &file_proto_backup_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2352,7 +2439,7 @@ func (x *UnloadDatasetKeyResponse) String() string {
 func (*UnloadDatasetKeyResponse) ProtoMessage() {}
 
 func (x *UnloadDatasetKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[31]
+	mi := &file_proto_backup_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2365,7 +2452,7 @@ func (x *UnloadDatasetKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnloadDatasetKeyResponse.ProtoReflect.Descriptor instead.
 func (*UnloadDatasetKeyResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{31}
+	return file_proto_backup_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *UnloadDatasetKeyResponse) GetSuccess() bool {
@@ -2394,7 +2481,7 @@ type HeartbeatRequest struct {
 
 func (x *HeartbeatRequest) Reset() {
 	*x = HeartbeatRequest{}
-	mi := &file_proto_backup_proto_msgTypes[32]
+	mi := &file_proto_backup_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2406,7 +2493,7 @@ func (x *HeartbeatRequest) String() string {
 func (*HeartbeatRequest) ProtoMessage() {}
 
 func (x *HeartbeatRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[32]
+	mi := &file_proto_backup_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2419,7 +2506,7 @@ func (x *HeartbeatRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HeartbeatRequest.ProtoReflect.Descriptor instead.
 func (*HeartbeatRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{32}
+	return file_proto_backup_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *HeartbeatRequest) GetClientId() string {
@@ -2460,7 +2547,7 @@ type HeartbeatResponse struct {
 
 func (x *HeartbeatResponse) Reset() {
 	*x = HeartbeatResponse{}
-	mi := &file_proto_backup_proto_msgTypes[33]
+	mi := &file_proto_backup_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2472,7 +2559,7 @@ func (x *HeartbeatResponse) String() string {
 func (*HeartbeatResponse) ProtoMessage() {}
 
 func (x *HeartbeatResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[33]
+	mi := &file_proto_backup_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2485,7 +2572,7 @@ func (x *HeartbeatResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HeartbeatResponse.ProtoReflect.Descriptor instead.
 func (*HeartbeatResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{33}
+	return file_proto_backup_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *HeartbeatResponse) GetSuccess() bool {
@@ -2511,7 +2598,7 @@ type ListPendingRegistrationsRequest struct {
 
 func (x *ListPendingRegistrationsRequest) Reset() {
 	*x = ListPendingRegistrationsRequest{}
-	mi := &file_proto_backup_proto_msgTypes[34]
+	mi := &file_proto_backup_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2523,7 +2610,7 @@ func (x *ListPendingRegistrationsRequest) String() string {
 func (*ListPendingRegistrationsRequest) ProtoMessage() {}
 
 func (x *ListPendingRegistrationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[34]
+	mi := &file_proto_backup_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2536,7 +2623,7 @@ func (x *ListPendingRegistrationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPendingRegistrationsRequest.ProtoReflect.Descriptor instead.
 func (*ListPendingRegistrationsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{34}
+	return file_proto_backup_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ListPendingRegistrationsRequest) GetAdminToken() string {
@@ -2555,7 +2642,7 @@ type ListPendingRegistrationsResponse struct {
 
 func (x *ListPendingRegistrationsResponse) Reset() {
 	*x = ListPendingRegistrationsResponse{}
-	mi := &file_proto_backup_proto_msgTypes[35]
+	mi := &file_proto_backup_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2567,7 +2654,7 @@ func (x *ListPendingRegistrationsResponse) String() string {
 func (*ListPendingRegistrationsResponse) ProtoMessage() {}
 
 func (x *ListPendingRegistrationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[35]
+	mi := &file_proto_backup_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2580,7 +2667,7 @@ func (x *ListPendingRegistrationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPendingRegistrationsResponse.ProtoReflect.Descriptor instead.
 func (*ListPendingRegistrationsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{35}
+	return file_proto_backup_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListPendingRegistrationsResponse) GetRegistrations() []*PendingRegistration {
@@ -2603,7 +2690,7 @@ type PendingRegistration struct {
 
 func (x *PendingRegistration) Reset() {
 	*x = PendingRegistration{}
-	mi := &file_proto_backup_proto_msgTypes[36]
+	mi := &file_proto_backup_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2615,7 +2702,7 @@ func (x *PendingRegistration) String() string {
 func (*PendingRegistration) ProtoMessage() {}
 
 func (x *PendingRegistration) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[36]
+	mi := &file_proto_backup_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2628,7 +2715,7 @@ func (x *PendingRegistration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingRegistration.ProtoReflect.Descriptor instead.
 func (*PendingRegistration) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{36}
+	return file_proto_backup_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *PendingRegistration) GetRegistrationId() string {
@@ -2677,7 +2764,7 @@ type ApproveRegistrationRequest struct {
 
 func (x *ApproveRegistrationRequest) Reset() {
 	*x = ApproveRegistrationRequest{}
-	mi := &file_proto_backup_proto_msgTypes[37]
+	mi := &file_proto_backup_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2689,7 +2776,7 @@ func (x *ApproveRegistrationRequest) String() string {
 func (*ApproveRegistrationRequest) ProtoMessage() {}
 
 func (x *ApproveRegistrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[37]
+	mi := &file_proto_backup_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2702,7 +2789,7 @@ func (x *ApproveRegistrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveRegistrationRequest.ProtoReflect.Descriptor instead.
 func (*ApproveRegistrationRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{37}
+	return file_proto_backup_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ApproveRegistrationRequest) GetAdminToken() string {
@@ -2737,7 +2824,7 @@ type ApproveRegistrationResponse struct {
 
 func (x *ApproveRegistrationResponse) Reset() {
 	*x = ApproveRegistrationResponse{}
-	mi := &file_proto_backup_proto_msgTypes[38]
+	mi := &file_proto_backup_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2749,7 +2836,7 @@ func (x *ApproveRegistrationResponse) String() string {
 func (*ApproveRegistrationResponse) ProtoMessage() {}
 
 func (x *ApproveRegistrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[38]
+	mi := &file_proto_backup_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2762,7 +2849,7 @@ func (x *ApproveRegistrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveRegistrationResponse.ProtoReflect.Descriptor instead.
 func (*ApproveRegistrationResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{38}
+	return file_proto_backup_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ApproveRegistrationResponse) GetSuccess() bool {
@@ -2797,7 +2884,7 @@ type RejectRegistrationRequest struct {
 
 func (x *RejectRegistrationRequest) Reset() {
 	*x = RejectRegistrationRequest{}
-	mi := &file_proto_backup_proto_msgTypes[39]
+	mi := &file_proto_backup_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2809,7 +2896,7 @@ func (x *RejectRegistrationRequest) String() string {
 func (*RejectRegistrationRequest) ProtoMessage() {}
 
 func (x *RejectRegistrationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[39]
+	mi := &file_proto_backup_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2822,7 +2909,7 @@ func (x *RejectRegistrationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectRegistrationRequest.ProtoReflect.Descriptor instead.
 func (*RejectRegistrationRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{39}
+	return file_proto_backup_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *RejectRegistrationRequest) GetAdminToken() string {
@@ -2856,7 +2943,7 @@ type RejectRegistrationResponse struct {
 
 func (x *RejectRegistrationResponse) Reset() {
 	*x = RejectRegistrationResponse{}
-	mi := &file_proto_backup_proto_msgTypes[40]
+	mi := &file_proto_backup_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2868,7 +2955,7 @@ func (x *RejectRegistrationResponse) String() string {
 func (*RejectRegistrationResponse) ProtoMessage() {}
 
 func (x *RejectRegistrationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[40]
+	mi := &file_proto_backup_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2881,7 +2968,7 @@ func (x *RejectRegistrationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectRegistrationResponse.ProtoReflect.Descriptor instead.
 func (*RejectRegistrationResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{40}
+	return file_proto_backup_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *RejectRegistrationResponse) GetSuccess() bool {
@@ -2908,7 +2995,7 @@ type ListUsersRequest struct {
 
 func (x *ListUsersRequest) Reset() {
 	*x = ListUsersRequest{}
-	mi := &file_proto_backup_proto_msgTypes[41]
+	mi := &file_proto_backup_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2920,7 +3007,7 @@ func (x *ListUsersRequest) String() string {
 func (*ListUsersRequest) ProtoMessage() {}
 
 func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[41]
+	mi := &file_proto_backup_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2933,7 +3020,7 @@ func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
 func (*ListUsersRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{41}
+	return file_proto_backup_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *ListUsersRequest) GetAdminToken() string {
@@ -2959,7 +3046,7 @@ type ListUsersResponse struct {
 
 func (x *ListUsersResponse) Reset() {
 	*x = ListUsersResponse{}
-	mi := &file_proto_backup_proto_msgTypes[42]
+	mi := &file_proto_backup_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2971,7 +3058,7 @@ func (x *ListUsersResponse) String() string {
 func (*ListUsersResponse) ProtoMessage() {}
 
 func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[42]
+	mi := &file_proto_backup_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2984,7 +3071,7 @@ func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
 func (*ListUsersResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{42}
+	return file_proto_backup_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *ListUsersResponse) GetUsers() []*UserInfo {
@@ -3011,7 +3098,7 @@ type UserInfo struct {
 
 func (x *UserInfo) Reset() {
 	*x = UserInfo{}
-	mi := &file_proto_backup_proto_msgTypes[43]
+	mi := &file_proto_backup_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3023,7 +3110,7 @@ func (x *UserInfo) String() string {
 func (*UserInfo) ProtoMessage() {}
 
 func (x *UserInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[43]
+	mi := &file_proto_backup_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3036,7 +3123,7 @@ func (x *UserInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
 func (*UserInfo) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{43}
+	return file_proto_backup_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *UserInfo) GetUserId() string {
@@ -3113,7 +3200,7 @@ type RevokeUserRequest struct {
 
 func (x *RevokeUserRequest) Reset() {
 	*x = RevokeUserRequest{}
-	mi := &file_proto_backup_proto_msgTypes[44]
+	mi := &file_proto_backup_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3125,7 +3212,7 @@ func (x *RevokeUserRequest) String() string {
 func (*RevokeUserRequest) ProtoMessage() {}
 
 func (x *RevokeUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[44]
+	mi := &file_proto_backup_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3138,7 +3225,7 @@ func (x *RevokeUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeUserRequest.ProtoReflect.Descriptor instead.
 func (*RevokeUserRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{44}
+	return file_proto_backup_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *RevokeUserRequest) GetAdminToken() string {
@@ -3172,7 +3259,7 @@ type RevokeUserResponse struct {
 
 func (x *RevokeUserResponse) Reset() {
 	*x = RevokeUserResponse{}
-	mi := &file_proto_backup_proto_msgTypes[45]
+	mi := &file_proto_backup_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3184,7 +3271,7 @@ func (x *RevokeUserResponse) String() string {
 func (*RevokeUserResponse) ProtoMessage() {}
 
 func (x *RevokeUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[45]
+	mi := &file_proto_backup_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3197,7 +3284,7 @@ func (x *RevokeUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeUserResponse.ProtoReflect.Descriptor instead.
 func (*RevokeUserResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{45}
+	return file_proto_backup_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *RevokeUserResponse) GetSuccess() bool {
@@ -3224,7 +3311,7 @@ type ListAllSnapshotsRequest struct {
 
 func (x *ListAllSnapshotsRequest) Reset() {
 	*x = ListAllSnapshotsRequest{}
-	mi := &file_proto_backup_proto_msgTypes[46]
+	mi := &file_proto_backup_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3236,7 +3323,7 @@ func (x *ListAllSnapshotsRequest) String() string {
 func (*ListAllSnapshotsRequest) ProtoMessage() {}
 
 func (x *ListAllSnapshotsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[46]
+	mi := &file_proto_backup_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3249,7 +3336,7 @@ func (x *ListAllSnapshotsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAllSnapshotsRequest.ProtoReflect.Descriptor instead.
 func (*ListAllSnapshotsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{46}
+	return file_proto_backup_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *ListAllSnapshotsRequest) GetAdminToken() string {
@@ -3275,7 +3362,7 @@ type ListAllSnapshotsResponse struct {
 
 func (x *ListAllSnapshotsResponse) Reset() {
 	*x = ListAllSnapshotsResponse{}
-	mi := &file_proto_backup_proto_msgTypes[47]
+	mi := &file_proto_backup_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3287,7 +3374,7 @@ func (x *ListAllSnapshotsResponse) String() string {
 func (*ListAllSnapshotsResponse) ProtoMessage() {}
 
 func (x *ListAllSnapshotsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[47]
+	mi := &file_proto_backup_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3300,7 +3387,7 @@ func (x *ListAllSnapshotsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAllSnapshotsResponse.ProtoReflect.Descriptor instead.
 func (*ListAllSnapshotsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{47}
+	return file_proto_backup_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *ListAllSnapshotsResponse) GetSnapshots() []*SnapshotInfo {
@@ -3320,7 +3407,7 @@ type ApproveRestoreRequestRequest struct {
 
 func (x *ApproveRestoreRequestRequest) Reset() {
 	*x = ApproveRestoreRequestRequest{}
-	mi := &file_proto_backup_proto_msgTypes[48]
+	mi := &file_proto_backup_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3332,7 +3419,7 @@ func (x *ApproveRestoreRequestRequest) String() string {
 func (*ApproveRestoreRequestRequest) ProtoMessage() {}
 
 func (x *ApproveRestoreRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[48]
+	mi := &file_proto_backup_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3345,7 +3432,7 @@ func (x *ApproveRestoreRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveRestoreRequestRequest.ProtoReflect.Descriptor instead.
 func (*ApproveRestoreRequestRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{48}
+	return file_proto_backup_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *ApproveRestoreRequestRequest) GetAdminToken() string {
@@ -3372,7 +3459,7 @@ type ApproveRestoreRequestResponse struct {
 
 func (x *ApproveRestoreRequestResponse) Reset() {
 	*x = ApproveRestoreRequestResponse{}
-	mi := &file_proto_backup_proto_msgTypes[49]
+	mi := &file_proto_backup_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3384,7 +3471,7 @@ func (x *ApproveRestoreRequestResponse) String() string {
 func (*ApproveRestoreRequestResponse) ProtoMessage() {}
 
 func (x *ApproveRestoreRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[49]
+	mi := &file_proto_backup_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3397,7 +3484,7 @@ func (x *ApproveRestoreRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApproveRestoreRequestResponse.ProtoReflect.Descriptor instead.
 func (*ApproveRestoreRequestResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{49}
+	return file_proto_backup_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ApproveRestoreRequestResponse) GetSuccess() bool {
@@ -3425,7 +3512,7 @@ type RejectRestoreRequestRequest struct {
 
 func (x *RejectRestoreRequestRequest) Reset() {
 	*x = RejectRestoreRequestRequest{}
-	mi := &file_proto_backup_proto_msgTypes[50]
+	mi := &file_proto_backup_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3437,7 +3524,7 @@ func (x *RejectRestoreRequestRequest) String() string {
 func (*RejectRestoreRequestRequest) ProtoMessage() {}
 
 func (x *RejectRestoreRequestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[50]
+	mi := &file_proto_backup_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3450,7 +3537,7 @@ func (x *RejectRestoreRequestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectRestoreRequestRequest.ProtoReflect.Descriptor instead.
 func (*RejectRestoreRequestRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{50}
+	return file_proto_backup_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *RejectRestoreRequestRequest) GetAdminToken() string {
@@ -3484,7 +3571,7 @@ type RejectRestoreRequestResponse struct {
 
 func (x *RejectRestoreRequestResponse) Reset() {
 	*x = RejectRestoreRequestResponse{}
-	mi := &file_proto_backup_proto_msgTypes[51]
+	mi := &file_proto_backup_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3496,7 +3583,7 @@ func (x *RejectRestoreRequestResponse) String() string {
 func (*RejectRestoreRequestResponse) ProtoMessage() {}
 
 func (x *RejectRestoreRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[51]
+	mi := &file_proto_backup_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3509,7 +3596,7 @@ func (x *RejectRestoreRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectRestoreRequestResponse.ProtoReflect.Descriptor instead.
 func (*RejectRestoreRequestResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{51}
+	return file_proto_backup_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *RejectRestoreRequestResponse) GetSuccess() bool {
@@ -3536,7 +3623,7 @@ type UpdateSnapshotPolicyRequest struct {
 
 func (x *UpdateSnapshotPolicyRequest) Reset() {
 	*x = UpdateSnapshotPolicyRequest{}
-	mi := &file_proto_backup_proto_msgTypes[52]
+	mi := &file_proto_backup_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3548,7 +3635,7 @@ func (x *UpdateSnapshotPolicyRequest) String() string {
 func (*UpdateSnapshotPolicyRequest) ProtoMessage() {}
 
 func (x *UpdateSnapshotPolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[52]
+	mi := &file_proto_backup_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3561,7 +3648,7 @@ func (x *UpdateSnapshotPolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSnapshotPolicyRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSnapshotPolicyRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{52}
+	return file_proto_backup_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *UpdateSnapshotPolicyRequest) GetAdminToken() string {
@@ -3590,7 +3677,7 @@ type SnapshotPolicy struct {
 
 func (x *SnapshotPolicy) Reset() {
 	*x = SnapshotPolicy{}
-	mi := &file_proto_backup_proto_msgTypes[53]
+	mi := &file_proto_backup_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3602,7 +3689,7 @@ func (x *SnapshotPolicy) String() string {
 func (*SnapshotPolicy) ProtoMessage() {}
 
 func (x *SnapshotPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[53]
+	mi := &file_proto_backup_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3615,7 +3702,7 @@ func (x *SnapshotPolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotPolicy.ProtoReflect.Descriptor instead.
 func (*SnapshotPolicy) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{53}
+	return file_proto_backup_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *SnapshotPolicy) GetHourlyRetention() int32 {
@@ -3656,7 +3743,7 @@ type UpdateSnapshotPolicyResponse struct {
 
 func (x *UpdateSnapshotPolicyResponse) Reset() {
 	*x = UpdateSnapshotPolicyResponse{}
-	mi := &file_proto_backup_proto_msgTypes[54]
+	mi := &file_proto_backup_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3668,7 +3755,7 @@ func (x *UpdateSnapshotPolicyResponse) String() string {
 func (*UpdateSnapshotPolicyResponse) ProtoMessage() {}
 
 func (x *UpdateSnapshotPolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[54]
+	mi := &file_proto_backup_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3681,7 +3768,7 @@ func (x *UpdateSnapshotPolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSnapshotPolicyResponse.ProtoReflect.Descriptor instead.
 func (*UpdateSnapshotPolicyResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{54}
+	return file_proto_backup_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *UpdateSnapshotPolicyResponse) GetSuccess() bool {
@@ -3707,7 +3794,7 @@ type SystemStatusRequest struct {
 
 func (x *SystemStatusRequest) Reset() {
 	*x = SystemStatusRequest{}
-	mi := &file_proto_backup_proto_msgTypes[55]
+	mi := &file_proto_backup_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3719,7 +3806,7 @@ func (x *SystemStatusRequest) String() string {
 func (*SystemStatusRequest) ProtoMessage() {}
 
 func (x *SystemStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[55]
+	mi := &file_proto_backup_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3732,7 +3819,7 @@ func (x *SystemStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemStatusRequest.ProtoReflect.Descriptor instead.
 func (*SystemStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{55}
+	return file_proto_backup_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *SystemStatusRequest) GetAdminToken() string {
@@ -3756,7 +3843,7 @@ type SystemStatusResponse struct {
 
 func (x *SystemStatusResponse) Reset() {
 	*x = SystemStatusResponse{}
-	mi := &file_proto_backup_proto_msgTypes[56]
+	mi := &file_proto_backup_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3768,7 +3855,7 @@ func (x *SystemStatusResponse) String() string {
 func (*SystemStatusResponse) ProtoMessage() {}
 
 func (x *SystemStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[56]
+	mi := &file_proto_backup_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3781,7 +3868,7 @@ func (x *SystemStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemStatusResponse.ProtoReflect.Descriptor instead.
 func (*SystemStatusResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{56}
+	return file_proto_backup_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *SystemStatusResponse) GetTotalUsers() int64 {
@@ -3839,7 +3926,7 @@ type PoolStatus struct {
 
 func (x *PoolStatus) Reset() {
 	*x = PoolStatus{}
-	mi := &file_proto_backup_proto_msgTypes[57]
+	mi := &file_proto_backup_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3851,7 +3938,7 @@ func (x *PoolStatus) String() string {
 func (*PoolStatus) ProtoMessage() {}
 
 func (x *PoolStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[57]
+	mi := &file_proto_backup_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3864,7 +3951,7 @@ func (x *PoolStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PoolStatus.ProtoReflect.Descriptor instead.
 func (*PoolStatus) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{57}
+	return file_proto_backup_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *PoolStatus) GetPoolName() string {
@@ -3902,24 +3989,20 @@ func (x *PoolStatus) GetHealth() float64 {
 	return 0
 }
 
-// CreateSnapshotRequest - Manual snapshot creation request
 type CreateSnapshotRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AdminToken    string                 `protobuf:"bytes,1,opt,name=admin_token,json=adminToken,proto3" json:"admin_token,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	SnapshotType  string                 `protobuf:"bytes,3,opt,name=snapshot_type,json=snapshotType,proto3" json:"snapshot_type,omitempty"` // "manual", "hourly", "daily", "weekly", "monthly"
 	unknownFields protoimpl.UnknownFields
-
-	AdminToken   string `protobuf:"bytes,1,opt,name=admin_token,json=adminToken,proto3" json:"admin_token,omitempty"`
-	UserId       string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	SnapshotType string `protobuf:"bytes,3,opt,name=snapshot_type,json=snapshotType,proto3" json:"snapshot_type,omitempty"`
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateSnapshotRequest) Reset() {
 	*x = CreateSnapshotRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_backup_proto_msgTypes[58]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_proto_backup_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateSnapshotRequest) String() string {
@@ -3929,8 +4012,8 @@ func (x *CreateSnapshotRequest) String() string {
 func (*CreateSnapshotRequest) ProtoMessage() {}
 
 func (x *CreateSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[58]
-	if protoimpl.UnsafeEnabled && x != nil {
+	mi := &file_proto_backup_proto_msgTypes[60]
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3940,8 +4023,9 @@ func (x *CreateSnapshotRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+// Deprecated: Use CreateSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*CreateSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{58}
+	return file_proto_backup_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *CreateSnapshotRequest) GetAdminToken() string {
@@ -3965,25 +4049,21 @@ func (x *CreateSnapshotRequest) GetSnapshotType() string {
 	return ""
 }
 
-// CreateSnapshotResponse - Manual snapshot creation response
 type CreateSnapshotResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	SnapshotName  string                 `protobuf:"bytes,3,opt,name=snapshot_name,json=snapshotName,proto3" json:"snapshot_name,omitempty"`
+	SizeBytes     int64                  `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
-
-	Success      bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message      string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	SnapshotName string `protobuf:"bytes,3,opt,name=snapshot_name,json=snapshotName,proto3" json:"snapshot_name,omitempty"`
-	SizeBytes    int64  `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateSnapshotResponse) Reset() {
 	*x = CreateSnapshotResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_backup_proto_msgTypes[59]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_proto_backup_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateSnapshotResponse) String() string {
@@ -3993,8 +4073,8 @@ func (x *CreateSnapshotResponse) String() string {
 func (*CreateSnapshotResponse) ProtoMessage() {}
 
 func (x *CreateSnapshotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_backup_proto_msgTypes[59]
-	if protoimpl.UnsafeEnabled && x != nil {
+	mi := &file_proto_backup_proto_msgTypes[61]
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4004,8 +4084,9 @@ func (x *CreateSnapshotResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+// Deprecated: Use CreateSnapshotResponse.ProtoReflect.Descriptor instead.
 func (*CreateSnapshotResponse) Descriptor() ([]byte, []int) {
-	return file_proto_backup_proto_rawDescGZIP(), []int{59}
+	return file_proto_backup_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *CreateSnapshotResponse) GetSuccess() bool {
@@ -4040,7 +4121,12 @@ var File_proto_backup_proto protoreflect.FileDescriptor
 
 const file_proto_backup_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/backup.proto\x12\vzfscloud.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x02\n" +
+	"\x12proto/backup.proto\x12\vzfscloud.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x18\n" +
+	"\x16ServerPublicKeyRequest\"O\n" +
+	"\x17ServerPublicKeyResponse\x12\x1d\n" +
+	"\n" +
+	"public_key\x18\x01 \x01(\fR\tpublicKey\x12\x15\n" +
+	"\x06key_id\x18\x02 \x01(\tR\x05keyId\"\x8b\x02\n" +
 	"\x0fRegisterRequest\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
@@ -4340,7 +4426,18 @@ const file_proto_backup_proto_rawDesc = "" +
 	"\n" +
 	"used_bytes\x18\x03 \x01(\x03R\tusedBytes\x12'\n" +
 	"\x0favailable_bytes\x18\x04 \x01(\x03R\x0eavailableBytes\x12\x16\n" +
-	"\x06health\x18\x05 \x01(\x01R\x06health*\x9a\x01\n" +
+	"\x06health\x18\x05 \x01(\x01R\x06health\"v\n" +
+	"\x15CreateSnapshotRequest\x12\x1f\n" +
+	"\vadmin_token\x18\x01 \x01(\tR\n" +
+	"adminToken\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12#\n" +
+	"\rsnapshot_type\x18\x03 \x01(\tR\fsnapshotType\"\x90\x01\n" +
+	"\x16CreateSnapshotResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12#\n" +
+	"\rsnapshot_name\x18\x03 \x01(\tR\fsnapshotName\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x04 \x01(\x03R\tsizeBytes*\x9a\x01\n" +
 	"\x12RegistrationStatus\x12\x1f\n" +
 	"\x1bREGISTRATION_STATUS_UNKNOWN\x10\x00\x12\x1f\n" +
 	"\x1bREGISTRATION_STATUS_PENDING\x10\x01\x12 \n" +
@@ -4351,8 +4448,10 @@ const file_proto_backup_proto_rawDesc = "" +
 	"\x1eRESTORE_REQUEST_STATUS_PENDING\x10\x01\x12#\n" +
 	"\x1fRESTORE_REQUEST_STATUS_APPROVED\x10\x02\x12#\n" +
 	"\x1fRESTORE_REQUEST_STATUS_REJECTED\x10\x03\x12$\n" +
-	" RESTORE_REQUEST_STATUS_COMPLETED\x10\x042\xf0\t\n" +
-	"\rBackupService\x12G\n" +
+	" RESTORE_REQUEST_STATUS_COMPLETED\x10\x042\xd1\n" +
+	"\n" +
+	"\rBackupService\x12_\n" +
+	"\x12GetServerPublicKey\x12#.zfscloud.v1.ServerPublicKeyRequest\x1a$.zfscloud.v1.ServerPublicKeyResponse\x12G\n" +
 	"\bRegister\x12\x1c.zfscloud.v1.RegisterRequest\x1a\x1d.zfscloud.v1.RegisterResponse\x12h\n" +
 	"\x15GetRegistrationStatus\x12&.zfscloud.v1.RegistrationStatusRequest\x1a'.zfscloud.v1.RegistrationStatusResponse\x12V\n" +
 	"\x0fGetBackupPolicy\x12 .zfscloud.v1.BackupPolicyRequest\x1a!.zfscloud.v1.BackupPolicyResponse\x12M\n" +
@@ -4366,7 +4465,7 @@ const file_proto_backup_proto_rawDesc = "" +
 	"\x17GetRestoreRequestStatus\x12(.zfscloud.v1.RestoreRequestStatusRequest\x1a).zfscloud.v1.RestoreRequestStatusResponse\x12Y\n" +
 	"\x0eLoadDatasetKey\x12\".zfscloud.v1.LoadDatasetKeyRequest\x1a#.zfscloud.v1.LoadDatasetKeyResponse\x12_\n" +
 	"\x10UnloadDatasetKey\x12$.zfscloud.v1.UnloadDatasetKeyRequest\x1a%.zfscloud.v1.UnloadDatasetKeyResponse\x12J\n" +
-	"\tHeartbeat\x12\x1d.zfscloud.v1.HeartbeatRequest\x1a\x1e.zfscloud.v1.HeartbeatResponse2\xf6\a\n" +
+	"\tHeartbeat\x12\x1d.zfscloud.v1.HeartbeatRequest\x1a\x1e.zfscloud.v1.HeartbeatResponse2\xd1\b\n" +
 	"\fAdminService\x12w\n" +
 	"\x18ListPendingRegistrations\x12,.zfscloud.v1.ListPendingRegistrationsRequest\x1a-.zfscloud.v1.ListPendingRegistrationsResponse\x12h\n" +
 	"\x13ApproveRegistration\x12'.zfscloud.v1.ApproveRegistrationRequest\x1a(.zfscloud.v1.ApproveRegistrationResponse\x12e\n" +
@@ -4378,7 +4477,8 @@ const file_proto_backup_proto_rawDesc = "" +
 	"\x15ApproveRestoreRequest\x12).zfscloud.v1.ApproveRestoreRequestRequest\x1a*.zfscloud.v1.ApproveRestoreRequestResponse\x12k\n" +
 	"\x14RejectRestoreRequest\x12(.zfscloud.v1.RejectRestoreRequestRequest\x1a).zfscloud.v1.RejectRestoreRequestResponse\x12k\n" +
 	"\x14UpdateSnapshotPolicy\x12(.zfscloud.v1.UpdateSnapshotPolicyRequest\x1a).zfscloud.v1.UpdateSnapshotPolicyResponse\x12V\n" +
-	"\x0fGetSystemStatus\x12 .zfscloud.v1.SystemStatusRequest\x1a!.zfscloud.v1.SystemStatusResponseB&Z$github.com/ioustamora/zfscloud/protob\x06proto3"
+	"\x0fGetSystemStatus\x12 .zfscloud.v1.SystemStatusRequest\x1a!.zfscloud.v1.SystemStatusResponse\x12Y\n" +
+	"\x0eCreateSnapshot\x12\".zfscloud.v1.CreateSnapshotRequest\x1a#.zfscloud.v1.CreateSnapshotResponseB&Z$github.com/ioustamora/zfscloud/protob\x06proto3"
 
 var (
 	file_proto_backup_proto_rawDescOnce sync.Once
@@ -4393,149 +4493,157 @@ func file_proto_backup_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_backup_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_backup_proto_msgTypes = make([]protoimpl.MessageInfo, 58)
+var file_proto_backup_proto_msgTypes = make([]protoimpl.MessageInfo, 62)
 var file_proto_backup_proto_goTypes = []any{
 	(RegistrationStatus)(0),                  // 0: zfscloud.v1.RegistrationStatus
 	(RestoreRequestStatus)(0),                // 1: zfscloud.v1.RestoreRequestStatus
-	(*RegisterRequest)(nil),                  // 2: zfscloud.v1.RegisterRequest
-	(*ClientMetadata)(nil),                   // 3: zfscloud.v1.ClientMetadata
-	(*RegisterResponse)(nil),                 // 4: zfscloud.v1.RegisterResponse
-	(*RegistrationStatusRequest)(nil),        // 5: zfscloud.v1.RegistrationStatusRequest
-	(*RegistrationStatusResponse)(nil),       // 6: zfscloud.v1.RegistrationStatusResponse
-	(*BackupPolicyRequest)(nil),              // 7: zfscloud.v1.BackupPolicyRequest
-	(*BackupPolicyResponse)(nil),             // 8: zfscloud.v1.BackupPolicyResponse
-	(*HashIndexRequest)(nil),                 // 9: zfscloud.v1.HashIndexRequest
-	(*HashIndexResponse)(nil),                // 10: zfscloud.v1.HashIndexResponse
-	(*FileHash)(nil),                         // 11: zfscloud.v1.FileHash
-	(*UploadChunkRequest)(nil),               // 12: zfscloud.v1.UploadChunkRequest
-	(*ChunkMetadata)(nil),                    // 13: zfscloud.v1.ChunkMetadata
-	(*UploadChunkResponse)(nil),              // 14: zfscloud.v1.UploadChunkResponse
-	(*CompleteBackupRequest)(nil),            // 15: zfscloud.v1.CompleteBackupRequest
-	(*CompleteBackupResponse)(nil),           // 16: zfscloud.v1.CompleteBackupResponse
-	(*ListFilesRequest)(nil),                 // 17: zfscloud.v1.ListFilesRequest
-	(*ListFilesResponse)(nil),                // 18: zfscloud.v1.ListFilesResponse
-	(*FileInfo)(nil),                         // 19: zfscloud.v1.FileInfo
-	(*DownloadFileRequest)(nil),              // 20: zfscloud.v1.DownloadFileRequest
-	(*DownloadFileResponse)(nil),             // 21: zfscloud.v1.DownloadFileResponse
-	(*FileMetadata)(nil),                     // 22: zfscloud.v1.FileMetadata
-	(*ListSnapshotsRequest)(nil),             // 23: zfscloud.v1.ListSnapshotsRequest
-	(*ListSnapshotsResponse)(nil),            // 24: zfscloud.v1.ListSnapshotsResponse
-	(*SnapshotInfo)(nil),                     // 25: zfscloud.v1.SnapshotInfo
-	(*SnapshotRestoreRequest)(nil),           // 26: zfscloud.v1.SnapshotRestoreRequest
-	(*SnapshotRestoreResponse)(nil),          // 27: zfscloud.v1.SnapshotRestoreResponse
-	(*RestoreRequestStatusRequest)(nil),      // 28: zfscloud.v1.RestoreRequestStatusRequest
-	(*RestoreRequestStatusResponse)(nil),     // 29: zfscloud.v1.RestoreRequestStatusResponse
-	(*LoadDatasetKeyRequest)(nil),            // 30: zfscloud.v1.LoadDatasetKeyRequest
-	(*LoadDatasetKeyResponse)(nil),           // 31: zfscloud.v1.LoadDatasetKeyResponse
-	(*UnloadDatasetKeyRequest)(nil),          // 32: zfscloud.v1.UnloadDatasetKeyRequest
-	(*UnloadDatasetKeyResponse)(nil),         // 33: zfscloud.v1.UnloadDatasetKeyResponse
-	(*HeartbeatRequest)(nil),                 // 34: zfscloud.v1.HeartbeatRequest
-	(*HeartbeatResponse)(nil),                // 35: zfscloud.v1.HeartbeatResponse
-	(*ListPendingRegistrationsRequest)(nil),  // 36: zfscloud.v1.ListPendingRegistrationsRequest
-	(*ListPendingRegistrationsResponse)(nil), // 37: zfscloud.v1.ListPendingRegistrationsResponse
-	(*PendingRegistration)(nil),              // 38: zfscloud.v1.PendingRegistration
-	(*ApproveRegistrationRequest)(nil),       // 39: zfscloud.v1.ApproveRegistrationRequest
-	(*ApproveRegistrationResponse)(nil),      // 40: zfscloud.v1.ApproveRegistrationResponse
-	(*RejectRegistrationRequest)(nil),        // 41: zfscloud.v1.RejectRegistrationRequest
-	(*RejectRegistrationResponse)(nil),       // 42: zfscloud.v1.RejectRegistrationResponse
-	(*ListUsersRequest)(nil),                 // 43: zfscloud.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),                // 44: zfscloud.v1.ListUsersResponse
-	(*UserInfo)(nil),                         // 45: zfscloud.v1.UserInfo
-	(*RevokeUserRequest)(nil),                // 46: zfscloud.v1.RevokeUserRequest
-	(*RevokeUserResponse)(nil),               // 47: zfscloud.v1.RevokeUserResponse
-	(*ListAllSnapshotsRequest)(nil),          // 48: zfscloud.v1.ListAllSnapshotsRequest
-	(*ListAllSnapshotsResponse)(nil),         // 49: zfscloud.v1.ListAllSnapshotsResponse
-	(*ApproveRestoreRequestRequest)(nil),     // 50: zfscloud.v1.ApproveRestoreRequestRequest
-	(*ApproveRestoreRequestResponse)(nil),    // 51: zfscloud.v1.ApproveRestoreRequestResponse
-	(*RejectRestoreRequestRequest)(nil),      // 52: zfscloud.v1.RejectRestoreRequestRequest
-	(*RejectRestoreRequestResponse)(nil),     // 53: zfscloud.v1.RejectRestoreRequestResponse
-	(*UpdateSnapshotPolicyRequest)(nil),      // 54: zfscloud.v1.UpdateSnapshotPolicyRequest
-	(*SnapshotPolicy)(nil),                   // 55: zfscloud.v1.SnapshotPolicy
-	(*UpdateSnapshotPolicyResponse)(nil),     // 56: zfscloud.v1.UpdateSnapshotPolicyResponse
-	(*SystemStatusRequest)(nil),              // 57: zfscloud.v1.SystemStatusRequest
-	(*SystemStatusResponse)(nil),             // 58: zfscloud.v1.SystemStatusResponse
-	(*PoolStatus)(nil),                       // 59: zfscloud.v1.PoolStatus
-	(*timestamppb.Timestamp)(nil),            // 60: google.protobuf.Timestamp
+	(*ServerPublicKeyRequest)(nil),           // 2: zfscloud.v1.ServerPublicKeyRequest
+	(*ServerPublicKeyResponse)(nil),          // 3: zfscloud.v1.ServerPublicKeyResponse
+	(*RegisterRequest)(nil),                  // 4: zfscloud.v1.RegisterRequest
+	(*ClientMetadata)(nil),                   // 5: zfscloud.v1.ClientMetadata
+	(*RegisterResponse)(nil),                 // 6: zfscloud.v1.RegisterResponse
+	(*RegistrationStatusRequest)(nil),        // 7: zfscloud.v1.RegistrationStatusRequest
+	(*RegistrationStatusResponse)(nil),       // 8: zfscloud.v1.RegistrationStatusResponse
+	(*BackupPolicyRequest)(nil),              // 9: zfscloud.v1.BackupPolicyRequest
+	(*BackupPolicyResponse)(nil),             // 10: zfscloud.v1.BackupPolicyResponse
+	(*HashIndexRequest)(nil),                 // 11: zfscloud.v1.HashIndexRequest
+	(*HashIndexResponse)(nil),                // 12: zfscloud.v1.HashIndexResponse
+	(*FileHash)(nil),                         // 13: zfscloud.v1.FileHash
+	(*UploadChunkRequest)(nil),               // 14: zfscloud.v1.UploadChunkRequest
+	(*ChunkMetadata)(nil),                    // 15: zfscloud.v1.ChunkMetadata
+	(*UploadChunkResponse)(nil),              // 16: zfscloud.v1.UploadChunkResponse
+	(*CompleteBackupRequest)(nil),            // 17: zfscloud.v1.CompleteBackupRequest
+	(*CompleteBackupResponse)(nil),           // 18: zfscloud.v1.CompleteBackupResponse
+	(*ListFilesRequest)(nil),                 // 19: zfscloud.v1.ListFilesRequest
+	(*ListFilesResponse)(nil),                // 20: zfscloud.v1.ListFilesResponse
+	(*FileInfo)(nil),                         // 21: zfscloud.v1.FileInfo
+	(*DownloadFileRequest)(nil),              // 22: zfscloud.v1.DownloadFileRequest
+	(*DownloadFileResponse)(nil),             // 23: zfscloud.v1.DownloadFileResponse
+	(*FileMetadata)(nil),                     // 24: zfscloud.v1.FileMetadata
+	(*ListSnapshotsRequest)(nil),             // 25: zfscloud.v1.ListSnapshotsRequest
+	(*ListSnapshotsResponse)(nil),            // 26: zfscloud.v1.ListSnapshotsResponse
+	(*SnapshotInfo)(nil),                     // 27: zfscloud.v1.SnapshotInfo
+	(*SnapshotRestoreRequest)(nil),           // 28: zfscloud.v1.SnapshotRestoreRequest
+	(*SnapshotRestoreResponse)(nil),          // 29: zfscloud.v1.SnapshotRestoreResponse
+	(*RestoreRequestStatusRequest)(nil),      // 30: zfscloud.v1.RestoreRequestStatusRequest
+	(*RestoreRequestStatusResponse)(nil),     // 31: zfscloud.v1.RestoreRequestStatusResponse
+	(*LoadDatasetKeyRequest)(nil),            // 32: zfscloud.v1.LoadDatasetKeyRequest
+	(*LoadDatasetKeyResponse)(nil),           // 33: zfscloud.v1.LoadDatasetKeyResponse
+	(*UnloadDatasetKeyRequest)(nil),          // 34: zfscloud.v1.UnloadDatasetKeyRequest
+	(*UnloadDatasetKeyResponse)(nil),         // 35: zfscloud.v1.UnloadDatasetKeyResponse
+	(*HeartbeatRequest)(nil),                 // 36: zfscloud.v1.HeartbeatRequest
+	(*HeartbeatResponse)(nil),                // 37: zfscloud.v1.HeartbeatResponse
+	(*ListPendingRegistrationsRequest)(nil),  // 38: zfscloud.v1.ListPendingRegistrationsRequest
+	(*ListPendingRegistrationsResponse)(nil), // 39: zfscloud.v1.ListPendingRegistrationsResponse
+	(*PendingRegistration)(nil),              // 40: zfscloud.v1.PendingRegistration
+	(*ApproveRegistrationRequest)(nil),       // 41: zfscloud.v1.ApproveRegistrationRequest
+	(*ApproveRegistrationResponse)(nil),      // 42: zfscloud.v1.ApproveRegistrationResponse
+	(*RejectRegistrationRequest)(nil),        // 43: zfscloud.v1.RejectRegistrationRequest
+	(*RejectRegistrationResponse)(nil),       // 44: zfscloud.v1.RejectRegistrationResponse
+	(*ListUsersRequest)(nil),                 // 45: zfscloud.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),                // 46: zfscloud.v1.ListUsersResponse
+	(*UserInfo)(nil),                         // 47: zfscloud.v1.UserInfo
+	(*RevokeUserRequest)(nil),                // 48: zfscloud.v1.RevokeUserRequest
+	(*RevokeUserResponse)(nil),               // 49: zfscloud.v1.RevokeUserResponse
+	(*ListAllSnapshotsRequest)(nil),          // 50: zfscloud.v1.ListAllSnapshotsRequest
+	(*ListAllSnapshotsResponse)(nil),         // 51: zfscloud.v1.ListAllSnapshotsResponse
+	(*ApproveRestoreRequestRequest)(nil),     // 52: zfscloud.v1.ApproveRestoreRequestRequest
+	(*ApproveRestoreRequestResponse)(nil),    // 53: zfscloud.v1.ApproveRestoreRequestResponse
+	(*RejectRestoreRequestRequest)(nil),      // 54: zfscloud.v1.RejectRestoreRequestRequest
+	(*RejectRestoreRequestResponse)(nil),     // 55: zfscloud.v1.RejectRestoreRequestResponse
+	(*UpdateSnapshotPolicyRequest)(nil),      // 56: zfscloud.v1.UpdateSnapshotPolicyRequest
+	(*SnapshotPolicy)(nil),                   // 57: zfscloud.v1.SnapshotPolicy
+	(*UpdateSnapshotPolicyResponse)(nil),     // 58: zfscloud.v1.UpdateSnapshotPolicyResponse
+	(*SystemStatusRequest)(nil),              // 59: zfscloud.v1.SystemStatusRequest
+	(*SystemStatusResponse)(nil),             // 60: zfscloud.v1.SystemStatusResponse
+	(*PoolStatus)(nil),                       // 61: zfscloud.v1.PoolStatus
+	(*CreateSnapshotRequest)(nil),            // 62: zfscloud.v1.CreateSnapshotRequest
+	(*CreateSnapshotResponse)(nil),           // 63: zfscloud.v1.CreateSnapshotResponse
+	(*timestamppb.Timestamp)(nil),            // 64: google.protobuf.Timestamp
 }
 var file_proto_backup_proto_depIdxs = []int32{
-	3,  // 0: zfscloud.v1.RegisterRequest.metadata:type_name -> zfscloud.v1.ClientMetadata
+	5,  // 0: zfscloud.v1.RegisterRequest.metadata:type_name -> zfscloud.v1.ClientMetadata
 	0,  // 1: zfscloud.v1.RegisterResponse.status:type_name -> zfscloud.v1.RegistrationStatus
 	0,  // 2: zfscloud.v1.RegistrationStatusResponse.status:type_name -> zfscloud.v1.RegistrationStatus
-	60, // 3: zfscloud.v1.RegistrationStatusResponse.approved_at:type_name -> google.protobuf.Timestamp
-	11, // 4: zfscloud.v1.HashIndexResponse.hashes:type_name -> zfscloud.v1.FileHash
-	60, // 5: zfscloud.v1.FileHash.modified_time:type_name -> google.protobuf.Timestamp
-	13, // 6: zfscloud.v1.UploadChunkRequest.metadata:type_name -> zfscloud.v1.ChunkMetadata
-	60, // 7: zfscloud.v1.ChunkMetadata.modified_time:type_name -> google.protobuf.Timestamp
-	60, // 8: zfscloud.v1.CompleteBackupResponse.backup_timestamp:type_name -> google.protobuf.Timestamp
-	19, // 9: zfscloud.v1.ListFilesResponse.files:type_name -> zfscloud.v1.FileInfo
-	60, // 10: zfscloud.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
-	22, // 11: zfscloud.v1.DownloadFileResponse.metadata:type_name -> zfscloud.v1.FileMetadata
-	60, // 12: zfscloud.v1.FileMetadata.modified_time:type_name -> google.protobuf.Timestamp
-	25, // 13: zfscloud.v1.ListSnapshotsResponse.snapshots:type_name -> zfscloud.v1.SnapshotInfo
-	60, // 14: zfscloud.v1.SnapshotInfo.created_at:type_name -> google.protobuf.Timestamp
+	64, // 3: zfscloud.v1.RegistrationStatusResponse.approved_at:type_name -> google.protobuf.Timestamp
+	13, // 4: zfscloud.v1.HashIndexResponse.hashes:type_name -> zfscloud.v1.FileHash
+	64, // 5: zfscloud.v1.FileHash.modified_time:type_name -> google.protobuf.Timestamp
+	15, // 6: zfscloud.v1.UploadChunkRequest.metadata:type_name -> zfscloud.v1.ChunkMetadata
+	64, // 7: zfscloud.v1.ChunkMetadata.modified_time:type_name -> google.protobuf.Timestamp
+	64, // 8: zfscloud.v1.CompleteBackupResponse.backup_timestamp:type_name -> google.protobuf.Timestamp
+	21, // 9: zfscloud.v1.ListFilesResponse.files:type_name -> zfscloud.v1.FileInfo
+	64, // 10: zfscloud.v1.FileInfo.modified_time:type_name -> google.protobuf.Timestamp
+	24, // 11: zfscloud.v1.DownloadFileResponse.metadata:type_name -> zfscloud.v1.FileMetadata
+	64, // 12: zfscloud.v1.FileMetadata.modified_time:type_name -> google.protobuf.Timestamp
+	27, // 13: zfscloud.v1.ListSnapshotsResponse.snapshots:type_name -> zfscloud.v1.SnapshotInfo
+	64, // 14: zfscloud.v1.SnapshotInfo.created_at:type_name -> google.protobuf.Timestamp
 	1,  // 15: zfscloud.v1.SnapshotRestoreResponse.status:type_name -> zfscloud.v1.RestoreRequestStatus
 	1,  // 16: zfscloud.v1.RestoreRequestStatusResponse.status:type_name -> zfscloud.v1.RestoreRequestStatus
-	60, // 17: zfscloud.v1.RestoreRequestStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
-	38, // 18: zfscloud.v1.ListPendingRegistrationsResponse.registrations:type_name -> zfscloud.v1.PendingRegistration
-	3,  // 19: zfscloud.v1.PendingRegistration.metadata:type_name -> zfscloud.v1.ClientMetadata
-	60, // 20: zfscloud.v1.PendingRegistration.requested_at:type_name -> google.protobuf.Timestamp
-	45, // 21: zfscloud.v1.ListUsersResponse.users:type_name -> zfscloud.v1.UserInfo
-	3,  // 22: zfscloud.v1.UserInfo.metadata:type_name -> zfscloud.v1.ClientMetadata
-	60, // 23: zfscloud.v1.UserInfo.registered_at:type_name -> google.protobuf.Timestamp
-	60, // 24: zfscloud.v1.UserInfo.last_seen:type_name -> google.protobuf.Timestamp
-	25, // 25: zfscloud.v1.ListAllSnapshotsResponse.snapshots:type_name -> zfscloud.v1.SnapshotInfo
-	55, // 26: zfscloud.v1.UpdateSnapshotPolicyRequest.policy:type_name -> zfscloud.v1.SnapshotPolicy
-	59, // 27: zfscloud.v1.SystemStatusResponse.pools:type_name -> zfscloud.v1.PoolStatus
-	2,  // 28: zfscloud.v1.BackupService.Register:input_type -> zfscloud.v1.RegisterRequest
-	5,  // 29: zfscloud.v1.BackupService.GetRegistrationStatus:input_type -> zfscloud.v1.RegistrationStatusRequest
-	7,  // 30: zfscloud.v1.BackupService.GetBackupPolicy:input_type -> zfscloud.v1.BackupPolicyRequest
-	9,  // 31: zfscloud.v1.BackupService.GetHashIndex:input_type -> zfscloud.v1.HashIndexRequest
-	12, // 32: zfscloud.v1.BackupService.UploadChunk:input_type -> zfscloud.v1.UploadChunkRequest
-	15, // 33: zfscloud.v1.BackupService.CompleteBackup:input_type -> zfscloud.v1.CompleteBackupRequest
-	17, // 34: zfscloud.v1.BackupService.ListFiles:input_type -> zfscloud.v1.ListFilesRequest
-	20, // 35: zfscloud.v1.BackupService.DownloadFile:input_type -> zfscloud.v1.DownloadFileRequest
-	23, // 36: zfscloud.v1.BackupService.ListSnapshots:input_type -> zfscloud.v1.ListSnapshotsRequest
-	26, // 37: zfscloud.v1.BackupService.RequestSnapshotRestore:input_type -> zfscloud.v1.SnapshotRestoreRequest
-	28, // 38: zfscloud.v1.BackupService.GetRestoreRequestStatus:input_type -> zfscloud.v1.RestoreRequestStatusRequest
-	30, // 39: zfscloud.v1.BackupService.LoadDatasetKey:input_type -> zfscloud.v1.LoadDatasetKeyRequest
-	32, // 40: zfscloud.v1.BackupService.UnloadDatasetKey:input_type -> zfscloud.v1.UnloadDatasetKeyRequest
-	34, // 41: zfscloud.v1.BackupService.Heartbeat:input_type -> zfscloud.v1.HeartbeatRequest
-	36, // 42: zfscloud.v1.AdminService.ListPendingRegistrations:input_type -> zfscloud.v1.ListPendingRegistrationsRequest
-	39, // 43: zfscloud.v1.AdminService.ApproveRegistration:input_type -> zfscloud.v1.ApproveRegistrationRequest
-	41, // 44: zfscloud.v1.AdminService.RejectRegistration:input_type -> zfscloud.v1.RejectRegistrationRequest
-	43, // 45: zfscloud.v1.AdminService.ListUsers:input_type -> zfscloud.v1.ListUsersRequest
-	46, // 46: zfscloud.v1.AdminService.RevokeUser:input_type -> zfscloud.v1.RevokeUserRequest
-	48, // 47: zfscloud.v1.AdminService.ListAllSnapshots:input_type -> zfscloud.v1.ListAllSnapshotsRequest
-	50, // 48: zfscloud.v1.AdminService.ApproveRestoreRequest:input_type -> zfscloud.v1.ApproveRestoreRequestRequest
-	52, // 49: zfscloud.v1.AdminService.RejectRestoreRequest:input_type -> zfscloud.v1.RejectRestoreRequestRequest
-	54, // 50: zfscloud.v1.AdminService.UpdateSnapshotPolicy:input_type -> zfscloud.v1.UpdateSnapshotPolicyRequest
-	57, // 51: zfscloud.v1.AdminService.GetSystemStatus:input_type -> zfscloud.v1.SystemStatusRequest
-	4,  // 52: zfscloud.v1.BackupService.Register:output_type -> zfscloud.v1.RegisterResponse
-	6,  // 53: zfscloud.v1.BackupService.GetRegistrationStatus:output_type -> zfscloud.v1.RegistrationStatusResponse
-	8,  // 54: zfscloud.v1.BackupService.GetBackupPolicy:output_type -> zfscloud.v1.BackupPolicyResponse
-	10, // 55: zfscloud.v1.BackupService.GetHashIndex:output_type -> zfscloud.v1.HashIndexResponse
-	14, // 56: zfscloud.v1.BackupService.UploadChunk:output_type -> zfscloud.v1.UploadChunkResponse
-	16, // 57: zfscloud.v1.BackupService.CompleteBackup:output_type -> zfscloud.v1.CompleteBackupResponse
-	18, // 58: zfscloud.v1.BackupService.ListFiles:output_type -> zfscloud.v1.ListFilesResponse
-	21, // 59: zfscloud.v1.BackupService.DownloadFile:output_type -> zfscloud.v1.DownloadFileResponse
-	24, // 60: zfscloud.v1.BackupService.ListSnapshots:output_type -> zfscloud.v1.ListSnapshotsResponse
-	27, // 61: zfscloud.v1.BackupService.RequestSnapshotRestore:output_type -> zfscloud.v1.SnapshotRestoreResponse
-	29, // 62: zfscloud.v1.BackupService.GetRestoreRequestStatus:output_type -> zfscloud.v1.RestoreRequestStatusResponse
-	31, // 63: zfscloud.v1.BackupService.LoadDatasetKey:output_type -> zfscloud.v1.LoadDatasetKeyResponse
-	33, // 64: zfscloud.v1.BackupService.UnloadDatasetKey:output_type -> zfscloud.v1.UnloadDatasetKeyResponse
-	35, // 65: zfscloud.v1.BackupService.Heartbeat:output_type -> zfscloud.v1.HeartbeatResponse
-	37, // 66: zfscloud.v1.AdminService.ListPendingRegistrations:output_type -> zfscloud.v1.ListPendingRegistrationsResponse
-	40, // 67: zfscloud.v1.AdminService.ApproveRegistration:output_type -> zfscloud.v1.ApproveRegistrationResponse
-	42, // 68: zfscloud.v1.AdminService.RejectRegistration:output_type -> zfscloud.v1.RejectRegistrationResponse
-	44, // 69: zfscloud.v1.AdminService.ListUsers:output_type -> zfscloud.v1.ListUsersResponse
-	47, // 70: zfscloud.v1.AdminService.RevokeUser:output_type -> zfscloud.v1.RevokeUserResponse
-	49, // 71: zfscloud.v1.AdminService.ListAllSnapshots:output_type -> zfscloud.v1.ListAllSnapshotsResponse
-	51, // 72: zfscloud.v1.AdminService.ApproveRestoreRequest:output_type -> zfscloud.v1.ApproveRestoreRequestResponse
-	53, // 73: zfscloud.v1.AdminService.RejectRestoreRequest:output_type -> zfscloud.v1.RejectRestoreRequestResponse
-	56, // 74: zfscloud.v1.AdminService.UpdateSnapshotPolicy:output_type -> zfscloud.v1.UpdateSnapshotPolicyResponse
-	58, // 75: zfscloud.v1.AdminService.GetSystemStatus:output_type -> zfscloud.v1.SystemStatusResponse
-	52, // [52:76] is the sub-list for method output_type
-	28, // [28:52] is the sub-list for method input_type
+	64, // 17: zfscloud.v1.RestoreRequestStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
+	40, // 18: zfscloud.v1.ListPendingRegistrationsResponse.registrations:type_name -> zfscloud.v1.PendingRegistration
+	5,  // 19: zfscloud.v1.PendingRegistration.metadata:type_name -> zfscloud.v1.ClientMetadata
+	64, // 20: zfscloud.v1.PendingRegistration.requested_at:type_name -> google.protobuf.Timestamp
+	47, // 21: zfscloud.v1.ListUsersResponse.users:type_name -> zfscloud.v1.UserInfo
+	5,  // 22: zfscloud.v1.UserInfo.metadata:type_name -> zfscloud.v1.ClientMetadata
+	64, // 23: zfscloud.v1.UserInfo.registered_at:type_name -> google.protobuf.Timestamp
+	64, // 24: zfscloud.v1.UserInfo.last_seen:type_name -> google.protobuf.Timestamp
+	27, // 25: zfscloud.v1.ListAllSnapshotsResponse.snapshots:type_name -> zfscloud.v1.SnapshotInfo
+	57, // 26: zfscloud.v1.UpdateSnapshotPolicyRequest.policy:type_name -> zfscloud.v1.SnapshotPolicy
+	61, // 27: zfscloud.v1.SystemStatusResponse.pools:type_name -> zfscloud.v1.PoolStatus
+	2,  // 28: zfscloud.v1.BackupService.GetServerPublicKey:input_type -> zfscloud.v1.ServerPublicKeyRequest
+	4,  // 29: zfscloud.v1.BackupService.Register:input_type -> zfscloud.v1.RegisterRequest
+	7,  // 30: zfscloud.v1.BackupService.GetRegistrationStatus:input_type -> zfscloud.v1.RegistrationStatusRequest
+	9,  // 31: zfscloud.v1.BackupService.GetBackupPolicy:input_type -> zfscloud.v1.BackupPolicyRequest
+	11, // 32: zfscloud.v1.BackupService.GetHashIndex:input_type -> zfscloud.v1.HashIndexRequest
+	14, // 33: zfscloud.v1.BackupService.UploadChunk:input_type -> zfscloud.v1.UploadChunkRequest
+	17, // 34: zfscloud.v1.BackupService.CompleteBackup:input_type -> zfscloud.v1.CompleteBackupRequest
+	19, // 35: zfscloud.v1.BackupService.ListFiles:input_type -> zfscloud.v1.ListFilesRequest
+	22, // 36: zfscloud.v1.BackupService.DownloadFile:input_type -> zfscloud.v1.DownloadFileRequest
+	25, // 37: zfscloud.v1.BackupService.ListSnapshots:input_type -> zfscloud.v1.ListSnapshotsRequest
+	28, // 38: zfscloud.v1.BackupService.RequestSnapshotRestore:input_type -> zfscloud.v1.SnapshotRestoreRequest
+	30, // 39: zfscloud.v1.BackupService.GetRestoreRequestStatus:input_type -> zfscloud.v1.RestoreRequestStatusRequest
+	32, // 40: zfscloud.v1.BackupService.LoadDatasetKey:input_type -> zfscloud.v1.LoadDatasetKeyRequest
+	34, // 41: zfscloud.v1.BackupService.UnloadDatasetKey:input_type -> zfscloud.v1.UnloadDatasetKeyRequest
+	36, // 42: zfscloud.v1.BackupService.Heartbeat:input_type -> zfscloud.v1.HeartbeatRequest
+	38, // 43: zfscloud.v1.AdminService.ListPendingRegistrations:input_type -> zfscloud.v1.ListPendingRegistrationsRequest
+	41, // 44: zfscloud.v1.AdminService.ApproveRegistration:input_type -> zfscloud.v1.ApproveRegistrationRequest
+	43, // 45: zfscloud.v1.AdminService.RejectRegistration:input_type -> zfscloud.v1.RejectRegistrationRequest
+	45, // 46: zfscloud.v1.AdminService.ListUsers:input_type -> zfscloud.v1.ListUsersRequest
+	48, // 47: zfscloud.v1.AdminService.RevokeUser:input_type -> zfscloud.v1.RevokeUserRequest
+	50, // 48: zfscloud.v1.AdminService.ListAllSnapshots:input_type -> zfscloud.v1.ListAllSnapshotsRequest
+	52, // 49: zfscloud.v1.AdminService.ApproveRestoreRequest:input_type -> zfscloud.v1.ApproveRestoreRequestRequest
+	54, // 50: zfscloud.v1.AdminService.RejectRestoreRequest:input_type -> zfscloud.v1.RejectRestoreRequestRequest
+	56, // 51: zfscloud.v1.AdminService.UpdateSnapshotPolicy:input_type -> zfscloud.v1.UpdateSnapshotPolicyRequest
+	59, // 52: zfscloud.v1.AdminService.GetSystemStatus:input_type -> zfscloud.v1.SystemStatusRequest
+	62, // 53: zfscloud.v1.AdminService.CreateSnapshot:input_type -> zfscloud.v1.CreateSnapshotRequest
+	3,  // 54: zfscloud.v1.BackupService.GetServerPublicKey:output_type -> zfscloud.v1.ServerPublicKeyResponse
+	6,  // 55: zfscloud.v1.BackupService.Register:output_type -> zfscloud.v1.RegisterResponse
+	8,  // 56: zfscloud.v1.BackupService.GetRegistrationStatus:output_type -> zfscloud.v1.RegistrationStatusResponse
+	10, // 57: zfscloud.v1.BackupService.GetBackupPolicy:output_type -> zfscloud.v1.BackupPolicyResponse
+	12, // 58: zfscloud.v1.BackupService.GetHashIndex:output_type -> zfscloud.v1.HashIndexResponse
+	16, // 59: zfscloud.v1.BackupService.UploadChunk:output_type -> zfscloud.v1.UploadChunkResponse
+	18, // 60: zfscloud.v1.BackupService.CompleteBackup:output_type -> zfscloud.v1.CompleteBackupResponse
+	20, // 61: zfscloud.v1.BackupService.ListFiles:output_type -> zfscloud.v1.ListFilesResponse
+	23, // 62: zfscloud.v1.BackupService.DownloadFile:output_type -> zfscloud.v1.DownloadFileResponse
+	26, // 63: zfscloud.v1.BackupService.ListSnapshots:output_type -> zfscloud.v1.ListSnapshotsResponse
+	29, // 64: zfscloud.v1.BackupService.RequestSnapshotRestore:output_type -> zfscloud.v1.SnapshotRestoreResponse
+	31, // 65: zfscloud.v1.BackupService.GetRestoreRequestStatus:output_type -> zfscloud.v1.RestoreRequestStatusResponse
+	33, // 66: zfscloud.v1.BackupService.LoadDatasetKey:output_type -> zfscloud.v1.LoadDatasetKeyResponse
+	35, // 67: zfscloud.v1.BackupService.UnloadDatasetKey:output_type -> zfscloud.v1.UnloadDatasetKeyResponse
+	37, // 68: zfscloud.v1.BackupService.Heartbeat:output_type -> zfscloud.v1.HeartbeatResponse
+	39, // 69: zfscloud.v1.AdminService.ListPendingRegistrations:output_type -> zfscloud.v1.ListPendingRegistrationsResponse
+	42, // 70: zfscloud.v1.AdminService.ApproveRegistration:output_type -> zfscloud.v1.ApproveRegistrationResponse
+	44, // 71: zfscloud.v1.AdminService.RejectRegistration:output_type -> zfscloud.v1.RejectRegistrationResponse
+	46, // 72: zfscloud.v1.AdminService.ListUsers:output_type -> zfscloud.v1.ListUsersResponse
+	49, // 73: zfscloud.v1.AdminService.RevokeUser:output_type -> zfscloud.v1.RevokeUserResponse
+	51, // 74: zfscloud.v1.AdminService.ListAllSnapshots:output_type -> zfscloud.v1.ListAllSnapshotsResponse
+	53, // 75: zfscloud.v1.AdminService.ApproveRestoreRequest:output_type -> zfscloud.v1.ApproveRestoreRequestResponse
+	55, // 76: zfscloud.v1.AdminService.RejectRestoreRequest:output_type -> zfscloud.v1.RejectRestoreRequestResponse
+	58, // 77: zfscloud.v1.AdminService.UpdateSnapshotPolicy:output_type -> zfscloud.v1.UpdateSnapshotPolicyResponse
+	60, // 78: zfscloud.v1.AdminService.GetSystemStatus:output_type -> zfscloud.v1.SystemStatusResponse
+	63, // 79: zfscloud.v1.AdminService.CreateSnapshot:output_type -> zfscloud.v1.CreateSnapshotResponse
+	54, // [54:80] is the sub-list for method output_type
+	28, // [28:54] is the sub-list for method input_type
 	28, // [28:28] is the sub-list for extension type_name
 	28, // [28:28] is the sub-list for extension extendee
 	0,  // [0:28] is the sub-list for field type_name
@@ -4546,11 +4654,11 @@ func file_proto_backup_proto_init() {
 	if File_proto_backup_proto != nil {
 		return
 	}
-	file_proto_backup_proto_msgTypes[10].OneofWrappers = []any{
+	file_proto_backup_proto_msgTypes[12].OneofWrappers = []any{
 		(*UploadChunkRequest_Metadata)(nil),
 		(*UploadChunkRequest_ChunkData)(nil),
 	}
-	file_proto_backup_proto_msgTypes[19].OneofWrappers = []any{
+	file_proto_backup_proto_msgTypes[21].OneofWrappers = []any{
 		(*DownloadFileResponse_Metadata)(nil),
 		(*DownloadFileResponse_ChunkData)(nil),
 	}
@@ -4560,7 +4668,7 @@ func file_proto_backup_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_backup_proto_rawDesc), len(file_proto_backup_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   58,
+			NumMessages:   62,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

@@ -8,7 +8,6 @@ package proto
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	BackupService_GetServerPublicKey_FullMethodName      = "/zfscloud.v1.BackupService/GetServerPublicKey"
 	BackupService_Register_FullMethodName                = "/zfscloud.v1.BackupService/Register"
 	BackupService_GetRegistrationStatus_FullMethodName   = "/zfscloud.v1.BackupService/GetRegistrationStatus"
 	BackupService_GetBackupPolicy_FullMethodName         = "/zfscloud.v1.BackupService/GetBackupPolicy"
@@ -76,7 +76,7 @@ func NewBackupServiceClient(cc grpc.ClientConnInterface) BackupServiceClient {
 func (c *backupServiceClient) GetServerPublicKey(ctx context.Context, in *ServerPublicKeyRequest, opts ...grpc.CallOption) (*ServerPublicKeyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ServerPublicKeyResponse)
-	err := c.cc.Invoke(ctx, "/zfscloud.v1.BackupService/GetServerPublicKey", in, out, cOpts...)
+	err := c.cc.Invoke(ctx, BackupService_GetServerPublicKey_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +348,7 @@ func _BackupService_GetServerPublicKey_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/zfscloud.v1.BackupService/GetServerPublicKey",
+		FullMethod: BackupService_GetServerPublicKey_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BackupServiceServer).GetServerPublicKey(ctx, req.(*ServerPublicKeyRequest))
@@ -676,6 +676,7 @@ const (
 	AdminService_RejectRestoreRequest_FullMethodName     = "/zfscloud.v1.AdminService/RejectRestoreRequest"
 	AdminService_UpdateSnapshotPolicy_FullMethodName     = "/zfscloud.v1.AdminService/UpdateSnapshotPolicy"
 	AdminService_GetSystemStatus_FullMethodName          = "/zfscloud.v1.AdminService/GetSystemStatus"
+	AdminService_CreateSnapshot_FullMethodName           = "/zfscloud.v1.AdminService/CreateSnapshot"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -697,6 +698,8 @@ type AdminServiceClient interface {
 	// Configuration
 	UpdateSnapshotPolicy(ctx context.Context, in *UpdateSnapshotPolicyRequest, opts ...grpc.CallOption) (*UpdateSnapshotPolicyResponse, error)
 	GetSystemStatus(ctx context.Context, in *SystemStatusRequest, opts ...grpc.CallOption) (*SystemStatusResponse, error)
+	// Manual snapshot operations
+	CreateSnapshot(ctx context.Context, in *CreateSnapshotRequest, opts ...grpc.CallOption) (*CreateSnapshotResponse, error)
 }
 
 type adminServiceClient struct {
@@ -807,6 +810,16 @@ func (c *adminServiceClient) GetSystemStatus(ctx context.Context, in *SystemStat
 	return out, nil
 }
 
+func (c *adminServiceClient) CreateSnapshot(ctx context.Context, in *CreateSnapshotRequest, opts ...grpc.CallOption) (*CreateSnapshotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateSnapshotResponse)
+	err := c.cc.Invoke(ctx, AdminService_CreateSnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -867,6 +880,9 @@ func (UnimplementedAdminServiceServer) UpdateSnapshotPolicy(context.Context, *Up
 }
 func (UnimplementedAdminServiceServer) GetSystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSystemStatus not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateSnapshot(context.Context, *CreateSnapshotRequest) (*CreateSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSnapshot not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -1069,6 +1085,24 @@ func _AdminService_GetSystemStatus_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_CreateSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateSnapshot(ctx, req.(*CreateSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1115,6 +1149,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSystemStatus",
 			Handler:    _AdminService_GetSystemStatus_Handler,
+		},
+		{
+			MethodName: "CreateSnapshot",
+			Handler:    _AdminService_CreateSnapshot_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
