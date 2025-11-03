@@ -200,15 +200,17 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return d.tooltipPause.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
 				text := IconSymbols[IconPause] + " Pause"
+				// Change button logic: enable Resume when paused, enable Pause when running
 				if stats.EngineState == "paused" {
 					text = IconSymbols[IconResume] + " Resume"
+					// Enable Resume button when paused
+				} else if !stats.EngineRunning {
+					// Disable button when engine not running
+					gtx = gtx.Disabled()
 				}
 				btn := material.Button(theme.Theme, &d.pauseButton, text)
 				btn.Background = theme.Warning
 				btn.Color = theme.OnPrimary
-				if !stats.EngineRunning || stats.EngineState == "paused" {
-					gtx = gtx.Disabled()
-				}
 				return btn.Layout(gtx)
 			})
 		}),

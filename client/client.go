@@ -15,6 +15,7 @@ import (
 	"github.com/ioustamora/zfscloud/shared/config"
 	"github.com/ioustamora/zfscloud/shared/crypto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
