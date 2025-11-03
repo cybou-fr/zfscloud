@@ -15,6 +15,7 @@ import (
 
 	"github.com/ioustamora/zfscloud/client"
 	"github.com/ioustamora/zfscloud/client/backup"
+	clientgui "github.com/ioustamora/zfscloud/client/gui"
 	"github.com/ioustamora/zfscloud/proto"
 	"github.com/ioustamora/zfscloud/shared/config"
 	"github.com/ioustamora/zfscloud/shared/crypto"
@@ -23,7 +24,8 @@ import (
 var (
 	configPath  = flag.String("config", "client-config.yaml", "Path to configuration file")
 	keyPath     = flag.String("keys", "client-keys.dat", "Path to key file")
-	interactive = flag.Bool("interactive", true, "Run in interactive mode")
+	interactive = flag.Bool("interactive", false, "Run in interactive CLI mode")
+	gui         = flag.Bool("gui", true, "Run in GUI mode")
 	version     = "0.2.0"
 )
 
@@ -70,10 +72,13 @@ func main() {
 
 	log.Println("Connected successfully!")
 
+	// Choose mode
 	if *interactive {
 		runInteractiveMode(c, cfg)
+	} else if *gui {
+		runGUIMode(c, cfg, *configPath, privateKey, publicKey)
 	} else {
-		log.Println("Non-interactive mode not yet implemented")
+		log.Println("No mode specified. Use --interactive or --gui")
 	}
 }
 
@@ -460,4 +465,14 @@ func handleListSnapshots(c *client.Client) {
 		fmt.Printf("%-30s %s (%d bytes)\n", snap.SnapshotName, snap.CreatedAt.AsTime().Format(time.RFC3339), snap.SizeBytes)
 	}
 	fmt.Println("------------------------------------------------------------")
+}
+
+func runGUIMode(c *client.Client, cfg *config.ClientConfig, configPath string, privateKey ed25519.PrivateKey, publicKey ed25519.PublicKey) {
+	log.Println("Starting GUI mode...")
+
+	// Create and run GUI application (engine will be created on demand)
+	app := clientgui.NewApp(c, nil, cfg, configPath)
+	if err := app.Run(); err != nil {
+		log.Fatalf("GUI error: %v", err)
+	}
 }
