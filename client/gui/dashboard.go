@@ -3,9 +3,14 @@ package gui
 import (
 	"context"
 	"fmt"
+	"image"
+	"image/color"
 	"log"
 
 	"gioui.org/layout"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
+	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -58,15 +63,15 @@ func (d *DashboardView) Layout(gtx layout.Context) layout.Dimensions {
 	})
 }
 
-// layoutConnectionCard renders the connection status card
+// layoutConnectionCard renders the connection status card with colored indicator
 func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensions {
 	stats := d.app.GetStats()
 
 	statusText := "Disconnected from server"
-	statusColor := d.app.theme.Palette.ContrastBg
+	indicatorColor := color.NRGBA{R: 220, G: 53, B: 69, A: 255} // Red
 	if stats.Connected {
 		statusText = "Connected to server"
-		statusColor = d.app.theme.Palette.ContrastBg
+		indicatorColor = color.NRGBA{R: 40, G: 167, B: 69, A: 255} // Green
 	}
 
 	return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
@@ -74,10 +79,17 @@ func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensio
 			Axis:      layout.Horizontal,
 			Alignment: layout.Middle,
 		}.Layout(gtx,
+			// Status indicator circle
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				size := gtx.Dp(unit.Dp(12))
+				rect := image.Rectangle{Max: image.Point{X: size, Y: size}}
+				circle := clip.UniformRRect(rect, size/2)
+				paint.FillShape(gtx.Ops, indicatorColor, circle.Op(gtx.Ops))
+				return layout.Dimensions{Size: image.Point{X: size, Y: size}}
+			}),
 			layout.Rigid(layout.Spacer{Width: unit.Dp(12)}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				label := material.H6(d.app.theme, statusText)
-				label.Color = statusColor
 				return label.Layout(gtx)
 			}),
 		)
@@ -200,23 +212,37 @@ func (d *DashboardView) layoutStatistics(gtx layout.Context) layout.Dimensions {
 	)
 }
 
-// statCard renders a single statistics card
+// statCard renders a single statistics card with enhanced styling
 func (d *DashboardView) statCard(gtx layout.Context, label, value string) layout.Dimensions {
-	return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		return layout.Flex{
-			Axis: layout.Vertical,
-		}.Layout(gtx,
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				lbl := material.Body2(d.app.theme, label)
-				lbl.Color = d.app.theme.Palette.ContrastBg
-				return lbl.Layout(gtx)
-			}),
-			layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				val := material.H4(d.app.theme, value)
-				return val.Layout(gtx)
-			}),
-		)
+	// Card background color (light gray)
+	bgColor := color.NRGBA{R: 245, G: 245, B: 245, A: 255}
+
+	return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		// Draw rounded rectangle background
+		rect := image.Rectangle{Max: gtx.Constraints.Min}
+		rr := clip.UniformRRect(rect, gtx.Dp(unit.Dp(8)))
+		paint.FillShape(gtx.Ops, bgColor, rr.Op(gtx.Ops))
+
+		return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+			return layout.Flex{
+				Axis:      layout.Vertical,
+				Alignment: layout.Middle,
+			}.Layout(gtx,
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					lbl := material.Body2(d.app.theme, label)
+					lbl.Color = color.NRGBA{R: 100, G: 100, B: 100, A: 255}
+					lbl.Alignment = text.Middle
+					return lbl.Layout(gtx)
+				}),
+				layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					val := material.H3(d.app.theme, value)
+					val.Color = d.app.theme.Palette.ContrastBg
+					val.Alignment = text.Middle
+					return val.Layout(gtx)
+				}),
+			)
+		})
 	})
 }
 
