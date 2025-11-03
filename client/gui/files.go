@@ -429,13 +429,31 @@ func (f *FilesView) performRestore() {
 	go func() {
 		log.Printf("Restoring file: %s to %s", file.Path, destPath)
 
-		// TODO: Implement actual restore via DownloadFile RPC
-		// For now, show placeholder message
-		time.Sleep(2 * time.Second)
+		if f.app.client == nil {
+			f.restoring = false
+			f.restoreErrorMsg = "Client not initialized"
+			f.app.window.Invalidate()
+			return
+		}
+
+		// Update progress
+		f.restoreProgress = "Downloading file..."
+		f.app.window.Invalidate()
+
+		// Download the file using the client wrapper
+		err := f.app.client.DownloadFile(file.Path, destPath)
 
 		f.restoring = false
 		f.restoreProgress = ""
-		f.restoreErrorMsg = "Restore functionality coming soon! (DownloadFile RPC not yet implemented)"
+
+		if err != nil {
+			f.restoreErrorMsg = fmt.Sprintf("Failed to restore file: %v", err)
+			log.Printf("Restore error: %v", err)
+		} else {
+			f.restoreErrorMsg = fmt.Sprintf("✅ File successfully restored to:\n%s", destPath)
+			log.Printf("File restored successfully to %s", destPath)
+		}
+
 		f.app.window.Invalidate()
 	}()
 }

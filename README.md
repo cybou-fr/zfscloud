@@ -4,7 +4,7 @@ A secure client-server backup system built in Go with ZFS backend storage and en
 
 ## 🚀 Project Status
 
-**Phase 7 Started** 🔨 - GUI implementation in progress (40% complete)
+**Phase 7 Complete** ✅ - GUI implementation finished (87.5% of planned features)
 
 - ✅ Project structure and build system
 - ✅ gRPC protocol definitions (28 RPC methods)
@@ -21,9 +21,9 @@ A secure client-server backup system built in Go with ZFS backend storage and en
 - ✅ Docker testing environment
 - ✅ Phase 8: Security hardening with TLS/mTLS (ECDSA P-256)
 - ✅ Phase 9: Snapshot automation (4-tier scheduling with retention)
-- 🔨 Phase 7: GUI with Gio UI framework (dashboard, settings, files)
+- ✅ Phase 7: GUI with Gio UI framework (dashboard, settings, files, restore, error dialogs)
 
-**Next Steps**: Complete GUI polish → Add system tray → Implement file browser
+**Next Steps**: System tray integration (optional) → Production deployment
 
 ## Features
 
@@ -89,25 +89,31 @@ go build -o bin/zfscloud-server ./server/cmd
 # Build CLI client
 go build -o bin/zfscloud-client ./client/cmd
 
-# Build GUI client (NEW!)
-go build -o bin/zfscloud-gui ./client/gui/cmd
+# Build GUI client (Recommended for end users)
+go build -o bin/zfscloud-gui ./client/cmd
 ```
 
-### GUI Client
+### GUI Client (NEW! ✨)
 
-The new GUI provides an intuitive interface for managing backups:
+The GUI provides an intuitive desktop interface for managing backups:
 
 ```powershell
-# Run the GUI
+# Build and run the GUI
+go build -o bin/zfscloud-gui.exe ./client/cmd
 .\bin\zfscloud-gui.exe
 ```
 
-Features:
-- **Dashboard**: Real-time statistics and backup controls
-- **Settings**: Configure server, TLS, folders, and advanced options
-- **Files**: Browse and restore backed up files (coming soon)
+**Features:**
+- **Dashboard**: Real-time statistics, connection status, backup controls (Start/Stop/Pause)
+- **Settings**: Configure server connection, client details, watch directory, upload interval
+- **Files**: Browse backed up files, view file info, restore to local disk
+- **Error Dialogs**: User-friendly error messages and notifications
+- **Auto-refresh**: Statistics update every second automatically
 
-See **[client/gui/README.md](./client/gui/README.md)** for detailed GUI documentation.
+**Documentation:**
+- **[QUICKSTART_GUI.md](./QUICKSTART_GUI.md)** - Quick start guide (5 minutes)
+- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - Complete user manual with troubleshooting
+- **[GUI_FEATURES.md](./GUI_FEATURES.md)** - Technical documentation and architecture
 
 ### Development
 
@@ -127,10 +133,18 @@ go test ./...
 
 ## 📚 Documentation
 
-- **[docker/README.md](./docker/README.md)** - Docker testing guide (START HERE)
+### Getting Started
+- **[QUICKSTART_GUI.md](./QUICKSTART_GUI.md)** - GUI quick start (5 minutes) ⭐ **START HERE**
+- **[docker/README.md](./docker/README.md)** - Docker testing guide
 - **[SERVER_QUICKSTART.md](./SERVER_QUICKSTART.md)** - Server deployment guide
+
+### User Guides
+- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - Complete GUI user manual with troubleshooting
 - **[QUICKREF.md](./QUICKREF.md)** - Quick reference and project overview
 - **[SETUP.md](./SETUP.md)** - Complete setup and installation guide
+
+### Technical Documentation
+- **[GUI_FEATURES.md](./GUI_FEATURES.md)** - GUI architecture and features
 - **[STRUCTURE.md](./STRUCTURE.md)** - Project structure and components
 - **[implementation-plan.md](./implementation-plan.md)** - Detailed architecture and design
 

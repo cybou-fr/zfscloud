@@ -5,6 +5,9 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"time"
 
 	"github.com/ioustamora/zfscloud/proto"
@@ -252,6 +255,80 @@ func (c *Client) ListFiles(path string, recursive bool) ([]*proto.FileInfo, erro
 	}
 
 	return resp.Files, nil
+}
+
+// DownloadFile downloads a file from the backup and saves it to destPath
+func (c *Client) DownloadFile(filePath, destPath string) error {
+	nonce, err := crypto.GenerateNonce()
+	if err != nil {
+		return fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
+	timestamp := crypto.GetTimestamp()
+
+	// Create signature
+	sigData := &crypto.SignatureData{
+		ClientID:  c.clientID,
+		Timestamp: timestamp,
+		Nonce:     nonce,
+		Payload:   []byte(filePath),
+	}
+
+	signature, err := c.keyPair.Sign(sigData)
+	if err != nil {
+		return fmt.Errorf("failed to sign request: %w", err)
+	}
+
+	req := &proto.DownloadFileRequest{
+		ClientId:  c.clientID,
+		FilePath:  filePath,
+		Signature: signature,
+		Timestamp: timestamp,
+		Nonce:     nonce,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	stream, err := c.backupService.DownloadFile(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to start download: %w", err)
+	}
+
+	// Create output file
+	outFile, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer outFile.Close()
+
+	// Receive chunks
+	var totalBytes int64
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to receive chunk: %w", err)
+		}
+
+		switch data := resp.Data.(type) {
+		case *proto.DownloadFileResponse_Metadata:
+			// First message contains metadata
+			log.Printf("Downloading file: %s (size: %d bytes)", data.Metadata.Path, data.Metadata.Size)
+		case *proto.DownloadFileResponse_ChunkData:
+			// Write chunk to file
+			n, err := outFile.Write(data.ChunkData)
+			if err != nil {
+				return fmt.Errorf("failed to write chunk: %w", err)
+			}
+			totalBytes += int64(n)
+		}
+	}
+
+	log.Printf("Download complete: %d bytes written to %s", totalBytes, destPath)
+	return nil
 }
 
 // ListSnapshots lists available snapshots

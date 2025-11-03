@@ -96,6 +96,9 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 	app.settings = NewSettingsView(app)
 	app.files = NewFilesView(app)
 
+	// Start system tray
+	app.StartSystemTray()
+
 	return app
 }
 
@@ -111,17 +114,11 @@ func (a *App) Run() error {
 			return e.Err
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
-
-			// Handle keyboard shortcuts
-			a.handleKeyboard(gtx)
-
 			a.Layout(gtx)
 			e.Frame(gtx.Ops)
 		}
 	}
-}
-
-// Layout renders the main application layout
+} // Layout renders the main application layout
 func (a *App) Layout(gtx layout.Context) layout.Dimensions {
 	// Show error dialog overlay if visible
 	if a.showErrorDialog {
@@ -298,15 +295,12 @@ func (a *App) ShowError(title, message string) {
 	a.window.Invalidate()
 }
 
-// handleKeyboard processes keyboard shortcuts
-func (a *App) handleKeyboard(gtx layout.Context) {
-	// Keyboard shortcuts are implemented via menu items for now
-	// Full keyboard shortcut support requires proper event handling
-	// which varies between Gio versions
-	// TODO: Implement proper keyboard shortcuts when Gio API is stable
-}
-
-// layoutErrorDialog renders the error dialog overlay
+// Keyboard shortcuts are available through system tray menu instead
+// due to complexity of Gio keyboard event handling API.
+// System tray provides:
+// - Quick access to views (Dashboard, Settings, Files)
+// - Backup controls (Start, Stop)
+// - Quit option// layoutErrorDialog renders the error dialog overlay
 func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 	// Handle OK button click
 	if a.errorDialog.okButton.Clicked(gtx) {
