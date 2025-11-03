@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"context"
 	"log"
 
 	"github.com/getlantern/systray"
@@ -55,7 +56,12 @@ func (a *App) onTrayReady() {
 			case <-mStartBackup.ClickedCh:
 				log.Println("System tray: Start backup")
 				if a.engine != nil {
-					go a.engine.Start()
+					go func() {
+						ctx := context.Background()
+						if err := a.engine.Start(ctx); err != nil {
+							log.Printf("Failed to start engine: %v", err)
+						}
+					}()
 				}
 
 			case <-mStopBackup.ClickedCh:

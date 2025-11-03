@@ -105,7 +105,8 @@ func (s *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 		}.Layout(gtx,
 			// Title
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				title := material.H5(s.app.theme, "Settings")
+				theme := s.app.GetTheme()
+				title := theme.H5("Settings")
 				return title.Layout(gtx)
 			}),
 			layout.Rigid(layout.Spacer{Height: unit.Dp(20)}.Layout),
@@ -144,11 +145,13 @@ func (s *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 
 // layoutServerSettings renders server connection settings
 func (s *SettingsView) layoutServerSettings(gtx layout.Context) layout.Dimensions {
+	theme := s.app.GetTheme()
+
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			label := material.H6(s.app.theme, "Server Connection")
+			label := theme.H6("Server Connection")
 			return label.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
@@ -164,16 +167,18 @@ func (s *SettingsView) layoutServerSettings(gtx layout.Context) layout.Dimension
 
 // layoutTLSSettings renders TLS security settings
 func (s *SettingsView) layoutTLSSettings(gtx layout.Context) layout.Dimensions {
+	theme := s.app.GetTheme()
+
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			label := material.H6(s.app.theme, "TLS/Security")
+			label := theme.H6("TLS/Security")
 			return label.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return material.CheckBox(s.app.theme, &s.tlsEnabled, "Enable TLS/mTLS").Layout(gtx)
+			return material.CheckBox(theme.Theme, &s.tlsEnabled, "Enable TLS/mTLS").Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -201,11 +206,13 @@ func (s *SettingsView) layoutTLSSettings(gtx layout.Context) layout.Dimensions {
 
 // layoutBackupSettings renders backup configuration settings
 func (s *SettingsView) layoutBackupSettings(gtx layout.Context) layout.Dimensions {
+	theme := s.app.GetTheme()
+
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			label := material.H6(s.app.theme, "Backup Configuration")
+			label := theme.H6("Backup Configuration")
 			return label.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
@@ -225,11 +232,13 @@ func (s *SettingsView) layoutBackupSettings(gtx layout.Context) layout.Dimension
 
 // layoutAdvancedSettings renders advanced configuration settings
 func (s *SettingsView) layoutAdvancedSettings(gtx layout.Context) layout.Dimensions {
+	theme := s.app.GetTheme()
+
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			label := material.H6(s.app.theme, "Advanced Settings")
+			label := theme.H6("Advanced Settings")
 			return label.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
@@ -257,18 +266,23 @@ func (s *SettingsView) layoutActions(gtx layout.Context) layout.Dimensions {
 		s.testConnection()
 	}
 
+	theme := s.app.GetTheme()
+
 	return layout.Flex{
 		Axis:    layout.Horizontal,
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(s.app.theme, &s.testButton, "Test Connection")
+			btn := material.Button(theme.Theme, &s.testButton, "Test Connection")
+			btn.Background = theme.Info
+			btn.Color = theme.OnPrimary
 			return btn.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(s.app.theme, &s.saveButton, "Save Settings")
-			btn.Background = s.app.theme.Palette.ContrastBg
+			btn := material.Button(theme.Theme, &s.saveButton, "Save Settings")
+			btn.Background = theme.Success
+			btn.Color = theme.OnPrimary
 			return btn.Layout(gtx)
 		}),
 	)
@@ -278,17 +292,18 @@ func (s *SettingsView) layoutActions(gtx layout.Context) layout.Dimensions {
 func (s *SettingsView) textField(gtx layout.Context, editor *widget.Editor, label, hint string) layout.Dimensions {
 	editor.SingleLine = true
 	editor.Submit = false
+	theme := s.app.GetTheme()
 
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			lbl := material.Body2(s.app.theme, label)
+			lbl := theme.Body2(label)
 			return lbl.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(4)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			e := material.Editor(s.app.theme, editor, hint)
+			e := material.Editor(theme.Theme, editor, hint)
 			return e.Layout(gtx)
 		}),
 	)
@@ -298,17 +313,18 @@ func (s *SettingsView) textField(gtx layout.Context, editor *widget.Editor, labe
 func (s *SettingsView) textAreaField(gtx layout.Context, editor *widget.Editor, label, hint string) layout.Dimensions {
 	editor.SingleLine = false
 	editor.Submit = false
+	theme := s.app.GetTheme()
 
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			lbl := material.Body2(s.app.theme, label)
+			lbl := theme.Body2(label)
 			return lbl.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: unit.Dp(4)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			e := material.Editor(s.app.theme, editor, hint)
+			e := material.Editor(theme.Theme, editor, hint)
 			// Set minimum height for text area
 			gtx.Constraints.Min.Y = gtx.Dp(unit.Dp(80))
 			return e.Layout(gtx)

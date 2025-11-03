@@ -3,6 +3,7 @@ package gui
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"gioui.org/layout"
@@ -99,13 +100,15 @@ func (f *FilesView) layoutHeader(gtx layout.Context) layout.Dimensions {
 		f.showRestoreDialog()
 	}
 
+	theme := f.app.GetTheme()
+
 	return layout.Flex{
 		Axis:      layout.Horizontal,
 		Alignment: layout.Middle,
 		Spacing:   layout.SpaceBetween,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			title := material.H5(f.app.theme, "Backup Files")
+			title := theme.H5("Backup Files")
 			return title.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(20)}.Layout),
@@ -114,13 +117,16 @@ func (f *FilesView) layoutHeader(gtx layout.Context) layout.Dimensions {
 				Axis: layout.Horizontal,
 			}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					btn := material.Button(f.app.theme, &f.refreshButton, "Refresh")
+					btn := material.Button(theme.Theme, &f.refreshButton, "Refresh")
+					btn.Background = theme.Info
+					btn.Color = theme.OnPrimary
 					return btn.Layout(gtx)
 				}),
 				layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					btn := material.Button(f.app.theme, &f.restoreButton, "Restore...")
-					btn.Background = f.app.theme.Palette.ContrastBg
+					btn := material.Button(theme.Theme, &f.restoreButton, "Restore...")
+					btn.Background = theme.Primary
+					btn.Color = theme.OnPrimary
 					return btn.Layout(gtx)
 				}),
 			)
@@ -130,10 +136,12 @@ func (f *FilesView) layoutHeader(gtx layout.Context) layout.Dimensions {
 
 // layoutFileList renders the list of backed up files
 func (f *FilesView) layoutFileList(gtx layout.Context) layout.Dimensions {
+	theme := f.app.GetTheme()
+
 	// Show loading indicator
 	if f.loading {
 		return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-			return material.Body1(f.app.theme, "Loading files...").Layout(gtx)
+			return theme.Body1("Loading files...").Layout(gtx)
 		})
 	}
 
@@ -145,13 +153,13 @@ func (f *FilesView) layoutFileList(gtx layout.Context) layout.Dimensions {
 				Alignment: layout.Middle,
 			}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					text := material.Body1(f.app.theme, "Error:")
-					text.Color = f.app.theme.Palette.Fg
+					text := theme.Body1("Error:")
+					text.Color = theme.Error
 					return text.Layout(gtx)
 				}),
 				layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					text := material.Body2(f.app.theme, f.errorMsg)
+					text := theme.Body2(f.errorMsg)
 					return text.Layout(gtx)
 				}),
 			)
@@ -166,12 +174,12 @@ func (f *FilesView) layoutFileList(gtx layout.Context) layout.Dimensions {
 				Alignment: layout.Middle,
 			}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					text := material.H6(f.app.theme, "No files to display")
+					text := theme.H6("No files to display")
 					return text.Layout(gtx)
 				}),
 				layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					text := material.Body1(f.app.theme, "Start a backup to see files here")
+					text := theme.Body1("Start a backup to see files here")
 					return text.Layout(gtx)
 				}),
 			)
@@ -179,7 +187,7 @@ func (f *FilesView) layoutFileList(gtx layout.Context) layout.Dimensions {
 	}
 
 	// Render scrollable file list
-	return material.List(f.app.theme, &f.fileList).Layout(gtx, len(f.files), func(gtx layout.Context, index int) layout.Dimensions {
+	return material.List(theme.Theme, &f.fileList).Layout(gtx, len(f.files), func(gtx layout.Context, index int) layout.Dimensions {
 		file := f.files[index]
 
 		// Handle file click
@@ -201,6 +209,8 @@ func (f *FilesView) layoutFileList(gtx layout.Context) layout.Dimensions {
 
 // layoutFileItem renders a single file item
 func (f *FilesView) layoutFileItem(gtx layout.Context, file FileItem, isSelected bool) layout.Dimensions {
+	theme := f.app.GetTheme()
+
 	// Format file size
 	sizeStr := formatBytes(file.Size)
 
@@ -217,9 +227,10 @@ func (f *FilesView) layoutFileItem(gtx layout.Context, file FileItem, isSelected
 				if file.IsDirectory {
 					text = file.Path + "/"
 				}
-				label := material.Body1(f.app.theme, text)
+				label := theme.Body1(text)
 				if isSelected {
 					label.Font.Weight = 700 // Bold weight
+					label.Color = theme.Primary
 				}
 				return label.Layout(gtx)
 			}),
@@ -230,12 +241,14 @@ func (f *FilesView) layoutFileItem(gtx layout.Context, file FileItem, isSelected
 					Axis: layout.Horizontal,
 				}.Layout(gtx,
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-						label := material.Caption(f.app.theme, fmt.Sprintf("Size: %s", sizeStr))
+						label := theme.Caption(fmt.Sprintf("Size: %s", sizeStr))
+						label.Color = theme.TextSecondary
 						return label.Layout(gtx)
 					}),
 					layout.Rigid(layout.Spacer{Width: unit.Dp(20)}.Layout),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-						label := material.Caption(f.app.theme, fmt.Sprintf("Modified: %s", timeStr))
+						label := theme.Caption(fmt.Sprintf("Modified: %s", timeStr))
+						label.Color = theme.TextSecondary
 						return label.Layout(gtx)
 					}),
 				)
@@ -319,6 +332,8 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 		f.performRestore()
 	}
 
+	theme := f.app.GetTheme()
+
 	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		// Dialog size
 		gtx.Constraints.Max.X = gtx.Dp(unit.Dp(500))
@@ -330,7 +345,7 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 			}.Layout(gtx,
 				// Title
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					title := material.H6(f.app.theme, "Restore File")
+					title := theme.H6("Restore File")
 					return title.Layout(gtx)
 				}),
 				layout.Rigid(layout.Spacer{Height: unit.Dp(20)}.Layout),
@@ -339,7 +354,7 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					if f.selectedFile >= 0 && f.selectedFile < len(f.files) {
 						file := f.files[f.selectedFile]
-						text := material.Body2(f.app.theme, fmt.Sprintf("File: %s\nSize: %s",
+						text := theme.Body2(fmt.Sprintf("File: %s\nSize: %s",
 							file.Path, formatBytes(file.Size)))
 						return text.Layout(gtx)
 					}
@@ -353,12 +368,12 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 						Axis: layout.Vertical,
 					}.Layout(gtx,
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							label := material.Body1(f.app.theme, "Restore to:")
+							label := theme.Body1("Restore to:")
 							return label.Layout(gtx)
 						}),
 						layout.Rigid(layout.Spacer{Height: unit.Dp(8)}.Layout),
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							editor := material.Editor(f.app.theme, &f.restorePath, "C:\\Restored\\")
+							editor := material.Editor(theme.Theme, &f.restorePath, "C:\\Restored\\")
 							return editor.Layout(gtx)
 						}),
 					)
@@ -368,11 +383,17 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 				// Progress or error message
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					if f.restoring {
-						text := material.Body2(f.app.theme, f.restoreProgress)
+						text := theme.Body2(f.restoreProgress)
+						text.Color = theme.Info
 						return text.Layout(gtx)
 					}
 					if f.restoreErrorMsg != "" {
-						text := material.Body2(f.app.theme, f.restoreErrorMsg)
+						text := theme.Body2(f.restoreErrorMsg)
+						if strings.Contains(f.restoreErrorMsg, "✅") {
+							text.Color = theme.Success
+						} else {
+							text.Color = theme.Error
+						}
 						return text.Layout(gtx)
 					}
 					return layout.Dimensions{}
@@ -386,13 +407,14 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 						Spacing: layout.SpaceEnd,
 					}.Layout(gtx,
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							btn := material.Button(f.app.theme, &f.restoreCancelBtn, "Cancel")
+							btn := material.Button(theme.Theme, &f.restoreCancelBtn, "Cancel")
 							return btn.Layout(gtx)
 						}),
 						layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							btn := material.Button(f.app.theme, &f.restoreConfirmBtn, "Restore")
-							btn.Background = f.app.theme.Palette.ContrastBg
+							btn := material.Button(theme.Theme, &f.restoreConfirmBtn, "Restore")
+							btn.Background = theme.Success
+							btn.Color = theme.OnPrimary
 							if f.restoring {
 								// Disable button during restore
 								gtx = gtx.Disabled()

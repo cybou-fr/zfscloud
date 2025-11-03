@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"image"
-	"image/color"
 	"log"
 
 	"gioui.org/layout"
@@ -66,12 +65,13 @@ func (d *DashboardView) Layout(gtx layout.Context) layout.Dimensions {
 // layoutConnectionCard renders the connection status card with colored indicator
 func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensions {
 	stats := d.app.GetStats()
+	theme := d.app.GetTheme()
 
 	statusText := "Disconnected from server"
-	indicatorColor := color.NRGBA{R: 220, G: 53, B: 69, A: 255} // Red
+	indicatorColor := theme.StatusDisconnected
 	if stats.Connected {
 		statusText = "Connected to server"
-		indicatorColor = color.NRGBA{R: 40, G: 167, B: 69, A: 255} // Green
+		indicatorColor = theme.StatusConnected
 	}
 
 	return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
@@ -89,7 +89,7 @@ func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensio
 			}),
 			layout.Rigid(layout.Spacer{Width: unit.Dp(12)}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				label := material.H6(d.app.theme, statusText)
+				label := theme.H6(statusText)
 				return label.Layout(gtx)
 			}),
 		)
@@ -141,13 +141,16 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		}
 	}
 
+	theme := d.app.GetTheme()
+
 	return layout.Flex{
 		Axis:    layout.Horizontal,
 		Spacing: layout.SpaceEvenly,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(d.app.theme, &d.startButton, "Start Backup")
-			btn.Background = d.app.theme.Palette.ContrastBg
+			btn := material.Button(theme.Theme, &d.startButton, "Start Backup")
+			btn.Background = theme.Success
+			btn.Color = theme.OnPrimary
 			if stats.EngineRunning {
 				// Disable if already running
 				gtx = gtx.Disabled()
@@ -156,7 +159,9 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(d.app.theme, &d.stopButton, "Stop")
+			btn := material.Button(theme.Theme, &d.stopButton, "Stop")
+			btn.Background = theme.Error
+			btn.Color = theme.OnPrimary
 			if !stats.EngineRunning {
 				gtx = gtx.Disabled()
 			}
@@ -168,7 +173,9 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 			if stats.EngineState == "paused" {
 				text = "Resume"
 			}
-			btn := material.Button(d.app.theme, &d.pauseButton, text)
+			btn := material.Button(theme.Theme, &d.pauseButton, text)
+			btn.Background = theme.Warning
+			btn.Color = theme.OnPrimary
 			if !stats.EngineRunning || stats.EngineState == "paused" {
 				gtx = gtx.Disabled()
 			}
@@ -176,7 +183,9 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(d.app.theme, &d.refreshButton, "Scan Now")
+			btn := material.Button(theme.Theme, &d.refreshButton, "Scan Now")
+			btn.Background = theme.Info
+			btn.Color = theme.OnPrimary
 			if !stats.Connected {
 				gtx = gtx.Disabled()
 			}
@@ -214,14 +223,13 @@ func (d *DashboardView) layoutStatistics(gtx layout.Context) layout.Dimensions {
 
 // statCard renders a single statistics card with enhanced styling
 func (d *DashboardView) statCard(gtx layout.Context, label, value string) layout.Dimensions {
-	// Card background color (light gray)
-	bgColor := color.NRGBA{R: 245, G: 245, B: 245, A: 255}
+	theme := d.app.GetTheme()
 
 	return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		// Draw rounded rectangle background
 		rect := image.Rectangle{Max: gtx.Constraints.Min}
 		rr := clip.UniformRRect(rect, gtx.Dp(unit.Dp(8)))
-		paint.FillShape(gtx.Ops, bgColor, rr.Op(gtx.Ops))
+		paint.FillShape(gtx.Ops, theme.Surface, rr.Op(gtx.Ops))
 
 		return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 			return layout.Flex{
@@ -229,15 +237,15 @@ func (d *DashboardView) statCard(gtx layout.Context, label, value string) layout
 				Alignment: layout.Middle,
 			}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					lbl := material.Body2(d.app.theme, label)
-					lbl.Color = color.NRGBA{R: 100, G: 100, B: 100, A: 255}
+					lbl := theme.Body2(label)
+					lbl.Color = theme.TextSecondary
 					lbl.Alignment = text.Middle
 					return lbl.Layout(gtx)
 				}),
 				layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					val := material.H3(d.app.theme, value)
-					val.Color = d.app.theme.Palette.ContrastBg
+					val := theme.H3(value)
+					val.Color = theme.Primary
 					val.Alignment = text.Middle
 					return val.Layout(gtx)
 				}),
@@ -249,6 +257,7 @@ func (d *DashboardView) statCard(gtx layout.Context, label, value string) layout
 // layoutCurrentActivity renders the current backup activity
 func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensions {
 	stats := d.app.GetStats()
+	theme := d.app.GetTheme()
 
 	var activityText string
 	if stats.EngineRunning && stats.CurrentFile != "" {
@@ -266,12 +275,12 @@ func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensi
 			Axis: layout.Vertical,
 		}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				title := material.H6(d.app.theme, "Current Activity")
+				title := theme.H6("Current Activity")
 				return title.Layout(gtx)
 			}),
 			layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				text := material.Body1(d.app.theme, activityText)
+				text := theme.Body1(activityText)
 				return text.Layout(gtx)
 			}),
 		)

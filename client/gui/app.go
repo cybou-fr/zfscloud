@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"gioui.org/app"
-	"gioui.org/font/gofont"
 	"gioui.org/layout"
 	"gioui.org/op"
-	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -23,7 +21,7 @@ import (
 // App represents the GUI application
 type App struct {
 	window      *app.Window
-	theme       *material.Theme
+	theme       *AppTheme
 	client      *client.Client
 	engine      *backup.Engine
 	config      *config.ClientConfig
@@ -42,6 +40,10 @@ type App struct {
 	// Error dialog
 	errorDialog     ErrorDialog
 	showErrorDialog bool
+
+	// Loading overlay
+	loadingOverlay *LoadingOverlay
+	showLoading    bool
 } // ErrorDialog represents an error dialog
 type ErrorDialog struct {
 	title    string
@@ -77,8 +79,8 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 	window.Option(app.Title("ZFSCloud Backup"))
 	window.Option(app.Size(unit.Dp(900), unit.Dp(600)))
 
-	theme := material.NewTheme()
-	theme.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+	// Create custom theme
+	theme := NewAppTheme(ThemeLight)
 
 	app := &App{
 		window:      window,
@@ -163,7 +165,7 @@ func (a *App) layoutNavBar(gtx layout.Context) layout.Dimensions {
 			Alignment: layout.Middle,
 		}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				title := material.H5(a.theme, "ZFSCloud Backup")
+				title := a.theme.H5("ZFSCloud Backup")
 				return title.Layout(gtx)
 			}),
 			layout.Rigid(layout.Spacer{Width: unit.Dp(20)}.Layout),
@@ -182,25 +184,25 @@ func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(a.theme, &a.navDashboard, "Dashboard")
+			btn := material.Button(a.theme.Theme, &a.navDashboard, "Dashboard")
 			if a.currentView == ViewDashboard {
-				btn.Background = a.theme.Palette.ContrastBg
+				btn.Background = a.theme.Primary
 			}
 			return btn.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(a.theme, &a.navSettings, "Settings")
+			btn := material.Button(a.theme.Theme, &a.navSettings, "Settings")
 			if a.currentView == ViewSettings {
-				btn.Background = a.theme.Palette.ContrastBg
+				btn.Background = a.theme.Primary
 			}
 			return btn.Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(a.theme, &a.navFiles, "Files")
+			btn := material.Button(a.theme.Theme, &a.navFiles, "Files")
 			if a.currentView == ViewFiles {
-				btn.Background = a.theme.Palette.ContrastBg
+				btn.Background = a.theme.Primary
 			}
 			return btn.Layout(gtx)
 		}),
@@ -232,7 +234,7 @@ func (a *App) layoutStatusBar(gtx layout.Context) layout.Dimensions {
 			statusText = fmt.Sprintf("%s • Engine: %s", statusText, a.stats.EngineState)
 		}
 
-		label := material.Body2(a.theme, statusText)
+		label := a.theme.Body2(statusText)
 		return label.Layout(gtx)
 	})
 }
@@ -275,7 +277,7 @@ func (a *App) SetView(view View) {
 }
 
 // GetTheme returns the application theme
-func (a *App) GetTheme() *material.Theme {
+func (a *App) GetTheme() *AppTheme {
 	return a.theme
 }
 
@@ -338,13 +340,13 @@ func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 					}.Layout(gtx,
 						// Title
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							title := material.H6(a.theme, a.errorDialog.title)
+							title := a.theme.H6(a.errorDialog.title)
 							return title.Layout(gtx)
 						}),
 						layout.Rigid(layout.Spacer{Height: unit.Dp(16)}.Layout),
 						// Message
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							msg := material.Body1(a.theme, a.errorDialog.message)
+							msg := a.theme.Body1(a.errorDialog.message)
 							return msg.Layout(gtx)
 						}),
 						layout.Rigid(layout.Spacer{Height: unit.Dp(24)}.Layout),
@@ -355,8 +357,9 @@ func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 								Spacing: layout.SpaceEnd,
 							}.Layout(gtx,
 								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-									btn := material.Button(a.theme, &a.errorDialog.okButton, "OK")
-									btn.Background = a.theme.Palette.ContrastBg
+									btn := material.Button(a.theme.Theme, &a.errorDialog.okButton, "OK")
+									btn.Background = a.theme.Error
+									btn.Color = a.theme.OnPrimary
 									return btn.Layout(gtx)
 								}),
 							)
