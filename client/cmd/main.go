@@ -371,18 +371,25 @@ func handleRegister(c *client.Client, cfg *config.ClientConfig) {
 		return
 	}
 
-	// TODO: Store passphrase securely in OS keychain
-	// For now, just log that it should be stored
-	fmt.Println("⚠️  WARNING: Passphrase not yet stored in OS keychain")
-	fmt.Println("⚠️  You will need to provide it manually when reconnecting")
-	fmt.Printf("⚠️  Passphrase (SAVE THIS SECURELY): %s\n", base64.StdEncoding.EncodeToString(passphrase))
-
+	// Register with server first
 	if err := c.Register(metadata, encryptedPassphrase); err != nil {
 		fmt.Printf("Registration failed: %v\n", err)
 		return
 	}
 
 	fmt.Println("Registration successful! Wait for admin approval.")
+
+	// Store passphrase securely in OS keychain
+	fmt.Println("\nStoring passphrase in OS keychain...")
+	if err := c.StorePassphrase(passphrase); err != nil {
+		fmt.Printf("⚠️  WARNING: Failed to store passphrase in keychain: %v\n", err)
+		fmt.Println("⚠️  Please save this passphrase securely:")
+		fmt.Printf("⚠️  Passphrase: %s\n", base64.StdEncoding.EncodeToString(passphrase))
+		fmt.Println("⚠️  You will need it to reconnect to the server")
+	} else {
+		fmt.Println("✅ Passphrase stored securely in OS keychain")
+		fmt.Println("💡 The passphrase will be automatically loaded when you connect")
+	}
 }
 
 func handleHeartbeat(c *client.Client) {

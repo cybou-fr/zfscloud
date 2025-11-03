@@ -161,6 +161,26 @@ func (c *Client) GetServerPublicKey() ([]byte, error) {
 	return resp.PublicKey, nil
 }
 
+// StorePassphrase stores the passphrase securely in OS keychain
+func (c *Client) StorePassphrase(passphrase []byte) error {
+	return storePassphraseInKeychain(c.clientID, passphrase)
+}
+
+// LoadPassphrase loads the passphrase from OS keychain
+func (c *Client) LoadPassphrase() ([]byte, error) {
+	return loadPassphraseFromKeychain(c.clientID)
+}
+
+// DeletePassphrase removes the stored passphrase from OS keychain
+func (c *Client) DeletePassphrase() error {
+	return deletePassphraseFromKeychain(c.clientID)
+}
+
+// HasStoredPassphrase checks if a passphrase is stored in OS keychain
+func (c *Client) HasStoredPassphrase() bool {
+	return hasStoredPassphrase(c.clientID)
+}
+
 // Heartbeat sends a heartbeat to keep the session alive
 func (c *Client) Heartbeat() error {
 	nonce, err := crypto.GenerateNonce()
