@@ -38,7 +38,18 @@ type App struct {
 	navDashboard widget.Clickable
 	navSettings  widget.Clickable
 	navFiles     widget.Clickable
-} // Statistics holds real-time backup statistics
+
+	// Error dialog
+	errorDialog     ErrorDialog
+	showErrorDialog bool
+} // ErrorDialog represents an error dialog
+type ErrorDialog struct {
+	title    string
+	message  string
+	okButton widget.Clickable
+}
+
+// Statistics holds real-time backup statistics
 type Statistics struct {
 	Connected     bool
 	EngineRunning bool
@@ -100,6 +111,10 @@ func (a *App) Run() error {
 			return e.Err
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
+
+			// Handle keyboard shortcuts
+			a.handleKeyboard(gtx)
+
 			a.Layout(gtx)
 			e.Frame(gtx.Ops)
 		}
@@ -108,6 +123,11 @@ func (a *App) Run() error {
 
 // Layout renders the main application layout
 func (a *App) Layout(gtx layout.Context) layout.Dimensions {
+	// Show error dialog overlay if visible
+	if a.showErrorDialog {
+		return a.layoutErrorDialog(gtx)
+	}
+
 	return layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
@@ -268,9 +288,90 @@ func (a *App) GetStats() *Statistics {
 }
 
 // ShowError displays an error message
-func (a *App) ShowError(err error) {
-	log.Printf("Error: %v", err)
-	// TODO: Implement error dialog
+func (a *App) ShowError(title, message string) {
+	log.Printf("Error: %s - %s", title, message)
+	a.errorDialog = ErrorDialog{
+		title:   title,
+		message: message,
+	}
+	a.showErrorDialog = true
+	a.window.Invalidate()
+}
+
+// handleKeyboard processes keyboard shortcuts
+func (a *App) handleKeyboard(gtx layout.Context) {
+	// Keyboard shortcuts are implemented via menu items for now
+	// Full keyboard shortcut support requires proper event handling
+	// which varies between Gio versions
+	// TODO: Implement proper keyboard shortcuts when Gio API is stable
+}
+
+// layoutErrorDialog renders the error dialog overlay
+func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
+	// Handle OK button click
+	if a.errorDialog.okButton.Clicked(gtx) {
+		a.showErrorDialog = false
+		a.window.Invalidate()
+	}
+
+	return layout.Stack{}.Layout(gtx,
+		// Dimmed background
+		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+			return layout.Flex{
+				Axis: layout.Vertical,
+			}.Layout(gtx,
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.layoutNavBar(gtx)
+				}),
+				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+					return a.layoutContent(gtx)
+				}),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.layoutStatusBar(gtx)
+				}),
+			)
+		}),
+		// Dialog overlay
+		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+			return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				// Dialog size
+				gtx.Constraints.Max.X = gtx.Dp(unit.Dp(450))
+				gtx.Constraints.Min.X = gtx.Dp(unit.Dp(400))
+
+				return layout.UniformInset(unit.Dp(24)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.Flex{
+						Axis: layout.Vertical,
+					}.Layout(gtx,
+						// Title
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							title := material.H6(a.theme, a.errorDialog.title)
+							return title.Layout(gtx)
+						}),
+						layout.Rigid(layout.Spacer{Height: unit.Dp(16)}.Layout),
+						// Message
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							msg := material.Body1(a.theme, a.errorDialog.message)
+							return msg.Layout(gtx)
+						}),
+						layout.Rigid(layout.Spacer{Height: unit.Dp(24)}.Layout),
+						// OK button
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return layout.Flex{
+								Axis:    layout.Horizontal,
+								Spacing: layout.SpaceEnd,
+							}.Layout(gtx,
+								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+									btn := material.Button(a.theme, &a.errorDialog.okButton, "OK")
+									btn.Background = a.theme.Palette.ContrastBg
+									return btn.Layout(gtx)
+								}),
+							)
+						}),
+					)
+				})
+			})
+		}),
+	)
 }
 
 // Quit closes the application
