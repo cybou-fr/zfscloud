@@ -23,12 +23,22 @@ type DashboardView struct {
 	pauseButton   widget.Clickable
 	resumeButton  widget.Clickable
 	refreshButton widget.Clickable
+
+	// Tooltips for buttons
+	tooltipStart   *Tooltip
+	tooltipStop    *Tooltip
+	tooltipPause   *Tooltip
+	tooltipRefresh *Tooltip
 }
 
 // NewDashboardView creates a new dashboard view
 func NewDashboardView(app *App) *DashboardView {
 	return &DashboardView{
-		app: app,
+		app:            app,
+		tooltipStart:   NewTooltip("Start the backup engine to begin syncing files"),
+		tooltipStop:    NewTooltip("Stop the backup engine and close all connections"),
+		tooltipPause:   NewTooltip("Pause or resume the backup process"),
+		tooltipRefresh: NewTooltip("Scan directories for new or changed files"),
 	}
 }
 
@@ -163,48 +173,56 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		Spacing: layout.SpaceEvenly,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &d.startButton, IconSymbols[IconStart]+" Start Backup")
-			btn.Background = theme.Success
-			btn.Color = theme.OnPrimary
-			if stats.EngineRunning {
-				// Disable if already running
-				gtx = gtx.Disabled()
-			}
-			return btn.Layout(gtx)
+			return d.tooltipStart.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				btn := material.Button(theme.Theme, &d.startButton, IconSymbols[IconStart]+" Start Backup")
+				btn.Background = theme.Success
+				btn.Color = theme.OnPrimary
+				if stats.EngineRunning {
+					// Disable if already running
+					gtx = gtx.Disabled()
+				}
+				return btn.Layout(gtx)
+			})
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &d.stopButton, IconSymbols[IconStop]+" Stop")
-			btn.Background = theme.Error
-			btn.Color = theme.OnPrimary
-			if !stats.EngineRunning {
-				gtx = gtx.Disabled()
-			}
-			return btn.Layout(gtx)
+			return d.tooltipStop.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				btn := material.Button(theme.Theme, &d.stopButton, IconSymbols[IconStop]+" Stop")
+				btn.Background = theme.Error
+				btn.Color = theme.OnPrimary
+				if !stats.EngineRunning {
+					gtx = gtx.Disabled()
+				}
+				return btn.Layout(gtx)
+			})
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			text := IconSymbols[IconPause] + " Pause"
-			if stats.EngineState == "paused" {
-				text = IconSymbols[IconResume] + " Resume"
-			}
-			btn := material.Button(theme.Theme, &d.pauseButton, text)
-			btn.Background = theme.Warning
-			btn.Color = theme.OnPrimary
-			if !stats.EngineRunning || stats.EngineState == "paused" {
-				gtx = gtx.Disabled()
-			}
-			return btn.Layout(gtx)
+			return d.tooltipPause.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				text := IconSymbols[IconPause] + " Pause"
+				if stats.EngineState == "paused" {
+					text = IconSymbols[IconResume] + " Resume"
+				}
+				btn := material.Button(theme.Theme, &d.pauseButton, text)
+				btn.Background = theme.Warning
+				btn.Color = theme.OnPrimary
+				if !stats.EngineRunning || stats.EngineState == "paused" {
+					gtx = gtx.Disabled()
+				}
+				return btn.Layout(gtx)
+			})
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &d.refreshButton, IconSymbols[IconRefresh]+" Scan Now")
-			btn.Background = theme.Info
-			btn.Color = theme.OnPrimary
-			if !stats.Connected {
-				gtx = gtx.Disabled()
-			}
-			return btn.Layout(gtx)
+			return d.tooltipRefresh.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				btn := material.Button(theme.Theme, &d.refreshButton, IconSymbols[IconRefresh]+" Scan Now")
+				btn.Background = theme.Info
+				btn.Color = theme.OnPrimary
+				if !stats.Connected {
+					gtx = gtx.Disabled()
+				}
+				return btn.Layout(gtx)
+			})
 		}),
 	)
 }

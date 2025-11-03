@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"gioui.org/app"
@@ -31,6 +32,8 @@ type App struct {
 	settings    *SettingsView
 	files       *FilesView
 	stats       *Statistics
+	statsMutex  sync.RWMutex  // Protects stats from concurrent access
+	stopUpdate  chan struct{} // Signal to stop statistics updater
 
 	// Navigation buttons
 	navDashboard widget.Clickable
@@ -38,8 +41,9 @@ type App struct {
 	navFiles     widget.Clickable
 
 	// Help button and dialog
-	helpButton     widget.Clickable
-	showHelpDialog bool
+	helpButton      widget.Clickable
+	helpCloseButton widget.Clickable // Separate button for closing help dialog
+	showHelpDialog  bool
 
 	// Error dialog
 	errorDialog     ErrorDialog
@@ -109,6 +113,7 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 		configPath:       configPath,
 		currentView:      ViewDashboard,
 		stats:            &Statistics{},
+		stopUpdate:       make(chan struct{}),
 		toastManager:     NewToastManager(),
 		responsiveLayout: NewResponsiveLayout(),
 		tooltipDashboard: NewTooltip("View dashboard and backup status"),
@@ -140,6 +145,8 @@ func (a *App) Run() error {
 	for {
 		switch e := a.window.Event().(type) {
 		case app.DestroyEvent:
+			// Stop the statistics updater goroutine
+			close(a.stopUpdate)
 			return e.Err
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
@@ -370,9 +377,20 @@ func (a *App) updateStatistics() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		a.updateStats()
-		a.window.Invalidate()
+	for {
+		select {
+		case <-ticker.C:
+			// Lock stats for writing
+			a.statsMutex.Lock()
+			a.updateStats()
+			a.statsMutex.Unlock()
+
+			// Request UI redraw
+			a.window.Invalidate()
+		case <-a.stopUpdate:
+			// Stop signal received, exit goroutine
+			return
+		}
 	}
 }
 
@@ -407,9 +425,14 @@ func (a *App) GetTheme() *AppTheme {
 	return a.theme
 }
 
-// GetStats returns the current statistics
+// GetStats returns a safe copy of the current statistics
 func (a *App) GetStats() *Statistics {
-	return a.stats
+	a.statsMutex.RLock()
+	defer a.statsMutex.RUnlock()
+
+	// Return a copy to avoid race conditions
+	statsCopy := *a.stats
+	return &statsCopy
 }
 
 // ShowError displays an error message
@@ -450,8 +473,8 @@ func (a *App) ShowToast(toastType ToastType, message string) {
 // - Backup controls (Start, Stop)
 // layoutHelpDialog renders the help dialog overlay
 func (a *App) layoutHelpDialog(gtx layout.Context) layout.Dimensions {
-	// Handle close button click
-	for a.helpButton.Clicked(gtx) {
+	// Handle close button click (using separate close button to avoid conflicts)
+	for a.helpCloseButton.Clicked(gtx) {
 		a.showHelpDialog = false
 		a.window.Invalidate()
 	}
@@ -511,7 +534,7 @@ func (a *App) layoutHelpDialog(gtx layout.Context) layout.Dimensions {
 								Spacing: layout.SpaceEnd,
 							}.Layout(gtx,
 								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-									btn := material.Button(a.theme.Theme, &a.helpButton, "Close")
+									btn := material.Button(a.theme.Theme, &a.helpCloseButton, "Close")
 									btn.Background = a.theme.Primary
 									btn.Color = a.theme.OnPrimary
 									return btn.Layout(gtx)

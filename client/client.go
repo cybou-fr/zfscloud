@@ -89,7 +89,12 @@ func (c *Client) Close() error {
 
 // IsConnected returns true if the client has an active connection to the server
 func (c *Client) IsConnected() bool {
-	return c.conn != nil
+	if c.conn == nil {
+		return false
+	}
+	// Check actual connection state, not just if conn exists
+	state := c.conn.GetState()
+	return state == connectivity.Ready || state == connectivity.Idle
 }
 
 // Register registers the client with the server

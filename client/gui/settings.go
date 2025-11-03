@@ -45,6 +45,10 @@ type SettingsView struct {
 	// Validation
 	validator        *Validator
 	validationErrors map[string]string
+
+	// Tooltips
+	tooltipTest *Tooltip
+	tooltipSave *Tooltip
 }
 
 // NewSettingsView creates a new settings view
@@ -53,6 +57,8 @@ func NewSettingsView(app *App) *SettingsView {
 		app:              app,
 		validator:        NewValidator(),
 		validationErrors: make(map[string]string),
+		tooltipTest:      NewTooltip("Test connection to server with current settings"),
+		tooltipSave:      NewTooltip("Save configuration changes to file"),
 	}
 	s.LoadSettings()
 	return s
@@ -279,17 +285,21 @@ func (s *SettingsView) layoutActions(gtx layout.Context) layout.Dimensions {
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &s.testButton, IconSymbols[IconTest]+" Test Connection")
-			btn.Background = theme.Info
-			btn.Color = theme.OnPrimary
-			return btn.Layout(gtx)
+			return s.tooltipTest.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				btn := material.Button(theme.Theme, &s.testButton, IconSymbols[IconTest]+" Test Connection")
+				btn.Background = theme.Info
+				btn.Color = theme.OnPrimary
+				return btn.Layout(gtx)
+			})
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			btn := material.Button(theme.Theme, &s.saveButton, IconSymbols[IconSave]+" Save Settings")
-			btn.Background = theme.Success
-			btn.Color = theme.OnPrimary
-			return btn.Layout(gtx)
+			return s.tooltipSave.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				btn := material.Button(theme.Theme, &s.saveButton, IconSymbols[IconSave]+" Save Settings")
+				btn.Background = theme.Success
+				btn.Color = theme.OnPrimary
+				return btn.Layout(gtx)
+			})
 		}),
 	)
 }
