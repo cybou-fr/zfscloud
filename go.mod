@@ -15,6 +15,7 @@ require (
 
 require (
 	gioui.org v0.9.0 // indirect
+	gioui.org/shader v1.0.8 // indirect
 	gioui.org/x v0.9.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-text/typesetting v0.3.0 // indirect

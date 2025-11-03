@@ -74,13 +74,6 @@ func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensio
 			Axis:      layout.Horizontal,
 			Alignment: layout.Middle,
 		}.Layout(gtx,
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				// Status indicator (colored circle)
-				circle := widget.Image{
-					Src: nil, // TODO: Add colored circle image
-				}
-				return circle.Layout(gtx)
-			}),
 			layout.Rigid(layout.Spacer{Width: unit.Dp(12)}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				label := material.H6(d.app.theme, statusText)
@@ -100,7 +93,8 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		if d.app.engine != nil {
 			// Start engine in background
 			go func() {
-				if err := d.app.engine.Start(gtx.Source.Event.Context); err != nil {
+				ctx := context.Background()
+				if err := d.app.engine.Start(ctx); err != nil {
 					log.Printf("Failed to start engine: %v", err)
 				}
 			}()
@@ -127,7 +121,8 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		if d.app.engine != nil {
 			// Perform initial scan
 			go func() {
-				if err := d.app.engine.PerformInitialScan(gtx.Source.Event.Context); err != nil {
+				ctx := context.Background()
+				if err := d.app.engine.PerformInitialScan(ctx); err != nil {
 					log.Printf("Failed to perform scan: %v", err)
 				}
 			}()
