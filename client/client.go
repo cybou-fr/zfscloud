@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/ioustamora/zfscloud/proto"
+	"github.com/ioustamora/zfscloud/server/security"
+	"github.com/ioustamora/zfscloud/shared/config"
 	"github.com/ioustamora/zfscloud/shared/crypto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -23,6 +25,7 @@ type Client struct {
 	serverAddress string
 	sessionActive bool
 	lastHeartbeat time.Time
+	tlsConfig     *config.ClientTLSSettings
 }
 
 // NewClient creates a new ZFSCloud client
@@ -37,10 +40,33 @@ func NewClient(serverAddress, clientID string, privateKey ed25519.PrivateKey, pu
 	}
 }
 
+// SetTLSConfig sets TLS configuration for the client
+func (c *Client) SetTLSConfig(tlsConfig *config.ClientTLSSettings) {
+	c.tlsConfig = tlsConfig
+}
+
 // Connect establishes a connection to the server
 func (c *Client) Connect() error {
-	// TODO: Add TLS credentials
-	conn, err := grpc.NewClient(c.serverAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	var opts []grpc.DialOption
+
+	// Setup TLS if enabled
+	if c.tlsConfig != nil && c.tlsConfig.Enabled {
+		creds, err := security.LoadClientTLSCredentials(
+			c.tlsConfig.CAFile,
+			c.tlsConfig.CertFile,
+			c.tlsConfig.KeyFile,
+			c.tlsConfig.ServerName,
+			c.tlsConfig.InsecureSkipVerify,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to load TLS credentials: %w", err)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	conn, err := grpc.NewClient(c.serverAddress, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}

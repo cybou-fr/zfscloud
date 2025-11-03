@@ -18,10 +18,21 @@ type ServerConfig struct {
 }
 
 type ServerSettings struct {
-	ListenAddress string `yaml:"listen_address"`
-	TLSCert       string `yaml:"tls_cert"`
-	TLSKey        string `yaml:"tls_key"`
-	RSAKeyPath    string `yaml:"rsa_key_path"`
+	ListenAddress string      `yaml:"listen_address"`
+	TLSCert       string      `yaml:"tls_cert"`
+	TLSKey        string      `yaml:"tls_key"`
+	RSAKeyPath    string      `yaml:"rsa_key_path"`
+	TLS           TLSSettings `yaml:"tls"`
+}
+
+type TLSSettings struct {
+	Enabled      bool   `yaml:"enabled"`
+	CertFile     string `yaml:"cert_file"`
+	KeyFile      string `yaml:"key_file"`
+	CAFile       string `yaml:"ca_file"`
+	ClientAuth   string `yaml:"client_auth"` // none, request, require
+	CertDir      string `yaml:"cert_dir"`
+	AutoGenerate bool   `yaml:"auto_generate"`
 }
 
 type ZFSSettings struct {

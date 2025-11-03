@@ -15,10 +15,20 @@ type ClientConfig struct {
 }
 
 type ClientSettings struct {
-	ServerAddress         string `yaml:"server_address"`
-	ServerCertFingerprint string `yaml:"server_cert_fingerprint"`
-	ClientID              string `yaml:"client_id"`
-	KeyPath               string `yaml:"key_path"` // Path to store private key
+	ServerAddress         string            `yaml:"server_address"`
+	ServerCertFingerprint string            `yaml:"server_cert_fingerprint"`
+	ClientID              string            `yaml:"client_id"`
+	KeyPath               string            `yaml:"key_path"` // Path to store private key
+	TLS                   ClientTLSSettings `yaml:"tls"`
+}
+
+type ClientTLSSettings struct {
+	Enabled            bool   `yaml:"enabled"`
+	CAFile             string `yaml:"ca_file"`
+	CertFile           string `yaml:"cert_file"`
+	KeyFile            string `yaml:"key_file"`
+	ServerName         string `yaml:"server_name"`          // For server name verification
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify"` // For testing only
 }
 
 type BackupSettings struct {

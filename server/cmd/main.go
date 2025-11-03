@@ -13,6 +13,7 @@ import (
 	"github.com/ioustamora/zfscloud/proto"
 	"github.com/ioustamora/zfscloud/server/db"
 	"github.com/ioustamora/zfscloud/server/grpc"
+	"github.com/ioustamora/zfscloud/server/security"
 	"github.com/ioustamora/zfscloud/server/snapshot"
 	"github.com/ioustamora/zfscloud/server/zfs"
 	"github.com/ioustamora/zfscloud/shared/config"
@@ -81,10 +82,55 @@ func main() {
 	// Initialize gRPC server with authentication
 	log.Println("Initializing gRPC server...")
 	authInterceptor := grpc.NewAuthInterceptor(database)
-	grpcServer := grpc_server.NewServer(
+
+	var grpcOptions []grpc_server.ServerOption
+	grpcOptions = append(grpcOptions,
 		grpc_server.UnaryInterceptor(authInterceptor.Unary()),
 		grpc_server.StreamInterceptor(authInterceptor.Stream()),
 	)
+
+	// Setup TLS if enabled
+	if cfg.Server.TLS.Enabled {
+		log.Println("TLS enabled, loading credentials...")
+
+		// Auto-generate certificates if requested and they don't exist
+		if cfg.Server.TLS.AutoGenerate {
+			certMgr := security.NewCertificateManager(cfg.Server.TLS.CertDir)
+			if !certMgr.CertExists("ca-cert.pem") {
+				log.Println("Generating CA certificate...")
+				if err := certMgr.GenerateCA("ZFSCloud CA", 3650); err != nil {
+					log.Fatalf("Failed to generate CA: %v", err)
+				}
+				log.Println("CA certificate generated successfully")
+			}
+			if !certMgr.CertExists("server-cert.pem") {
+				log.Println("Generating server certificate...")
+				dnsNames := []string{"localhost", "zfscloud-server"}
+				if err := certMgr.GenerateServerCert("zfscloud-server", dnsNames, 365); err != nil {
+					log.Fatalf("Failed to generate server certificate: %v", err)
+				}
+				log.Println("Server certificate generated successfully")
+			}
+		}
+
+		clientAuth := security.GetClientAuthType(cfg.Server.TLS.ClientAuth)
+		creds, err := security.LoadServerTLSCredentials(
+			cfg.Server.TLS.CertFile,
+			cfg.Server.TLS.KeyFile,
+			cfg.Server.TLS.CAFile,
+			clientAuth,
+		)
+		if err != nil {
+			log.Fatalf("Failed to load TLS credentials: %v", err)
+		}
+
+		grpcOptions = append(grpcOptions, grpc_server.Creds(creds))
+		log.Printf("TLS configured with client auth mode: %s", cfg.Server.TLS.ClientAuth)
+	} else {
+		log.Println("TLS disabled - running in insecure mode")
+	}
+
+	grpcServer := grpc_server.NewServer(grpcOptions...)
 
 	// Register services
 	backupService := grpc.NewBackupServiceServer(database, zfsManager, cfg)
