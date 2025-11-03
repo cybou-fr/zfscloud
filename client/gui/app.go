@@ -37,6 +37,10 @@ type App struct {
 	navSettings  widget.Clickable
 	navFiles     widget.Clickable
 
+	// Help button and dialog
+	helpButton     widget.Clickable
+	showHelpDialog bool
+
 	// Error dialog
 	errorDialog     ErrorDialog
 	showErrorDialog bool
@@ -50,6 +54,12 @@ type App struct {
 
 	// Responsive layout
 	responsiveLayout *ResponsiveLayout
+
+	// Tooltips for navigation
+	tooltipDashboard *Tooltip
+	tooltipFiles     *Tooltip
+	tooltipSettings  *Tooltip
+	tooltipHelp      *Tooltip
 }
 
 // ErrorDialog represents an error dialog
@@ -101,6 +111,10 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 		stats:            &Statistics{},
 		toastManager:     NewToastManager(),
 		responsiveLayout: NewResponsiveLayout(),
+		tooltipDashboard: NewTooltip("View dashboard and backup status"),
+		tooltipFiles:     NewTooltip("Browse and manage backed up files"),
+		tooltipSettings:  NewTooltip("Configure backup settings and connection"),
+		tooltipHelp:      NewTooltip("Show keyboard shortcuts and help information"),
 	}
 
 	// Initialize views
@@ -145,8 +159,15 @@ func (a *App) handleKeyboardShortcuts(gtx layout.Context) {
 	// Keyboard shortcuts will be fully implemented with proper
 	// input focus management in a future update
 	// For now, see keyboard.go for planned shortcuts
-} // Layout renders the main application layout
+}
+
+// Layout renders the main application layout
 func (a *App) Layout(gtx layout.Context) layout.Dimensions {
+	// Show help dialog overlay if visible
+	if a.showHelpDialog {
+		return a.layoutHelpDialog(gtx)
+	}
+
 	// Show error dialog overlay if visible
 	if a.showErrorDialog {
 		return a.layoutErrorDialog(gtx)
@@ -230,20 +251,41 @@ func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
 		spacer = layout.Spacer{Height: spacing}
 	}
 
+	// Handle help button click
+	if a.helpButton.Clicked(gtx) {
+		a.showHelpDialog = true
+	}
+
 	return layout.Flex{
 		Axis:    axis,
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return a.navButton(gtx, &a.navDashboard, IconDashboard, "Dashboard", ViewDashboard)
+			return a.tooltipDashboard.Layout(gtx, a.theme, func(gtx layout.Context) layout.Dimensions {
+				return a.navButton(gtx, &a.navDashboard, IconDashboard, "Dashboard", ViewDashboard)
+			})
 		}),
 		layout.Rigid(spacer.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return a.navButton(gtx, &a.navFiles, IconFiles, "Files", ViewFiles)
+			return a.tooltipFiles.Layout(gtx, a.theme, func(gtx layout.Context) layout.Dimensions {
+				return a.navButton(gtx, &a.navFiles, IconFiles, "Files", ViewFiles)
+			})
 		}),
 		layout.Rigid(spacer.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return a.navButton(gtx, &a.navSettings, IconSettings, "Settings", ViewSettings)
+			return a.tooltipSettings.Layout(gtx, a.theme, func(gtx layout.Context) layout.Dimensions {
+				return a.navButton(gtx, &a.navSettings, IconSettings, "Settings", ViewSettings)
+			})
+		}),
+		layout.Rigid(spacer.Layout),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			return a.tooltipHelp.Layout(gtx, a.theme, func(gtx layout.Context) layout.Dimensions {
+				// Help button (info icon)
+				btn := material.Button(a.theme.Theme, &a.helpButton, IconSymbols[IconInfo]+" Help")
+				btn.Background = a.theme.Info
+				btn.Color = a.theme.OnPrimary
+				return btn.Layout(gtx)
+			})
 		}),
 	)
 }
@@ -406,7 +448,84 @@ func (a *App) ShowToast(toastType ToastType, message string) {
 // System tray provides:
 // - Quick access to views (Dashboard, Settings, Files)
 // - Backup controls (Start, Stop)
-// - Quit option// layoutErrorDialog renders the error dialog overlay
+// layoutHelpDialog renders the help dialog overlay
+func (a *App) layoutHelpDialog(gtx layout.Context) layout.Dimensions {
+	// Handle close button click
+	for a.helpButton.Clicked(gtx) {
+		a.showHelpDialog = false
+		a.window.Invalidate()
+	}
+
+	return layout.Stack{}.Layout(gtx,
+		// Dimmed background
+		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+			return layout.Flex{
+				Axis: layout.Vertical,
+			}.Layout(gtx,
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.layoutNavBar(gtx)
+				}),
+				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+					return a.layoutContent(gtx)
+				}),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.layoutStatusBar(gtx)
+				}),
+			)
+		}),
+		// Dialog overlay
+		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+			return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				// Dialog size
+				gtx.Constraints.Max.X = gtx.Dp(unit.Dp(550))
+				gtx.Constraints.Min.X = gtx.Dp(unit.Dp(500))
+
+				return layout.UniformInset(unit.Dp(24)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.Flex{
+						Axis: layout.Vertical,
+					}.Layout(gtx,
+						// Title
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							title := a.theme.H5("ℹ ZFSCloud Backup - Help")
+							return title.Layout(gtx)
+						}),
+						layout.Rigid(layout.Spacer{Height: unit.Dp(20)}.Layout),
+						// Help content
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							helpText := GetShortcutHelp()
+							msg := a.theme.Body2(helpText)
+							return msg.Layout(gtx)
+						}),
+						layout.Rigid(layout.Spacer{Height: unit.Dp(20)}.Layout),
+						// Version and info
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							info := a.theme.Caption("Version: 1.0.0 | Built with Gio UI")
+							info.Color = a.theme.TextSecondary
+							return info.Layout(gtx)
+						}),
+						layout.Rigid(layout.Spacer{Height: unit.Dp(20)}.Layout),
+						// Close button
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return layout.Flex{
+								Axis:    layout.Horizontal,
+								Spacing: layout.SpaceEnd,
+							}.Layout(gtx,
+								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+									btn := material.Button(a.theme.Theme, &a.helpButton, "Close")
+									btn.Background = a.theme.Primary
+									btn.Color = a.theme.OnPrimary
+									return btn.Layout(gtx)
+								}),
+							)
+						}),
+					)
+				})
+			})
+		}),
+	)
+}
+
+// layoutErrorDialog renders the error dialog overlay
 func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 	// Handle OK button click
 	if a.errorDialog.okButton.Clicked(gtx) {
