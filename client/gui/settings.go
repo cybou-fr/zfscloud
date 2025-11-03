@@ -515,28 +515,43 @@ func (s *SettingsView) saveSettings() {
 // testConnection tests the connection to the server
 func (s *SettingsView) testConnection() {
 	log.Println("Testing connection...")
-	s.app.ShowToast(ToastTypeInfo, "Testing connection...")
+	s.app.ShowToast(ToastTypeInfo, "Testing connection to server...")
 
 	// Try to connect in a goroutine so we don't block UI
 	go func() {
-		_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if s.app.client == nil {
 			log.Println("Error: No client available")
-			s.app.ShowToast(ToastTypeError, "No client configured")
+			s.app.ShowToast(ToastTypeError, "Client not initialized. Please restart the application.")
 			return
 		}
 
 		// Try to connect
 		if err := s.app.client.Connect(); err != nil {
 			log.Printf("Connection test failed: %v", err)
-			s.app.ShowToast(ToastTypeError, fmt.Sprintf("Connection failed: %v", err))
+			// Provide user-friendly error message
+			userMsg := "Failed to connect to server. Please check:"
+			userMsg += "\n• Server address and port are correct"
+			userMsg += "\n• Server is running"
+			userMsg += "\n• Network connection is active"
+			if s.app.config.Client.TLS.Enabled {
+				userMsg += "\n• TLS certificates are valid"
+			}
+			s.app.ShowToast(ToastTypeError, userMsg)
+			log.Printf("Technical details: %v", err)
+			return
+		}
+
+		// Check if context was cancelled (timeout)
+		if ctx.Err() != nil {
+			s.app.ShowToast(ToastTypeWarning, "Connection test timed out after 10 seconds")
 			return
 		}
 
 		log.Println("Connection test successful!")
-		s.app.ShowToast(ToastTypeSuccess, "Connection test successful!")
+		s.app.ShowToast(ToastTypeSuccess, "✓ Connected successfully to server!")
 
 		// Close the test connection
 		s.app.client.Close()

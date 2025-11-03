@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"time"
 
 	"gioui.org/layout"
 	"gioui.org/op/clip"
@@ -112,58 +113,86 @@ func (d *DashboardView) layoutConnectionCard(gtx layout.Context) layout.Dimensio
 func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensions {
 	stats := d.app.GetStats()
 
-	// Handle button clicks
+	// Handle button clicks with proper nil checking and context timeouts
 	if d.startButton.Clicked(gtx) {
-		if d.app.engine != nil {
-			d.app.ShowToast(ToastTypeInfo, "Starting backup engine...")
-			// Start engine in background
-			go func() {
-				ctx := context.Background()
-				if err := d.app.engine.Start(ctx); err != nil {
-					log.Printf("Failed to start engine: %v", err)
-					d.app.ShowToast(ToastTypeError, fmt.Sprintf("Failed to start: %v", err))
-				} else {
-					d.app.ShowToast(ToastTypeSuccess, "Backup engine started")
-				}
-			}()
+		engine := d.app.engine
+		if engine == nil {
+			d.app.ShowToast(ToastTypeError, "Backup engine not initialized")
+			return layout.Dimensions{}
 		}
-	}
-	if d.stopButton.Clicked(gtx) {
-		if d.app.engine != nil {
-			if err := d.app.engine.Stop(); err != nil {
-				log.Printf("Failed to stop engine: %v", err)
-				d.app.ShowToast(ToastTypeError, fmt.Sprintf("Failed to stop: %v", err))
+
+		d.app.ShowToast(ToastTypeInfo, "Starting backup engine...")
+		// Start engine in background with timeout
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			if err := engine.Start(ctx); err != nil {
+				log.Printf("Failed to start engine: %v", err)
+				d.app.ShowToast(ToastTypeError, "Failed to start backup engine. Please check connection.")
 			} else {
-				d.app.ShowToast(ToastTypeInfo, "Backup engine stopped")
+				d.app.ShowToast(ToastTypeSuccess, "Backup engine started successfully")
 			}
+		}()
+	}
+
+	if d.stopButton.Clicked(gtx) {
+		engine := d.app.engine
+		if engine == nil {
+			d.app.ShowToast(ToastTypeError, "Backup engine not initialized")
+			return layout.Dimensions{}
+		}
+
+		if err := engine.Stop(); err != nil {
+			log.Printf("Failed to stop engine: %v", err)
+			d.app.ShowToast(ToastTypeError, "Failed to stop backup engine")
+		} else {
+			d.app.ShowToast(ToastTypeInfo, "Backup engine stopped")
 		}
 	}
+
 	if d.pauseButton.Clicked(gtx) {
-		if d.app.engine != nil {
-			d.app.engine.Pause()
-			d.app.ShowToast(ToastTypeWarning, "Backup paused")
+		engine := d.app.engine
+		if engine == nil {
+			d.app.ShowToast(ToastTypeError, "Backup engine not initialized")
+			return layout.Dimensions{}
 		}
+
+		engine.Pause()
+		d.app.ShowToast(ToastTypeWarning, "Backup paused")
 	}
+
 	if d.resumeButton.Clicked(gtx) {
-		if d.app.engine != nil {
-			d.app.engine.Resume()
-			d.app.ShowToast(ToastTypeSuccess, "Backup resumed")
+		engine := d.app.engine
+		if engine == nil {
+			d.app.ShowToast(ToastTypeError, "Backup engine not initialized")
+			return layout.Dimensions{}
 		}
+
+		engine.Resume()
+		d.app.ShowToast(ToastTypeSuccess, "Backup resumed")
 	}
+
 	if d.refreshButton.Clicked(gtx) {
-		if d.app.engine != nil {
-			d.app.ShowToast(ToastTypeInfo, "Scanning files...")
-			// Perform initial scan
-			go func() {
-				ctx := context.Background()
-				if err := d.app.engine.PerformInitialScan(ctx); err != nil {
-					log.Printf("Failed to perform scan: %v", err)
-					d.app.ShowToast(ToastTypeError, fmt.Sprintf("Scan failed: %v", err))
-				} else {
-					d.app.ShowToast(ToastTypeSuccess, "File scan completed")
-				}
-			}()
+		engine := d.app.engine
+		if engine == nil {
+			d.app.ShowToast(ToastTypeError, "Backup engine not initialized")
+			return layout.Dimensions{}
 		}
+
+		d.app.ShowToast(ToastTypeInfo, "Scanning files...")
+		// Perform initial scan with timeout
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+			defer cancel()
+
+			if err := engine.PerformInitialScan(ctx); err != nil {
+				log.Printf("Failed to perform scan: %v", err)
+				d.app.ShowToast(ToastTypeError, "File scan failed. Please check your configuration.")
+			} else {
+				d.app.ShowToast(ToastTypeSuccess, "File scan completed successfully")
+			}
+		}()
 	}
 
 	theme := d.app.GetTheme()
@@ -287,20 +316,29 @@ func (d *DashboardView) statCard(gtx layout.Context, label, value string) layout
 	})
 }
 
-// layoutCurrentActivity renders the current backup activity
+// layoutCurrentActivity renders the current backup activity with helpful empty states
 func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensions {
 	stats := d.app.GetStats()
 	theme := d.app.GetTheme()
 
 	var activityText string
+	var isEmptyState bool
+
 	if stats.EngineRunning && stats.CurrentFile != "" {
-		activityText = fmt.Sprintf("Currently backing up: %s", stats.CurrentFile)
+		activityText = fmt.Sprintf("📄 Currently backing up: %s", stats.CurrentFile)
 	} else if stats.EngineRunning {
-		activityText = "Backup engine running..."
+		activityText = "⚙️ Backup engine is running and monitoring for changes..."
 	} else if !stats.LastBackup.IsZero() {
-		activityText = fmt.Sprintf("Last backup: %s", stats.LastBackup.Format("2006-01-02 15:04:05"))
+		activityText = fmt.Sprintf("✓ Last backup: %s", stats.LastBackup.Format("2006-01-02 15:04:05"))
+	} else if !stats.Connected {
+		activityText = "⚠️ Not connected to server. Please check Settings and test your connection."
+		isEmptyState = true
+	} else if stats.FilesScanned == 0 {
+		activityText = "👋 Welcome! Click 'Scan Now' to begin scanning your files for backup."
+		isEmptyState = true
 	} else {
-		activityText = "No backup activity"
+		activityText = "Ready to backup. Click 'Start Backup' to begin."
+		isEmptyState = true
 	}
 
 	return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
@@ -314,6 +352,9 @@ func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensi
 			layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				text := theme.Body1(activityText)
+				if isEmptyState {
+					text.Color = theme.TextSecondary
+				}
 				return text.Layout(gtx)
 			}),
 		)
