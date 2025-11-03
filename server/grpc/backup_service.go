@@ -98,7 +98,9 @@ func (s *BackupServiceServer) Register(ctx context.Context, req *proto.RegisterR
 	}
 
 	// Log the action
-	s.database.LogAction("", req.ClientId, "registration_request", fmt.Sprintf("Client %s requested registration", req.ClientId), "")
+	if err := s.database.LogAction("", req.ClientId, "registration_request", fmt.Sprintf("Client %s requested registration", req.ClientId), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log registration request: %v\n", err)
+	}
 
 	return &proto.RegisterResponse{
 		Success:        true,
@@ -256,7 +258,9 @@ func (s *BackupServiceServer) CompleteBackup(ctx context.Context, req *proto.Com
 	}
 
 	// Log the action
-	s.database.LogAction("", clientID, "backup_complete", fmt.Sprintf("Backup completed: %d files", len(req.FilePaths)), "")
+	if err := s.database.LogAction("", clientID, "backup_complete", fmt.Sprintf("Backup completed: %d files", len(req.FilePaths)), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log backup completion: %v\n", err)
+	}
 
 	return &proto.CompleteBackupResponse{
 		Success:         true,
@@ -425,7 +429,9 @@ func (s *BackupServiceServer) RequestSnapshotRestore(ctx context.Context, req *p
 	}
 
 	// Log the action
-	s.database.LogAction(user.UserID, clientID, "restore_request", fmt.Sprintf("Requested restore of snapshot %s", req.SnapshotId), "")
+	if err := s.database.LogAction(user.UserID, clientID, "restore_request", fmt.Sprintf("Requested restore of snapshot %s", req.SnapshotId), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log restore request: %v\n", err)
+	}
 
 	return &proto.SnapshotRestoreResponse{
 		Success:   true,

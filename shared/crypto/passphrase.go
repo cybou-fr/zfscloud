@@ -74,7 +74,7 @@ func EncryptPassphrase(passphrase []byte, publicKeyPEM []byte) ([]byte, error) {
 	return encrypted, nil
 }
 
-// DecryptPassphrase decrypts a passphrase with an RSA private key
+// DecryptPassphrase decrypts a passphrase with a PEM-encoded RSA private key
 func DecryptPassphrase(encryptedPassphrase []byte, privateKeyPEM []byte) ([]byte, error) {
 	block, _ := pem.Decode(privateKeyPEM)
 	if block == nil {
@@ -91,10 +91,15 @@ func DecryptPassphrase(encryptedPassphrase []byte, privateKeyPEM []byte) ([]byte
 		return nil, fmt.Errorf("not an RSA private key")
 	}
 
+	return DecryptWithPrivateKey(encryptedPassphrase, rsaPrivateKey)
+}
+
+// DecryptWithPrivateKey decrypts a passphrase with an RSA private key
+func DecryptWithPrivateKey(encryptedPassphrase []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	decrypted, err := rsa.DecryptOAEP(
 		nil,
 		rand.Reader,
-		rsaPrivateKey,
+		privateKey,
 		encryptedPassphrase,
 		nil,
 	)

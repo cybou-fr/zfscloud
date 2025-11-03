@@ -20,49 +20,59 @@ func NewManager(pool string) *Manager {
 
 // CreateDataset creates a new encrypted ZFS dataset for a user with a passphrase
 // The passphrase is provided by the user/client and used to encrypt the dataset
-func (m *Manager) CreateDataset(userID string, passphrase []byte, compression string) (string, error) {
-	datasetName := fmt.Sprintf("%s/%s", m.pool, userID)
-
-	args := []string{
-		"create",
-		"-o", "encryption=aes-256-gcm",
-		"-o", "keyformat=passphrase",
-		"-o", "keylocation=prompt",
-		"-o", fmt.Sprintf("compression=%s", compression),
-		datasetName,
+func (m *Manager) CreateDataset(datasetName string, passphrase []byte, encryption bool, compression string) error {
+	args := []string{"create"}
+	if encryption {
+		args = append(args, "-o", "encryption=aes-256-gcm", "-o", "keyformat=passphrase", "-o", "keylocation=prompt")
 	}
+	if compression != "" {
+		args = append(args, "-o", fmt.Sprintf("compression=%s", compression))
+	}
+	args = append(args, datasetName)
 
 	cmd := exec.Command("zfs", args...)
 
-	// Provide passphrase via stdin
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return "", fmt.Errorf("failed to create stdin pipe: %w", err)
+	// Provide passphrase via stdin if encryption is enabled
+	if encryption {
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return fmt.Errorf("failed to create stdin pipe: %w", err)
+		}
+
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start zfs create: %w", err)
+		}
+
+		// Write passphrase twice (ZFS requires confirmation)
+		if _, err := stdin.Write(append(passphrase, '\n')); err != nil {
+			return fmt.Errorf("failed to write passphrase: %w", err)
+		}
+		if _, err := stdin.Write(append(passphrase, '\n')); err != nil {
+			return fmt.Errorf("failed to write passphrase confirmation: %w", err)
+		}
+		stdin.Close()
+
+		if err := cmd.Wait(); err != nil {
+			return fmt.Errorf("failed to create dataset: %w", err)
+		}
+	} else {
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("failed to create dataset: %w, output: %s", err, string(output))
+		}
 	}
 
-	if err := cmd.Start(); err != nil {
-		return "", fmt.Errorf("failed to start zfs create: %w", err)
-	}
-
-	// Write passphrase twice (ZFS requires confirmation)
-	if _, err := stdin.Write(append(passphrase, '\n')); err != nil {
-		return "", fmt.Errorf("failed to write passphrase: %w", err)
-	}
-	if _, err := stdin.Write(append(passphrase, '\n')); err != nil {
-		return "", fmt.Errorf("failed to write passphrase confirmation: %w", err)
-	}
-	stdin.Close()
-
-	if err := cmd.Wait(); err != nil {
-		return "", fmt.Errorf("failed to create dataset: %w", err)
-	}
-
-	return datasetName, nil
+	return nil
 }
 
 // DestroyDataset destroys a ZFS dataset
-func (m *Manager) DestroyDataset(datasetName string) error {
-	cmd := exec.Command("zfs", "destroy", "-r", datasetName)
+func (m *Manager) DestroyDataset(datasetName string, recursive bool) error {
+	args := []string{"destroy"}
+	if recursive {
+		args = append(args, "-r")
+	}
+	args = append(args, datasetName)
+
+	cmd := exec.Command("zfs", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to destroy dataset: %w, output: %s", err, string(output))
 	}

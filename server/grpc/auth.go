@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -19,6 +18,15 @@ import (
 type contextKey string
 
 const clientIDKey contextKey = "client_id"
+
+// GetClientIDFromContext retrieves the client ID from the context
+func GetClientIDFromContext(ctx context.Context) (string, error) {
+	clientID, ok := ctx.Value(clientIDKey).(string)
+	if !ok {
+		return "", status.Errorf(codes.Unauthenticated, "missing client-id in context")
+	}
+	return clientID, nil
+}
 
 // AuthInterceptor is a server interceptor for authentication
 func AuthInterceptor(database *db.Database) grpc.UnaryServerInterceptor {
@@ -72,7 +80,7 @@ func StreamAuthInterceptor(database *db.Database) grpc.StreamServerInterceptor {
 		// Add clientID to context for use in RPC handlers
 		newCtx := context.WithValue(stream.Context(), clientIDKey, clientID)
 
-		wrappedStream := &grpc.ServerStream{ServerStream: stream}
+		wrappedStream := newWrappedStream(stream, newCtx)
 		return handler(srv, wrappedStream)
 	}
 }

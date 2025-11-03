@@ -81,12 +81,10 @@ func main() {
 
 	// Initialize gRPC server with authentication
 	log.Println("Initializing gRPC server...")
-	authInterceptor := grpc.NewAuthInterceptor(database)
-
 	var grpcOptions []grpc_server.ServerOption
 	grpcOptions = append(grpcOptions,
-		grpc_server.UnaryInterceptor(authInterceptor.Unary()),
-		grpc_server.StreamInterceptor(authInterceptor.Stream()),
+		grpc_server.UnaryInterceptor(grpc.AuthInterceptor(database)),
+		grpc_server.StreamInterceptor(grpc.StreamAuthInterceptor(database)),
 	)
 
 	// Setup TLS if enabled

@@ -56,6 +56,11 @@ func Verify(publicKey ed25519.PublicKey, data *SignatureData, signature []byte) 
 	return ed25519.Verify(publicKey, message, signature)
 }
 
+// VerifySignature checks if a signature is valid
+func VerifySignature(publicKey ed25519.PublicKey, message, signature []byte) bool {
+	return ed25519.Verify(publicKey, message, signature)
+}
+
 // buildSignatureMessage constructs the message to be signed
 func (kp *KeyPair) buildSignatureMessage(data *SignatureData) []byte {
 	// Format: ClientID|Timestamp|Nonce|SHA256(Payload)
