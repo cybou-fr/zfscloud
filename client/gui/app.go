@@ -253,8 +253,8 @@ func (a *App) updateStatistics() {
 // updateStats updates the statistics from client and engine
 func (a *App) updateStats() {
 	if a.client != nil {
-		// Check if connection is active (simplified check)
-		a.stats.Connected = (a.client != nil)
+		// Check if connection is actually active
+		a.stats.Connected = a.client.IsConnected()
 	}
 
 	if a.engine != nil {

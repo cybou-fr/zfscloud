@@ -87,6 +87,11 @@ func (c *Client) Close() error {
 	return nil
 }
 
+// IsConnected returns true if the client has an active connection to the server
+func (c *Client) IsConnected() bool {
+	return c.conn != nil
+}
+
 // Register registers the client with the server
 func (c *Client) Register(metadata *proto.ClientMetadata, encryptedPassphrase []byte) error {
 	nonce, err := crypto.GenerateNonce()
