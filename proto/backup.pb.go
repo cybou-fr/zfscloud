@@ -7,12 +7,13 @@
 package proto
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -3897,6 +3898,140 @@ func (x *PoolStatus) GetAvailableBytes() int64 {
 func (x *PoolStatus) GetHealth() float64 {
 	if x != nil {
 		return x.Health
+	}
+	return 0
+}
+
+// CreateSnapshotRequest - Manual snapshot creation request
+type CreateSnapshotRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AdminToken   string `protobuf:"bytes,1,opt,name=admin_token,json=adminToken,proto3" json:"admin_token,omitempty"`
+	UserId       string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	SnapshotType string `protobuf:"bytes,3,opt,name=snapshot_type,json=snapshotType,proto3" json:"snapshot_type,omitempty"`
+}
+
+func (x *CreateSnapshotRequest) Reset() {
+	*x = CreateSnapshotRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_backup_proto_msgTypes[58]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateSnapshotRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSnapshotRequest) ProtoMessage() {}
+
+func (x *CreateSnapshotRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_backup_proto_msgTypes[58]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*CreateSnapshotRequest) Descriptor() ([]byte, []int) {
+	return file_proto_backup_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *CreateSnapshotRequest) GetAdminToken() string {
+	if x != nil {
+		return x.AdminToken
+	}
+	return ""
+}
+
+func (x *CreateSnapshotRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *CreateSnapshotRequest) GetSnapshotType() string {
+	if x != nil {
+		return x.SnapshotType
+	}
+	return ""
+}
+
+// CreateSnapshotResponse - Manual snapshot creation response
+type CreateSnapshotResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success      bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message      string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	SnapshotName string `protobuf:"bytes,3,opt,name=snapshot_name,json=snapshotName,proto3" json:"snapshot_name,omitempty"`
+	SizeBytes    int64  `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+}
+
+func (x *CreateSnapshotResponse) Reset() {
+	*x = CreateSnapshotResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_backup_proto_msgTypes[59]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateSnapshotResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateSnapshotResponse) ProtoMessage() {}
+
+func (x *CreateSnapshotResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_backup_proto_msgTypes[59]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*CreateSnapshotResponse) Descriptor() ([]byte, []int) {
+	return file_proto_backup_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *CreateSnapshotResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CreateSnapshotResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *CreateSnapshotResponse) GetSnapshotName() string {
+	if x != nil {
+		return x.SnapshotName
+	}
+	return ""
+}
+
+func (x *CreateSnapshotResponse) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
 	}
 	return 0
 }

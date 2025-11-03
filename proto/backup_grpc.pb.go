@@ -8,6 +8,7 @@ package proto
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -786,6 +787,8 @@ type AdminServiceServer interface {
 	// Configuration
 	UpdateSnapshotPolicy(context.Context, *UpdateSnapshotPolicyRequest) (*UpdateSnapshotPolicyResponse, error)
 	GetSystemStatus(context.Context, *SystemStatusRequest) (*SystemStatusResponse, error)
+	// Manual snapshot operations
+	CreateSnapshot(context.Context, *CreateSnapshotRequest) (*CreateSnapshotResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
