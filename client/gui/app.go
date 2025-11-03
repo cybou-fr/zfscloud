@@ -44,6 +44,9 @@ type App struct {
 	// Loading overlay
 	loadingOverlay *LoadingOverlay
 	showLoading    bool
+
+	// Toast notifications
+	toastManager *ToastManager
 } // ErrorDialog represents an error dialog
 type ErrorDialog struct {
 	title    string
@@ -83,14 +86,15 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 	theme := NewAppTheme(ThemeLight)
 
 	app := &App{
-		window:      window,
-		theme:       theme,
-		client:      client,
-		engine:      engine,
-		config:      cfg,
-		configPath:  configPath,
-		currentView: ViewDashboard,
-		stats:       &Statistics{},
+		window:       window,
+		theme:        theme,
+		client:       client,
+		engine:       engine,
+		config:       cfg,
+		configPath:   configPath,
+		currentView:  ViewDashboard,
+		stats:        &Statistics{},
+		toastManager: NewToastManager(),
 	}
 
 	// Initialize views
@@ -100,6 +104,9 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 
 	// Start system tray
 	app.StartSystemTray()
+
+	// Show welcome message
+	app.toastManager.ShowInfo("Welcome to ZFSCloud Backup")
 
 	return app
 }
@@ -127,20 +134,37 @@ func (a *App) Layout(gtx layout.Context) layout.Dimensions {
 		return a.layoutErrorDialog(gtx)
 	}
 
-	return layout.Flex{
-		Axis: layout.Vertical,
-	}.Layout(gtx,
-		// Top navigation bar
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return a.layoutNavBar(gtx)
+	// Render main UI with toast notifications overlay
+	return layout.Stack{}.Layout(gtx,
+		// Main content
+		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+			return layout.Flex{
+				Axis: layout.Vertical,
+			}.Layout(gtx,
+				// Top navigation bar
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.layoutNavBar(gtx)
+				}),
+				// Main content area
+				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+					return a.layoutContent(gtx)
+				}),
+				// Status bar
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.layoutStatusBar(gtx)
+				}),
+			)
 		}),
-		// Main content area
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return a.layoutContent(gtx)
-		}),
-		// Status bar
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return a.layoutStatusBar(gtx)
+		// Toast notifications overlay (top-right)
+		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+			return layout.Flex{
+				Axis: layout.Horizontal,
+			}.Layout(gtx,
+				layout.Flexed(1, layout.Spacer{}.Layout),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					return a.toastManager.Layout(gtx, a.theme)
+				}),
+			)
 		}),
 	)
 }
@@ -289,11 +313,31 @@ func (a *App) GetStats() *Statistics {
 // ShowError displays an error message
 func (a *App) ShowError(title, message string) {
 	log.Printf("Error: %s - %s", title, message)
+
+	// Show error dialog for critical errors
 	a.errorDialog = ErrorDialog{
 		title:   title,
 		message: message,
 	}
 	a.showErrorDialog = true
+
+	// Also show error toast
+	a.toastManager.ShowError(fmt.Sprintf("%s: %s", title, message))
+	a.window.Invalidate()
+}
+
+// ShowToast shows a toast notification
+func (a *App) ShowToast(toastType ToastType, message string) {
+	switch toastType {
+	case ToastTypeInfo:
+		a.toastManager.ShowInfo(message)
+	case ToastTypeSuccess:
+		a.toastManager.ShowSuccess(message)
+	case ToastTypeWarning:
+		a.toastManager.ShowWarning(message)
+	case ToastTypeError:
+		a.toastManager.ShowError(message)
+	}
 	a.window.Invalidate()
 }
 

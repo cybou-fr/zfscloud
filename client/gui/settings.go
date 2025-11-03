@@ -378,15 +378,18 @@ func (s *SettingsView) saveSettings() {
 	// Save to file
 	if err := config.SaveClientConfig(cfg, s.app.configPath); err != nil {
 		log.Printf("Failed to save config: %v", err)
+		s.app.ShowToast(ToastTypeError, fmt.Sprintf("Failed to save settings: %v", err))
 		return
 	}
 
 	log.Println("Settings saved successfully!")
+	s.app.ShowToast(ToastTypeSuccess, "Settings saved successfully!")
 }
 
 // testConnection tests the connection to the server
 func (s *SettingsView) testConnection() {
 	log.Println("Testing connection...")
+	s.app.ShowToast(ToastTypeInfo, "Testing connection...")
 
 	// Try to connect in a goroutine so we don't block UI
 	go func() {
@@ -395,16 +398,19 @@ func (s *SettingsView) testConnection() {
 
 		if s.app.client == nil {
 			log.Println("Error: No client available")
+			s.app.ShowToast(ToastTypeError, "No client configured")
 			return
 		}
 
 		// Try to connect
 		if err := s.app.client.Connect(); err != nil {
 			log.Printf("Connection test failed: %v", err)
+			s.app.ShowToast(ToastTypeError, fmt.Sprintf("Connection failed: %v", err))
 			return
 		}
 
 		log.Println("Connection test successful!")
+		s.app.ShowToast(ToastTypeSuccess, "Connection test successful!")
 
 		// Close the test connection
 		s.app.client.Close()

@@ -103,11 +103,15 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 	// Handle button clicks
 	if d.startButton.Clicked(gtx) {
 		if d.app.engine != nil {
+			d.app.ShowToast(ToastTypeInfo, "Starting backup engine...")
 			// Start engine in background
 			go func() {
 				ctx := context.Background()
 				if err := d.app.engine.Start(ctx); err != nil {
 					log.Printf("Failed to start engine: %v", err)
+					d.app.ShowToast(ToastTypeError, fmt.Sprintf("Failed to start: %v", err))
+				} else {
+					d.app.ShowToast(ToastTypeSuccess, "Backup engine started")
 				}
 			}()
 		}
@@ -116,26 +120,35 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		if d.app.engine != nil {
 			if err := d.app.engine.Stop(); err != nil {
 				log.Printf("Failed to stop engine: %v", err)
+				d.app.ShowToast(ToastTypeError, fmt.Sprintf("Failed to stop: %v", err))
+			} else {
+				d.app.ShowToast(ToastTypeInfo, "Backup engine stopped")
 			}
 		}
 	}
 	if d.pauseButton.Clicked(gtx) {
 		if d.app.engine != nil {
 			d.app.engine.Pause()
+			d.app.ShowToast(ToastTypeWarning, "Backup paused")
 		}
 	}
 	if d.resumeButton.Clicked(gtx) {
 		if d.app.engine != nil {
 			d.app.engine.Resume()
+			d.app.ShowToast(ToastTypeSuccess, "Backup resumed")
 		}
 	}
 	if d.refreshButton.Clicked(gtx) {
 		if d.app.engine != nil {
+			d.app.ShowToast(ToastTypeInfo, "Scanning files...")
 			// Perform initial scan
 			go func() {
 				ctx := context.Background()
 				if err := d.app.engine.PerformInitialScan(ctx); err != nil {
 					log.Printf("Failed to perform scan: %v", err)
+					d.app.ShowToast(ToastTypeError, fmt.Sprintf("Scan failed: %v", err))
+				} else {
+					d.app.ShowToast(ToastTypeSuccess, "File scan completed")
 				}
 			}()
 		}
