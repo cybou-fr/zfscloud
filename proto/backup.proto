@@ -10,6 +10,9 @@ import "google/protobuf/timestamp.proto";
 
 // BackupService handles all backup-related operations
 service BackupService {
+  // Server information
+  rpc GetServerPublicKey(ServerPublicKeyRequest) returns (ServerPublicKeyResponse);
+  
   // Client registration and authentication
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetRegistrationStatus(RegistrationStatusRequest) returns (RegistrationStatusResponse);
@@ -55,6 +58,19 @@ service AdminService {
   
   // Manual snapshot operations
   rpc CreateSnapshot(CreateSnapshotRequest) returns (CreateSnapshotResponse);
+}
+
+// ============================================================================
+// Server Information Messages
+// ============================================================================
+
+message ServerPublicKeyRequest {
+  // No authentication required for public key retrieval
+}
+
+message ServerPublicKeyResponse {
+  bytes public_key = 1;  // RSA public key in PEM format
+  string key_id = 2;     // Key identifier for key rotation
 }
 
 // ============================================================================

@@ -42,6 +42,8 @@ const (
 //
 // BackupService handles all backup-related operations
 type BackupServiceClient interface {
+	// Server information
+	GetServerPublicKey(ctx context.Context, in *ServerPublicKeyRequest, opts ...grpc.CallOption) (*ServerPublicKeyResponse, error)
 	// Client registration and authentication
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	GetRegistrationStatus(ctx context.Context, in *RegistrationStatusRequest, opts ...grpc.CallOption) (*RegistrationStatusResponse, error)
@@ -69,6 +71,16 @@ type backupServiceClient struct {
 
 func NewBackupServiceClient(cc grpc.ClientConnInterface) BackupServiceClient {
 	return &backupServiceClient{cc}
+}
+
+func (c *backupServiceClient) GetServerPublicKey(ctx context.Context, in *ServerPublicKeyRequest, opts ...grpc.CallOption) (*ServerPublicKeyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerPublicKeyResponse)
+	err := c.cc.Invoke(ctx, "/zfscloud.v1.BackupService/GetServerPublicKey", in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *backupServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
@@ -229,6 +241,8 @@ func (c *backupServiceClient) Heartbeat(ctx context.Context, in *HeartbeatReques
 //
 // BackupService handles all backup-related operations
 type BackupServiceServer interface {
+	// Server information
+	GetServerPublicKey(context.Context, *ServerPublicKeyRequest) (*ServerPublicKeyResponse, error)
 	// Client registration and authentication
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	GetRegistrationStatus(context.Context, *RegistrationStatusRequest) (*RegistrationStatusResponse, error)
@@ -258,6 +272,9 @@ type BackupServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBackupServiceServer struct{}
 
+func (UnimplementedBackupServiceServer) GetServerPublicKey(context.Context, *ServerPublicKeyRequest) (*ServerPublicKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServerPublicKey not implemented")
+}
 func (UnimplementedBackupServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
@@ -319,6 +336,24 @@ func RegisterBackupServiceServer(s grpc.ServiceRegistrar, srv BackupServiceServe
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&BackupService_ServiceDesc, srv)
+}
+
+func _BackupService_GetServerPublicKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServerPublicKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BackupServiceServer).GetServerPublicKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/zfscloud.v1.BackupService/GetServerPublicKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BackupServiceServer).GetServerPublicKey(ctx, req.(*ServerPublicKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _BackupService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -562,6 +597,10 @@ var BackupService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "zfscloud.v1.BackupService",
 	HandlerType: (*BackupServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetServerPublicKey",
+			Handler:    _BackupService_GetServerPublicKey_Handler,
+		},
 		{
 			MethodName: "Register",
 			Handler:    _BackupService_Register_Handler,

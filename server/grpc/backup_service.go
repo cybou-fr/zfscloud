@@ -22,20 +22,31 @@ import (
 // BackupServiceServer implements the BackupService gRPC service
 type BackupServiceServer struct {
 	proto.UnimplementedBackupServiceServer
-	database      *db.Database
-	zfsManager    *zfs.Manager
-	config        *config.ServerConfig
-	rsaPrivateKey []byte // Server's RSA private key for decrypting user passphrases
+	database        *db.Database
+	zfsManager      *zfs.Manager
+	config          *config.ServerConfig
+	rsaPrivateKey   []byte // Server's RSA private key for decrypting user passphrases
+	rsaPublicKeyPEM []byte // Server's RSA public key in PEM format
 }
 
 // NewBackupServiceServer creates a new backup service server
-func NewBackupServiceServer(database *db.Database, zfsManager *zfs.Manager, cfg *config.ServerConfig, rsaPrivateKey []byte) *BackupServiceServer {
+func NewBackupServiceServer(database *db.Database, zfsManager *zfs.Manager, cfg *config.ServerConfig, rsaPrivateKey []byte, rsaPublicKeyPEM []byte) *BackupServiceServer {
 	return &BackupServiceServer{
-		database:      database,
-		zfsManager:    zfsManager,
-		config:        cfg,
-		rsaPrivateKey: rsaPrivateKey,
+		database:        database,
+		zfsManager:      zfsManager,
+		config:          cfg,
+		rsaPrivateKey:   rsaPrivateKey,
+		rsaPublicKeyPEM: rsaPublicKeyPEM,
 	}
+}
+
+// GetServerPublicKey returns the server's RSA public key for clients to encrypt passphrases
+func (s *BackupServiceServer) GetServerPublicKey(ctx context.Context, req *proto.ServerPublicKeyRequest) (*proto.ServerPublicKeyResponse, error) {
+	// No authentication required - public key is meant to be public
+	return &proto.ServerPublicKeyResponse{
+		PublicKey: s.rsaPublicKeyPEM,
+		KeyId:     "default", // TODO: Implement key rotation with versioned key IDs
+	}, nil
 }
 
 // Register handles client registration

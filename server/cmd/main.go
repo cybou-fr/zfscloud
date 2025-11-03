@@ -132,11 +132,54 @@ func main() {
 
 	grpcServer := grpc_server.NewServer(grpcOptions...)
 
+	// Load or generate RSA keys for passphrase encryption
+	log.Println("Loading RSA keys...")
+	var rsaPrivateKey, rsaPublicKeyPEM []byte
+
+	rsaKeyPath := cfg.Server.RSAKeyPath
+	if rsaKeyPath == "" {
+		rsaKeyPath = "server-rsa-key.pem"
+	}
+
+	// Check if RSA key exists
+	if _, err := os.Stat(rsaKeyPath); os.IsNotExist(err) {
+		log.Printf("RSA key not found at %s, generating new key...", rsaKeyPath)
+		// Generate new RSA key pair
+		privateKey, publicKey, err := security.GenerateRSAKeyPair(4096)
+		if err != nil {
+			log.Fatalf("Failed to generate RSA key pair: %v", err)
+		}
+
+		// Save private key to file
+		if err := os.WriteFile(rsaKeyPath, privateKey, 0600); err != nil {
+			log.Fatalf("Failed to save RSA private key: %v", err)
+		}
+		log.Printf("RSA key pair generated and saved to %s", rsaKeyPath)
+
+		rsaPrivateKey = privateKey
+		rsaPublicKeyPEM = publicKey
+	} else {
+		// Load existing key
+		rsaPrivateKey, err = os.ReadFile(rsaKeyPath)
+		if err != nil {
+			log.Fatalf("Failed to read RSA private key: %v", err)
+		}
+		log.Printf("RSA private key loaded from %s", rsaKeyPath)
+
+		// Extract public key from private key
+		rsaPublicKeyPEM, err = security.ExtractPublicKeyFromPrivateKey(rsaPrivateKey)
+		if err != nil {
+			log.Fatalf("Failed to extract public key from private key: %v", err)
+		}
+	}
+
+	log.Println("RSA keys loaded successfully")
+
 	// Register services
-	backupService := grpc.NewBackupServiceServer(database, zfsManager, cfg)
+	backupService := grpc.NewBackupServiceServer(database, zfsManager, cfg, rsaPrivateKey, rsaPublicKeyPEM)
 	proto.RegisterBackupServiceServer(grpcServer, backupService)
 
-	adminService := grpc.NewAdminServiceServer(database, zfsManager, cfg)
+	adminService := grpc.NewAdminServiceServer(database, zfsManager, cfg, rsaPrivateKey)
 	proto.RegisterAdminServiceServer(grpcServer, adminService)
 
 	log.Println("gRPC services registered successfully")
