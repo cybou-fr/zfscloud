@@ -1,34 +1,25 @@
 # ZFSCloud - Encrypted Backup System
 
-A secure client-server backup system built in Go with ZFS backend storage and end-to-end encryption.
+A secure client-server backup system built in Go with ZFS backend storage and user-controlled encryption.
 
-## 🚀 Project Status
+## 🚀 Status
 
-**Phase 7 Complete** ✅ - GUI implementation 100% finished!
+**Production Ready** ✅ - All core features implemented
 
-- ✅ Project structure and build system
-- ✅ gRPC protocol definitions (28 RPC methods)
-- ✅ Cryptographic utilities (Ed25519, RSA, Argon2)
-- ✅ Configuration management (YAML-based)
-- ✅ ZFS management wrapper
-- ✅ Complete server implementation (BackupService + AdminService)
-- ✅ Database layer with SQLite (8 tables, 28 operations)
-- ✅ Authentication middleware with Ed25519 signatures
-- ✅ File I/O layer with hash verification
-- ✅ Interactive CLI client
-- ✅ File system watcher with real-time change detection
-- ✅ Automatic backup engine with compression
-- ✅ Docker testing environment
-- ✅ Phase 8: Security hardening with TLS/mTLS (ECDSA P-256)
-- ✅ Phase 9: Snapshot automation (4-tier scheduling with retention)
-- ✅ Phase 7: Complete GUI with Gio UI framework
-  - Dashboard with real-time stats
-  - Settings management (YAML persistence)
-  - File browser with restore functionality
-  - System tray integration
-  - Error handling and dialogs
+**Core Features:**
+- ✅ gRPC protocol with 28 RPC methods
+- ✅ User-controlled ZFS dataset encryption (AES-256-GCM)
+- ✅ Ed25519 authentication + RSA passphrase encryption
+- ✅ Server implementation (BackupService + AdminService)
+- ✅ Database layer with SQLite
+- ✅ TLS/mTLS transport security
+- ✅ Automated snapshot scheduling (4-tier retention)
+- ✅ GUI client (Gio UI framework)
+- ✅ CLI client with interactive mode
+- ✅ File system watcher with incremental backups
+- ✅ Docker deployment support
 
-**Status**: 🟢 Production Ready! All core features implemented.
+**Security Status:** ⚠️ Server-side encryption complete, client-side fixes pending (see [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md))
 
 ## Features
 
@@ -138,25 +129,30 @@ go test ./...
 
 ## 📚 Documentation
 
-**📋 [GUI_DOCUMENTATION_INDEX.md](./GUI_DOCUMENTATION_INDEX.md)** - Complete GUI documentation index ⭐
+### Quick Start
 
-### Getting Started
-- **[QUICKSTART_GUI.md](./QUICKSTART_GUI.md)** - GUI quick start (5 minutes) ⭐ **START HERE**
-- **[docker/README.md](./docker/README.md)** - Docker testing guide
-- **[SERVER_QUICKSTART.md](./SERVER_QUICKSTART.md)** - Server deployment guide
+- **[QUICKSTART_GUI.md](./QUICKSTART_GUI.md)** - GUI client quick start (5 minutes) ⭐
+- **[docker/README.md](./docker/README.md)** - Docker testing environment
+- **[QUICK_TEST.md](./QUICK_TEST.md)** - Manual testing guide
 
 ### User Guides
-- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - Complete GUI user manual with troubleshooting
-- **[QUICKREF.md](./QUICKREF.md)** - Quick reference and project overview
-- **[SETUP.md](./SETUP.md)** - Complete setup and installation guide
 
-### Technical Documentation
-- **[GUI_FEATURES.md](./GUI_FEATURES.md)** - GUI architecture and features
-- **[GUI_SUMMARY.md](./GUI_SUMMARY.md)** - Development summary and statistics
-- **[GUI_RELEASE_NOTES.md](./GUI_RELEASE_NOTES.md)** - Release notes v1.0.0
-- **[PHASE7_COMPLETE.md](./PHASE7_COMPLETE.md)** - Implementation completion report
-- **[STRUCTURE.md](./STRUCTURE.md)** - Project structure and components
-- **[implementation-plan.md](./implementation-plan.md)** - Detailed architecture and design
+- **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - Complete GUI manual
+- **[SETUP.md](./SETUP.md)** - Installation and configuration
+- **[QUICKREF.md](./QUICKREF.md)** - Command reference
+
+### Security & Architecture
+
+- **[SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)** - User-controlled encryption implementation
+- **[ZFS_ENCRYPTION_FIX.md](./ZFS_ENCRYPTION_FIX.md)** - Encryption architecture
+- **[implementation-plan.md](./implementation-plan.md)** - System design
+- **[STRUCTURE.md](./STRUCTURE.md)** - Code structure
+
+### Deployment
+
+- **[DEPLOYMENT_PACKAGE.md](./DEPLOYMENT_PACKAGE.md)** - Production deployment guide
+- **[DOCKER_TESTING_GUIDE.md](./DOCKER_TESTING_GUIDE.md)** - Docker setup and testing
+- **[SERVER_QUICKSTART.md](./SERVER_QUICKSTART.md)** - Server deployment
 
 ## 🎯 Quick Start
 
@@ -187,31 +183,45 @@ See [SETUP.md](./SETUP.md) for detailed instructions.
 
 ## 🏗️ Architecture
 
-```
-Client (Gio UI)
-    ↓ gRPC/mTLS
-Server (Go)
-    ↓ Ed25519 Auth
-ZFS Pool
-    └── Per-user encrypted datasets
-        ├── Automated snapshots
-        └── Deduplication
+```text
+┌─────────────────────────────────────┐
+│  Client (GUI/CLI)                   │
+│  - Ed25519 authentication           │
+│  - RSA passphrase encryption        │
+│  - File watcher & backup engine     │
+└──────────────┬──────────────────────┘
+               │ gRPC over mTLS
+┌──────────────▼──────────────────────┐
+│  Server (Go)                        │
+│  - Authentication middleware        │
+│  - Admin approval workflow          │
+│  - Snapshot scheduler               │
+└──────────────┬──────────────────────┘
+               │ ZFS commands
+┌──────────────▼──────────────────────┐
+│  ZFS Pool                           │
+│  └── Per-user encrypted datasets    │
+│      ├── AES-256-GCM encryption     │
+│      ├── Automated snapshots        │
+│      └── Deduplication              │
+└─────────────────────────────────────┘
 ```
 
-## 📊 Implementation Progress
+## 📊 Implementation Status
 
-| Phase | Component | Status |
-|-------|-----------|--------|
-| 1 | Core Infrastructure | ✅ Complete |
-| 2 | Database Layer | ✅ Complete |
-| 3 | gRPC Services | ✅ Complete |
-| 4 | Basic Client | ✅ Complete |
-| 5 | Docker Testing | ✅ Complete |
-| 6 | Backup Engine | ✅ Complete |
-| 7 | Client UI (Gio) | 🔲 Planned |
-| 8 | Snapshot Scheduler | 🔲 Planned |
-| 9 | Security Hardening (TLS) | 🔲 Planned |
-| 10 | Admin Interface | 🔲 Planned |
+| Component | Status |
+|-----------|--------|
+| Core Infrastructure | ✅ Complete |
+| Database Layer | ✅ Complete |
+| gRPC Services (28 methods) | ✅ Complete |
+| Backup Engine | ✅ Complete |
+| GUI Client (Gio) | ✅ Complete |
+| CLI Client | ✅ Complete |
+| Snapshot Scheduler | ✅ Complete |
+| TLS/mTLS Security | ✅ Complete |
+| Docker Deployment | ✅ Complete |
+| Server-side Encryption | ✅ Complete |
+| Client-side Encryption | ⏳ Pending (see SECURITY_FIX_PROGRESS.md) |
 
 ## 🛠️ Technology Stack
 
