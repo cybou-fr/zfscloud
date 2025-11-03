@@ -53,7 +53,7 @@ func main() {
 
 	// Create and run GUI
 	log.Println("Starting GUI...")
-	app := gui.NewApp(c, engine)
+	app := gui.NewApp(c, engine, cfg, "client-config.yaml")
 
 	if err := app.Run(); err != nil {
 		log.Fatalf("GUI error: %v", err)

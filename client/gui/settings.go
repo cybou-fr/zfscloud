@@ -1,10 +1,19 @@
 package gui
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+	"time"
+
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+
+	"github.com/ioustamora/zfscloud/shared/config"
 )
 
 // SettingsView displays the settings panel
@@ -36,9 +45,56 @@ type SettingsView struct {
 
 // NewSettingsView creates a new settings view
 func NewSettingsView(app *App) *SettingsView {
-	return &SettingsView{
+	s := &SettingsView{
 		app: app,
 	}
+	s.LoadSettings()
+	return s
+}
+
+// LoadSettings loads current config into the form fields
+func (s *SettingsView) LoadSettings() {
+	if s.app.config == nil {
+		return
+	}
+
+	cfg := s.app.config
+
+	// Server settings
+	s.serverAddr.SetText(cfg.Client.ServerAddress)
+
+	// TLS settings
+	s.tlsEnabled.Value = cfg.Client.TLS.Enabled
+	s.tlsCertPath.SetText(cfg.Client.TLS.CertFile)
+	s.tlsKeyPath.SetText(cfg.Client.TLS.KeyFile)
+	s.tlsCACertPath.SetText(cfg.Client.TLS.CAFile)
+
+	// Backup settings
+	folders := ""
+	for i, folder := range cfg.Backup.Folders {
+		if i > 0 {
+			folders += "\n"
+		}
+		folders += folder
+	}
+	s.backupFolders.SetText(folders)
+
+	excludes := ""
+	for i, pattern := range cfg.Backup.ExcludePatterns {
+		if i > 0 {
+			excludes += "\n"
+		}
+		excludes += pattern
+	}
+	s.excludePaths.SetText(excludes)
+
+	// Convert scan interval to string
+	s.scanInterval.SetText(fmt.Sprintf("%d", cfg.Backup.Schedule.CheckIntervalMinutes))
+
+	// Advanced settings - use default values if not set
+	s.maxWorkers.SetText("4")
+	s.chunkSize.SetText("4")
+	s.maxRetries.SetText("3")
 }
 
 // Layout renders the settings view
@@ -262,17 +318,79 @@ func (s *SettingsView) textAreaField(gtx layout.Context, editor *widget.Editor, 
 
 // saveSettings saves the current settings to config file
 func (s *SettingsView) saveSettings() {
-	// TODO: Implement config saving
-	// 1. Validate all input fields
-	// 2. Update client config
-	// 3. Save to config file
-	// 4. Show success/error message
+	if s.app.config == nil {
+		log.Println("Error: No config loaded")
+		return
+	}
+
+	cfg := s.app.config
+
+	// Update config from form fields
+	cfg.Client.ServerAddress = s.serverAddr.Text()
+	cfg.Client.TLS.Enabled = s.tlsEnabled.Value
+	cfg.Client.TLS.CertFile = s.tlsCertPath.Text()
+	cfg.Client.TLS.KeyFile = s.tlsKeyPath.Text()
+	cfg.Client.TLS.CAFile = s.tlsCACertPath.Text()
+
+	// Parse backup folders
+	foldersText := s.backupFolders.Text()
+	if foldersText != "" {
+		cfg.Backup.Folders = strings.Split(foldersText, "\n")
+		// Trim whitespace
+		for i := range cfg.Backup.Folders {
+			cfg.Backup.Folders[i] = strings.TrimSpace(cfg.Backup.Folders[i])
+		}
+	}
+
+	// Parse exclude patterns
+	excludeText := s.excludePaths.Text()
+	if excludeText != "" {
+		cfg.Backup.ExcludePatterns = strings.Split(excludeText, "\n")
+		// Trim whitespace
+		for i := range cfg.Backup.ExcludePatterns {
+			cfg.Backup.ExcludePatterns[i] = strings.TrimSpace(cfg.Backup.ExcludePatterns[i])
+		}
+	}
+
+	// Parse scan interval
+	if intervalStr := s.scanInterval.Text(); intervalStr != "" {
+		if interval, err := strconv.Atoi(intervalStr); err == nil {
+			cfg.Backup.Schedule.CheckIntervalMinutes = interval
+		}
+	}
+
+	// Save to file
+	if err := config.SaveClientConfig(cfg, s.app.configPath); err != nil {
+		log.Printf("Failed to save config: %v", err)
+		return
+	}
+
+	log.Println("Settings saved successfully!")
 }
 
 // testConnection tests the connection to the server
 func (s *SettingsView) testConnection() {
-	// TODO: Implement connection test
-	// 1. Apply current settings temporarily
-	// 2. Try to connect to server
-	// 3. Show success/error message
+	log.Println("Testing connection...")
+
+	// Try to connect in a goroutine so we don't block UI
+	go func() {
+		_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if s.app.client == nil {
+			log.Println("Error: No client available")
+			return
+		}
+
+		// Try to connect
+		if err := s.app.client.Connect(); err != nil {
+			log.Printf("Connection test failed: %v", err)
+			return
+		}
+
+		log.Println("Connection test successful!")
+
+		// Close the test connection
+		s.app.client.Close()
+	}()
 }

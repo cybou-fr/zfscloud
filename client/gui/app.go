@@ -12,10 +12,12 @@ import (
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/unit"
+	"gioui.org/widget"
 	"gioui.org/widget/material"
 
 	"github.com/ioustamora/zfscloud/client"
 	"github.com/ioustamora/zfscloud/client/backup"
+	"github.com/ioustamora/zfscloud/shared/config"
 )
 
 // App represents the GUI application
@@ -24,14 +26,19 @@ type App struct {
 	theme       *material.Theme
 	client      *client.Client
 	engine      *backup.Engine
+	config      *config.ClientConfig
+	configPath  string
 	currentView View
 	dashboard   *DashboardView
 	settings    *SettingsView
 	files       *FilesView
 	stats       *Statistics
-}
 
-// Statistics holds real-time backup statistics
+	// Navigation buttons
+	navDashboard widget.Clickable
+	navSettings  widget.Clickable
+	navFiles     widget.Clickable
+} // Statistics holds real-time backup statistics
 type Statistics struct {
 	Connected     bool
 	EngineRunning bool
@@ -54,7 +61,7 @@ const (
 )
 
 // NewApp creates a new GUI application
-func NewApp(client *client.Client, engine *backup.Engine) *App {
+func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConfig, configPath string) *App {
 	window := new(app.Window)
 	window.Option(app.Title("ZFSCloud Backup"))
 	window.Option(app.Size(unit.Dp(900), unit.Dp(600)))
@@ -67,6 +74,8 @@ func NewApp(client *client.Client, engine *backup.Engine) *App {
 		theme:       theme,
 		client:      client,
 		engine:      engine,
+		config:      cfg,
+		configPath:  configPath,
 		currentView: ViewDashboard,
 		stats:       &Statistics{},
 	}
@@ -119,6 +128,17 @@ func (a *App) Layout(gtx layout.Context) layout.Dimensions {
 
 // layoutNavBar renders the navigation bar
 func (a *App) layoutNavBar(gtx layout.Context) layout.Dimensions {
+	// Handle navigation button clicks
+	if a.navDashboard.Clicked(gtx) {
+		a.SetView(ViewDashboard)
+	}
+	if a.navSettings.Clicked(gtx) {
+		a.SetView(ViewSettings)
+	}
+	if a.navFiles.Clicked(gtx) {
+		a.SetView(ViewFiles)
+	}
+
 	return layout.UniformInset(unit.Dp(16)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{
 			Axis:      layout.Horizontal,
@@ -130,12 +150,44 @@ func (a *App) layoutNavBar(gtx layout.Context) layout.Dimensions {
 				return title.Layout(gtx)
 			}),
 			layout.Rigid(layout.Spacer{Width: unit.Dp(20)}.Layout),
+			layout.Flexed(1, layout.Spacer{}.Layout),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				// Navigation buttons will go here
-				return layout.Dimensions{}
+				return a.layoutNavButtons(gtx)
 			}),
 		)
 	})
+}
+
+// layoutNavButtons renders the navigation buttons
+func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
+	return layout.Flex{
+		Axis:    layout.Horizontal,
+		Spacing: layout.SpaceEnd,
+	}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			btn := material.Button(a.theme, &a.navDashboard, "Dashboard")
+			if a.currentView == ViewDashboard {
+				btn.Background = a.theme.Palette.ContrastBg
+			}
+			return btn.Layout(gtx)
+		}),
+		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			btn := material.Button(a.theme, &a.navSettings, "Settings")
+			if a.currentView == ViewSettings {
+				btn.Background = a.theme.Palette.ContrastBg
+			}
+			return btn.Layout(gtx)
+		}),
+		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			btn := material.Button(a.theme, &a.navFiles, "Files")
+			if a.currentView == ViewFiles {
+				btn.Background = a.theme.Palette.ContrastBg
+			}
+			return btn.Layout(gtx)
+		}),
+	)
 }
 
 // layoutContent renders the main content based on current view
