@@ -15,7 +15,6 @@ import (
 
 	"github.com/ioustamora/zfscloud/client"
 	"github.com/ioustamora/zfscloud/client/backup"
-	"github.com/ioustamora/zfscloud/client/ui"
 	"github.com/ioustamora/zfscloud/proto"
 	"github.com/ioustamora/zfscloud/shared/config"
 	"github.com/ioustamora/zfscloud/shared/crypto"
@@ -25,8 +24,7 @@ var (
 	configPath  = flag.String("config", "client-config.yaml", "Path to configuration file")
 	keyPath     = flag.String("keys", "client-keys.dat", "Path to key file")
 	interactive = flag.Bool("interactive", true, "Run in interactive mode")
-	guiMode     = flag.Bool("gui", false, "Run in graphical UI mode")
-	version     = "0.1.0"
+	version     = "0.2.0"
 )
 
 func main() {
@@ -72,27 +70,10 @@ func main() {
 
 	log.Println("Connected successfully!")
 
-	ctx := context.Background()
-
-	if *guiMode {
-		runGUIMode(ctx, c, cfg)
-	} else if *interactive {
+	if *interactive {
 		runInteractiveMode(c, cfg)
 	} else {
 		log.Println("Non-interactive mode not yet implemented")
-	}
-}
-
-func runGUIMode(ctx context.Context, c *client.Client, cfg *config.ClientConfig) {
-	log.Println("Starting GUI mode...")
-
-	app, err := ui.NewApp(ctx, c, cfg)
-	if err != nil {
-		log.Fatalf("Failed to create GUI app: %v", err)
-	}
-
-	if err := app.Run(ctx); err != nil {
-		log.Fatalf("GUI app error: %v", err)
 	}
 }
 

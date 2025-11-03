@@ -52,6 +52,9 @@ service AdminService {
   // Configuration
   rpc UpdateSnapshotPolicy(UpdateSnapshotPolicyRequest) returns (UpdateSnapshotPolicyResponse);
   rpc GetSystemStatus(SystemStatusRequest) returns (SystemStatusResponse);
+  
+  // Manual snapshot operations
+  rpc CreateSnapshot(CreateSnapshotRequest) returns (CreateSnapshotResponse);
 }
 
 // ============================================================================
@@ -472,4 +475,17 @@ message PoolStatus {
   int64 used_bytes = 3;
   int64 available_bytes = 4;
   double health = 5;
+}
+
+message CreateSnapshotRequest {
+  string admin_token = 1;
+  string user_id = 2;
+  string snapshot_type = 3;  // "manual", "hourly", "daily", "weekly", "monthly"
+}
+
+message CreateSnapshotResponse {
+  bool success = 1;
+  string message = 2;
+  string snapshot_name = 3;
+  int64 size_bytes = 4;
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
@@ -12,6 +13,7 @@ import (
 	"github.com/ioustamora/zfscloud/proto"
 	"github.com/ioustamora/zfscloud/server/db"
 	"github.com/ioustamora/zfscloud/server/grpc"
+	"github.com/ioustamora/zfscloud/server/snapshot"
 	"github.com/ioustamora/zfscloud/server/zfs"
 	"github.com/ioustamora/zfscloud/shared/config"
 	grpc_server "google.golang.org/grpc"
@@ -65,6 +67,17 @@ func main() {
 	zfsManager := zfs.NewManager(cfg.ZFS.Pool)
 	log.Println("ZFS manager initialized successfully")
 
+	// Initialize snapshot scheduler
+	log.Println("Initializing snapshot scheduler...")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	scheduler := snapshot.NewScheduler(database, zfsManager, cfg)
+	if err := scheduler.Start(ctx); err != nil {
+		log.Fatalf("Failed to start snapshot scheduler: %v", err)
+	}
+	log.Println("Snapshot scheduler initialized successfully")
+
 	// Initialize gRPC server with authentication
 	log.Println("Initializing gRPC server...")
 	authInterceptor := grpc.NewAuthInterceptor(database)
@@ -105,9 +118,16 @@ func main() {
 	<-sigChan
 	log.Println("Shutting down gracefully...")
 
+	// Stop snapshot scheduler
+	log.Println("Stopping snapshot scheduler...")
+	scheduler.Stop()
+
 	// Stop gRPC server
 	log.Println("Stopping gRPC server...")
 	grpcServer.GracefulStop()
+
+	// Cancel context
+	cancel()
 
 	// Close database
 	log.Println("Closing database...")

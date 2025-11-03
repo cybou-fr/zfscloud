@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ioustamora/zfscloud/proto"
 	"github.com/ioustamora/zfscloud/server/db"
+	"github.com/ioustamora/zfscloud/server/snapshot"
 	"github.com/ioustamora/zfscloud/server/zfs"
 	"github.com/ioustamora/zfscloud/shared/config"
 	"google.golang.org/grpc/codes"
@@ -422,5 +423,31 @@ func (s *AdminServiceServer) GetSystemStatus(ctx context.Context, req *proto.Sys
 		UsedStorageBytes:  usedStorage,
 		TotalSnapshots:    totalSnapshots,
 		Pools:             pools,
+	}, nil
+}
+
+// CreateSnapshot creates a manual snapshot for a specific user
+func (s *AdminServiceServer) CreateSnapshot(ctx context.Context, req *proto.CreateSnapshotRequest) (*proto.CreateSnapshotResponse, error) {
+	if err := s.validateAdminToken(req.AdminToken); err != nil {
+		return nil, err
+	}
+
+	// Verify user exists
+	user, err := s.database.GetUserByUserID(req.UserId)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+
+	// Create snapshot
+	snapshotName, sizeBytes, err := snapshot.CreateManualSnapshot(s.database, s.zfsManager, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create snapshot: %v", err)
+	}
+
+	return &proto.CreateSnapshotResponse{
+		Success:      true,
+		Message:      fmt.Sprintf("Manual snapshot created for user %s", user.UserID),
+		SnapshotName: snapshotName,
+		SizeBytes:    sizeBytes,
 	}, nil
 }
