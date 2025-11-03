@@ -8,48 +8,63 @@ import (
 	"github.com/ioustamora/zfscloud/server/zfs"
 )
 
-// CreateManualSnapshot creates a manual snapshot for a specific user
-// This is a convenience function that doesn't require a running scheduler
+// CreateManualSnapshot creates a manual snapshot for a user
 func CreateManualSnapshot(database *db.Database, zfsManager *zfs.Manager, userID string) (string, int64, error) {
-	// Get user info
 	user, err := database.GetUserByUserID(userID)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Generate snapshot name: manual-{timestamp}
-	timestamp := time.Now().UTC().Format("20060102-150405")
-	snapshotName := fmt.Sprintf("manual-%s", timestamp)
+	if user.ZFSDataset == "" {
+		return "", 0, fmt.Errorf("user does not have a ZFS dataset")
+	}
+
+	snapshotName := fmt.Sprintf("manual-%s", time.Now().UTC().Format("2006-01-02-150405"))
+
+	if err := zfsManager.CreateSnapshot(user.ZFSDataset, snapshotName); err != nil {
+		return "", 0, fmt.Errorf("failed to create snapshot: %w", err)
+	}
+
+	// Get snapshot size (this is an estimate)
+	sizeBytes, err := zfsManager.GetUsedSpace(fmt.Sprintf("%s@%s", user.ZFSDataset, snapshotName))
+	if err != nil {
+		// Don't fail the whole operation if we can't get the size
+		fmt.Printf("WARNING: Failed to get snapshot size: %v\n", err)
+	}
+
+	// Log the snapshot creation
+	if err := database.LogAction(userID, "", "snapshot_created_manual", fmt.Sprintf("Manual snapshot '%s' created", snapshotName), ""); err != nil {
+		// If logging fails, we should probably delete the snapshot to avoid inconsistency
+		if delErr := zfsManager.DeleteSnapshot(fmt.Sprintf("%s@%s", user.ZFSDataset, snapshotName)); delErr != nil {
+			return "", 0, fmt.Errorf("failed to log action and failed to delete snapshot: %w, original error: %v", delErr, err)
+		}
+		return "", 0, fmt.Errorf("failed to log action: %w", err)
+	}
+
+	return snapshotName, sizeBytes, nil
+}
+
+// DeleteManualSnapshot deletes a manual snapshot for a user
+func DeleteManualSnapshot(userID, snapshotName string, zfsManager *zfs.Manager, database *db.Database) error {
+	user, err := database.GetUserByUserID(userID)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if user.ZFSDataset == "" {
+		return fmt.Errorf("user does not have a ZFS dataset")
+	}
+
 	fullSnapshotName := fmt.Sprintf("%s@%s", user.ZFSDataset, snapshotName)
 
-	// Create ZFS snapshot
-	if err := zfsManager.CreateSnapshot(user.ZFSDataset, snapshotName); err != nil {
-		return "", 0, fmt.Errorf("failed to create ZFS snapshot: %w", err)
+	if err := zfsManager.DeleteSnapshot(fullSnapshotName); err != nil {
+		return fmt.Errorf("failed to delete snapshot: %w", err)
 	}
 
-	// Get snapshot size
-	usedSpace, err := zfsManager.GetUsedSpace(fullSnapshotName)
-	if err != nil {
-		// Continue even if we can't get size
-		usedSpace = 0
+	// Log the snapshot deletion
+	if err := database.LogAction(userID, "", "snapshot_deleted_manual", fmt.Sprintf("Manual snapshot '%s' deleted", snapshotName), ""); err != nil {
+		return fmt.Errorf("failed to log action: %w", err)
 	}
 
-	// Record in database
-	snapshot := &db.Snapshot{
-		UserID:          userID,
-		ZFSSnapshotName: fullSnapshotName,
-		SizeBytes:       usedSpace,
-	}
-
-	if err := database.CreateSnapshot(snapshot); err != nil {
-		// Try to clean up ZFS snapshot if database insert fails
-		zfsManager.DeleteSnapshot(fullSnapshotName)
-		return "", 0, fmt.Errorf("failed to record snapshot in database: %w", err)
-	}
-
-	// Log action
-	database.LogAction(userID, "", "snapshot_created_manual",
-		fmt.Sprintf("Manual snapshot: %s, Size: %d", fullSnapshotName, usedSpace), "")
-
-	return fullSnapshotName, usedSpace, nil
+	return nil
 }

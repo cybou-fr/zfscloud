@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	crypt32            = syscall.NewLazyDLL("crypt32.dll")
-	cryptProtectData   = crypt32.NewProc("CryptProtectData")
-	cryptUnprotectData = crypt32.NewProc("CryptUnprotectData")
-	localFree          = syscall.NewLazyDLL("kernel32.dll").NewProc("LocalFree")
+	crypt32               = syscall.NewLazyDLL("crypt32.dll")
+	procCryptProtectData    = crypt32.NewProc("CryptProtectData")
+	procCryptUnprotectData  = crypt32.NewProc("CryptUnprotectData")
+	procLocalFree           = syscall.NewLazyDLL("kernel32.dll").NewProc("LocalFree")
 )
 
 type dataBlob struct {
@@ -43,7 +43,7 @@ func storePassphraseInKeychain(clientID string, passphrase []byte) error {
 
 	// Call CryptProtectData
 	// dwFlags = 0x01 (CRYPTPROTECT_UI_FORBIDDEN) - no UI prompts
-	ret, _, err := cryptProtectData.Call(
+	ret, _, err := procCryptProtectData.Call(
 		uintptr(unsafe.Pointer(&inBlob)),
 		0, // Description (null)
 		uintptr(unsafe.Pointer(&entropyBlob)),
@@ -62,7 +62,9 @@ func storePassphraseInKeychain(clientID string, passphrase []byte) error {
 	copy(encryptedData, (*[1 << 30]byte)(unsafe.Pointer(outBlob.pbData))[:outBlob.cbData:outBlob.cbData])
 
 	// Free the output buffer
-	localFree.Call(uintptr(unsafe.Pointer(outBlob.pbData)))
+	if _, _, err := procLocalFree.Call(uintptr(unsafe.Pointer(outBlob.pbData))); err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Printf("WARNING: Failed to free memory: %v\n", err)
+	}
 
 	// Store in user's AppData
 	return storeEncryptedDataToFile(clientID, encryptedData)
@@ -94,7 +96,7 @@ func loadPassphraseFromKeychain(clientID string) ([]byte, error) {
 	var outBlob dataBlob
 
 	// Call CryptUnprotectData
-	ret, _, err := cryptUnprotectData.Call(
+	ret, _, err := procCryptUnprotectData.Call(
 		uintptr(unsafe.Pointer(&inBlob)),
 		0, // Description
 		uintptr(unsafe.Pointer(&entropyBlob)),
@@ -113,7 +115,9 @@ func loadPassphraseFromKeychain(clientID string) ([]byte, error) {
 	copy(passphrase, (*[1 << 30]byte)(unsafe.Pointer(outBlob.pbData))[:outBlob.cbData:outBlob.cbData])
 
 	// Free the output buffer
-	localFree.Call(uintptr(unsafe.Pointer(outBlob.pbData)))
+	if _, _, err := procLocalFree.Call(uintptr(unsafe.Pointer(outBlob.pbData))); err != nil && err.Error() != "The operation completed successfully." {
+		fmt.Printf("WARNING: Failed to free memory: %v\n", err)
+	}
 
 	return passphrase, nil
 }
@@ -123,8 +127,3 @@ func deletePassphraseFromKeychain(clientID string) error {
 	return deleteEncryptedDataFile(clientID)
 }
 
-// hasStoredPassphrase checks if a passphrase is stored for the client ID
-func hasStoredPassphrase(clientID string) bool {
-	_, err := loadEncryptedDataFromFile(clientID)
-	return err == nil
-}

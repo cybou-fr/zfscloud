@@ -260,7 +260,9 @@ func (s *Scheduler) CreateSnapshot(userID string, snapshotType SnapshotType) err
 
 	if err := s.database.CreateSnapshot(snapshot); err != nil {
 		// Try to clean up ZFS snapshot if database insert fails
-		s.zfsManager.DeleteSnapshot(fullSnapshotName)
+		if delErr := s.zfsManager.DeleteSnapshot(fullSnapshotName); delErr != nil {
+			log.Printf("Error deleting snapshot after database record failed for user %s: %v", userID, delErr)
+		}
 		return fmt.Errorf("failed to record snapshot in database: %w", err)
 	}
 

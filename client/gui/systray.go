@@ -1,91 +1,48 @@
 package gui
 
 import (
-	"context"
-	"log"
+	"fmt"
 
 	"github.com/getlantern/systray"
 )
 
-// StartSystemTray initializes the system tray icon and menu
-func (a *App) StartSystemTray() {
-	go func() {
-		systray.Run(a.onTrayReady, a.onTrayExit)
-	}()
-}
+// Placeholder for icon data
+var iconData = []byte{}
 
-// onTrayReady is called when the system tray is ready
-func (a *App) onTrayReady() {
-	// Set tray icon (you would need an .ico file for Windows)
-	// For now, use a simple icon placeholder
+func (a *App) onReady() {
+	systray.SetIcon(iconData)
 	systray.SetTitle("ZFSCloud")
-	systray.SetTooltip("ZFSCloud Backup Client")
+	systray.SetTooltip("ZFSCloud Backup")
 
-	// Create menu items
-	mShow := systray.AddMenuItem("Show Window", "Show the main window")
-	mDashboard := systray.AddMenuItem("Dashboard", "Open dashboard")
-	mSettings := systray.AddMenuItem("Settings", "Open settings")
-	mFiles := systray.AddMenuItem("Files", "Browse files")
-	systray.AddSeparator()
-	mStartBackup := systray.AddMenuItem("Start Backup", "Start backup operation")
-	mStopBackup := systray.AddMenuItem("Stop Backup", "Stop backup operation")
-	systray.AddSeparator()
+	// Menu items
+	mShow := systray.AddMenuItem("Show Window", "Show the main application window")
 	mQuit := systray.AddMenuItem("Quit", "Quit the application")
 
-	// Handle menu item clicks
 	go func() {
 		for {
 			select {
 			case <-mShow.ClickedCh:
-				log.Println("System tray: Show window")
-				// Note: Gio doesn't have a built-in way to show/hide window from code
-				// This would require platform-specific implementation
-
-			case <-mDashboard.ClickedCh:
-				log.Println("System tray: Dashboard")
-				a.SetView(ViewDashboard)
-
-			case <-mSettings.ClickedCh:
-				log.Println("System tray: Settings")
-				a.SetView(ViewSettings)
-
-			case <-mFiles.ClickedCh:
-				log.Println("System tray: Files")
-				a.SetView(ViewFiles)
-
-			case <-mStartBackup.ClickedCh:
-				log.Println("System tray: Start backup")
-				if a.engine != nil {
-					go func() {
-						ctx := context.Background()
-						if err := a.engine.Start(ctx); err != nil {
-							log.Printf("Failed to start engine: %v", err)
-						}
-					}()
-				}
-
-			case <-mStopBackup.ClickedCh:
-				log.Println("System tray: Stop backup")
-				if a.engine != nil {
-					a.engine.Stop()
-				}
-
+				a.showWindow()
 			case <-mQuit.ClickedCh:
-				log.Println("System tray: Quit")
 				systray.Quit()
-				a.Quit()
-				return
 			}
 		}
 	}()
+
+	// Initial state
+	a.updateSystray()
 }
 
-// onTrayExit is called when the system tray exits
-func (a *App) onTrayExit() {
-	log.Println("System tray exited")
+func (a *App) onExit() {
+	// Clean up resources here
+	if a.engine != nil {
+		if err := a.engine.Stop(); err != nil {
+			fmt.Printf("Error stopping engine: %v\n", err)
+		}
+	}
 }
 
-// StopSystemTray stops the system tray
-func (a *App) StopSystemTray() {
-	systray.Quit()
+func (a *App) updateSystray() {
+	// This function can be used to update the systray menu items dynamically
+	// For example, to show connection status or last backup time
 }

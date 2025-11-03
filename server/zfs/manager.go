@@ -60,6 +60,15 @@ func (m *Manager) CreateDataset(userID string, passphrase []byte, compression st
 	return datasetName, nil
 }
 
+// DestroyDataset destroys a ZFS dataset
+func (m *Manager) DestroyDataset(datasetName string) error {
+	cmd := exec.Command("zfs", "destroy", "-r", datasetName)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to destroy dataset: %w, output: %s", err, string(output))
+	}
+	return nil
+}
+
 // LoadKey loads the encryption key for a dataset
 func (m *Manager) LoadKey(datasetName string, passphrase []byte) error {
 	cmd := exec.Command("zfs", "load-key", datasetName)

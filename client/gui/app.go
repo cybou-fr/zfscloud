@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"gioui.org/app"
+	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/getlantern/systray"
 
 	"github.com/ioustamora/zfscloud/client"
 	"github.com/ioustamora/zfscloud/client/backup"
@@ -620,4 +622,13 @@ func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 // Quit closes the application
 func (a *App) Quit() {
 	os.Exit(0)
+}
+
+func (a *App) StartSystemTray() {
+	go systray.Run(a.onReady, a.onExit)
+}
+
+// showWindow brings the application window to the front
+func (a *App) showWindow() {
+	a.window.Perform(system.ActionRaise)
 }

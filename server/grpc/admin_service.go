@@ -142,7 +142,13 @@ func (s *AdminServiceServer) ApproveRegistration(ctx context.Context, req *proto
 
 	if err := s.database.CreateUser(user); err != nil {
 		// Cleanup: try to destroy dataset
-		s.zfsManager.DatasetExists(datasetName) // Ignore error
+		if _, err := s.zfsManager.DatasetExists(datasetName); err != nil {
+			fmt.Printf("WARNING: Failed to check if dataset exists during cleanup: %v\n", err)
+		} else {
+			if err := s.zfsManager.DestroyDataset(datasetName); err != nil {
+				fmt.Printf("WARNING: Failed to destroy dataset during cleanup: %v\n", err)
+			}
+		}
 		return nil, status.Error(codes.Internal, "failed to create user")
 	}
 
@@ -152,7 +158,9 @@ func (s *AdminServiceServer) ApproveRegistration(ctx context.Context, req *proto
 	}
 
 	// Log action
-	s.database.LogAction(userID, registration.ClientID, "registration_approved", fmt.Sprintf("Registration approved by admin, quota: %d bytes", quotaBytes), "")
+	if err := s.database.LogAction(userID, registration.ClientID, "registration_approved", fmt.Sprintf("Registration approved by admin, quota: %d bytes", quotaBytes), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log registration approval: %v\n", err)
+	}
 
 	return &proto.ApproveRegistrationResponse{
 		Success: true,
@@ -186,7 +194,9 @@ func (s *AdminServiceServer) RejectRegistration(ctx context.Context, req *proto.
 	}
 
 	// Log action
-	s.database.LogAction("", registration.ClientID, "registration_rejected", fmt.Sprintf("Registration rejected: %s", req.Reason), "")
+	if err := s.database.LogAction("", registration.ClientID, "registration_rejected", fmt.Sprintf("Registration rejected: %s", req.Reason), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log registration rejection: %v\n", err)
+	}
 
 	return &proto.RejectRegistrationResponse{
 		Success: true,
@@ -254,7 +264,9 @@ func (s *AdminServiceServer) RevokeUser(ctx context.Context, req *proto.RevokeUs
 	}
 
 	// Log action
-	s.database.LogAction(req.UserId, user.ClientID, "user_revoked", fmt.Sprintf("User revoked: %s", req.Reason), "")
+	if err := s.database.LogAction(req.UserId, user.ClientID, "user_revoked", fmt.Sprintf("User revoked: %s", req.Reason), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log user revocation: %v\n", err)
+	}
 
 	return &proto.RevokeUserResponse{
 		Success: true,
@@ -323,7 +335,9 @@ func (s *AdminServiceServer) ApproveRestoreRequest(ctx context.Context, req *pro
 	}
 
 	// Log action
-	s.database.LogAction(restoreReq.UserID, restoreReq.ClientID, "restore_approved", fmt.Sprintf("Restore request approved for snapshot %s", restoreReq.SnapshotID), "")
+	if err := s.database.LogAction(restoreReq.UserID, restoreReq.ClientID, "restore_approved", fmt.Sprintf("Restore request approved for snapshot %s", restoreReq.SnapshotID), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log restore approval: %v\n", err)
+	}
 
 	return &proto.ApproveRestoreRequestResponse{
 		Success: true,
@@ -356,7 +370,9 @@ func (s *AdminServiceServer) RejectRestoreRequest(ctx context.Context, req *prot
 	}
 
 	// Log action
-	s.database.LogAction(restoreReq.UserID, restoreReq.ClientID, "restore_rejected", fmt.Sprintf("Restore request rejected: %s", req.Reason), "")
+	if err := s.database.LogAction(restoreReq.UserID, restoreReq.ClientID, "restore_rejected", fmt.Sprintf("Restore request rejected: %s", req.Reason), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log restore rejection: %v\n", err)
+	}
 
 	return &proto.RejectRestoreRequestResponse{
 		Success: true,
@@ -379,8 +395,10 @@ func (s *AdminServiceServer) UpdateSnapshotPolicy(ctx context.Context, req *prot
 	// TODO: Save config to file
 
 	// Log action
-	s.database.LogAction("", "", "snapshot_policy_updated", fmt.Sprintf("Policy: hourly=%d, daily=%d, weekly=%d, monthly=%d",
-		req.Policy.HourlyRetention, req.Policy.DailyRetention, req.Policy.WeeklyRetention, req.Policy.MonthlyRetention), "")
+	if err := s.database.LogAction("", "", "snapshot_policy_updated", fmt.Sprintf("Policy: hourly=%d, daily=%d, weekly=%d, monthly=%d",
+		req.Policy.HourlyRetention, req.Policy.DailyRetention, req.Policy.WeeklyRetention, req.Policy.MonthlyRetention), ""); err != nil {
+		fmt.Printf("WARNING: Failed to log snapshot policy update: %v\n", err)
+	}
 
 	return &proto.UpdateSnapshotPolicyResponse{
 		Success: true,
