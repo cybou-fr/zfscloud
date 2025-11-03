@@ -1,0 +1,46 @@
+# ZFS-free Docker container for ZFSCloud server (Windows testing)
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies (without ZFS for Windows Docker)
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directories
+RUN mkdir -p /var/lib/zfscloud /etc/zfscloud /tank
+
+# Copy server binary and config
+COPY bin/zfscloud-server /usr/local/bin/zfscloud-server
+COPY docker/config/server.yaml /etc/zfscloud/config.yaml
+
+# Make binary executable
+RUN chmod +x /usr/local/bin/zfscloud-server
+
+# Expose gRPC port
+EXPOSE 50051
+
+# Create startup script (no ZFS, use directory)
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Starting ZFSCloud Server (directory-backed for Windows Docker)..."\n\
+\n\
+# Create storage directory if not exists\n\
+mkdir -p /tank\n\
+echo "Storage directory ready at /tank"\n\
+\n\
+# Show storage info\n\
+echo "Storage Status:"\n\
+df -h /tank\n\
+ls -la /tank\n\
+\n\
+# Start the server\n\
+echo "Starting gRPC server..."\n\
+exec /usr/local/bin/zfscloud-server -config /etc/zfscloud/config.yaml\n\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
