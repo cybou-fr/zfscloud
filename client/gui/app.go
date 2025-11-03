@@ -47,7 +47,12 @@ type App struct {
 
 	// Toast notifications
 	toastManager *ToastManager
-} // ErrorDialog represents an error dialog
+
+	// Responsive layout
+	responsiveLayout *ResponsiveLayout
+}
+
+// ErrorDialog represents an error dialog
 type ErrorDialog struct {
 	title    string
 	message  string
@@ -86,15 +91,16 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 	theme := NewAppTheme(ThemeLight)
 
 	app := &App{
-		window:       window,
-		theme:        theme,
-		client:       client,
-		engine:       engine,
-		config:       cfg,
-		configPath:   configPath,
-		currentView:  ViewDashboard,
-		stats:        &Statistics{},
-		toastManager: NewToastManager(),
+		window:           window,
+		theme:            theme,
+		client:           client,
+		engine:           engine,
+		config:           cfg,
+		configPath:       configPath,
+		currentView:      ViewDashboard,
+		stats:            &Statistics{},
+		toastManager:     NewToastManager(),
+		responsiveLayout: NewResponsiveLayout(),
 	}
 
 	// Initialize views
@@ -123,10 +129,22 @@ func (a *App) Run() error {
 			return e.Err
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
+
+			// Handle keyboard shortcuts
+			a.handleKeyboardShortcuts(gtx)
+
 			a.Layout(gtx)
 			e.Frame(gtx.Ops)
 		}
 	}
+}
+
+// handleKeyboardShortcuts processes keyboard shortcuts
+// Note: Simplified placeholder for future full implementation
+func (a *App) handleKeyboardShortcuts(gtx layout.Context) {
+	// Keyboard shortcuts will be fully implemented with proper
+	// input focus management in a future update
+	// For now, see keyboard.go for planned shortcuts
 } // Layout renders the main application layout
 func (a *App) Layout(gtx layout.Context) layout.Dimensions {
 	// Show error dialog overlay if visible
@@ -201,20 +219,29 @@ func (a *App) layoutNavBar(gtx layout.Context) layout.Dimensions {
 	})
 }
 
-// layoutNavButtons renders the navigation buttons with icons
+// layoutNavButtons renders the navigation buttons with icons (responsive)
 func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
+	// Get responsive navigation axis
+	axis := a.responsiveLayout.GetNavigationAxis(gtx)
+	spacing := a.responsiveLayout.GetSpacing(gtx)
+
+	spacer := layout.Spacer{Width: spacing}
+	if axis == layout.Vertical {
+		spacer = layout.Spacer{Height: spacing}
+	}
+
 	return layout.Flex{
-		Axis:    layout.Horizontal,
+		Axis:    axis,
 		Spacing: layout.SpaceEnd,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return a.navButton(gtx, &a.navDashboard, IconDashboard, "Dashboard", ViewDashboard)
 		}),
-		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
+		layout.Rigid(spacer.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return a.navButton(gtx, &a.navFiles, IconFiles, "Files", ViewFiles)
 		}),
-		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
+		layout.Rigid(spacer.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return a.navButton(gtx, &a.navSettings, IconSettings, "Settings", ViewSettings)
 		}),
@@ -250,9 +277,10 @@ func (a *App) layoutContent(gtx layout.Context) layout.Dimensions {
 	}
 }
 
-// layoutStatusBar renders the bottom status bar
+// layoutStatusBar renders the bottom status bar with enhanced information
 func (a *App) layoutStatusBar(gtx layout.Context) layout.Dimensions {
 	return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		// Build status text
 		statusText := "Disconnected"
 		if a.stats.Connected {
 			statusText = "Connected"
@@ -261,8 +289,37 @@ func (a *App) layoutStatusBar(gtx layout.Context) layout.Dimensions {
 			statusText = fmt.Sprintf("%s • Engine: %s", statusText, a.stats.EngineState)
 		}
 
-		label := a.theme.Body2(statusText)
-		return label.Layout(gtx)
+		// Add last update time if available
+		if !a.stats.LastBackup.IsZero() {
+			elapsed := time.Since(a.stats.LastBackup)
+			if elapsed < time.Minute {
+				statusText = fmt.Sprintf("%s • Last backup: %ds ago", statusText, int(elapsed.Seconds()))
+			} else if elapsed < time.Hour {
+				statusText = fmt.Sprintf("%s • Last backup: %dm ago", statusText, int(elapsed.Minutes()))
+			} else if elapsed < 24*time.Hour {
+				statusText = fmt.Sprintf("%s • Last backup: %dh ago", statusText, int(elapsed.Hours()))
+			}
+		}
+
+		return layout.Flex{
+			Axis:      layout.Horizontal,
+			Spacing:   layout.SpaceBetween,
+			Alignment: layout.Middle,
+		}.Layout(gtx,
+			// Left side: Status text
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				label := a.theme.Body2(statusText)
+				return label.Layout(gtx)
+			}),
+			layout.Flexed(1, layout.Spacer{}.Layout),
+			// Right side: Version info
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				versionText := "ZFSCloud v1.0"
+				version := a.theme.Caption(versionText)
+				version.Color = a.theme.TextSecondary
+				return version.Layout(gtx)
+			}),
+		)
 	})
 }
 

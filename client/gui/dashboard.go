@@ -209,31 +209,29 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 	)
 }
 
-// layoutStatistics renders the statistics cards
+// layoutStatistics renders the statistics cards with enhanced styling and responsive layout
 func (d *DashboardView) layoutStatistics(gtx layout.Context) layout.Dimensions {
 	stats := d.app.GetStats()
+	theme := d.app.GetTheme()
 
-	return layout.Flex{
-		Axis:    layout.Horizontal,
-		Spacing: layout.SpaceEvenly,
-	}.Layout(gtx,
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return d.statCard(gtx, "Files Scanned", fmt.Sprintf("%d", stats.FilesScanned))
-		}),
-		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return d.statCard(gtx, "Files Uploaded", fmt.Sprintf("%d", stats.FilesUploaded))
-		}),
-		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return d.statCard(gtx, "Files Failed", fmt.Sprintf("%d", stats.FilesFailed))
-		}),
-		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
-		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			bytes := formatBytes(stats.BytesUploaded)
-			return d.statCard(gtx, "Data Uploaded", bytes)
-		}),
-	)
+	// Create enhanced stat cards with icons and colors
+	cards := []*StatCard{
+		NewStatCard("Files Scanned", fmt.Sprintf("%d", stats.FilesScanned), IconSearch, theme).
+			WithColor(theme.Info),
+		NewStatCard("Files Uploaded", fmt.Sprintf("%d", stats.FilesUploaded), IconUpload, theme).
+			WithColor(theme.Success),
+		NewStatCard("Files Failed", fmt.Sprintf("%d", stats.FilesFailed), IconError, theme).
+			WithColor(theme.Error),
+		NewStatCard("Data Uploaded", formatBytes(stats.BytesUploaded), IconFolder, theme).
+			WithColor(theme.Primary),
+	}
+
+	// Get responsive columns based on screen size
+	columns := d.app.responsiveLayout.GetCardColumns(gtx)
+
+	// Create grid and render with responsive layout
+	grid := NewStatCardGrid(cards...)
+	return grid.LayoutResponsive(gtx, theme, columns)
 }
 
 // statCard renders a single statistics card with enhanced styling
