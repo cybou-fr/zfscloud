@@ -306,7 +306,9 @@ func (c *Client) ListFiles(path string, recursive bool) ([]*proto.FileInfo, erro
 		Nonce:     nonce,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	md := metadata.Pairs("client-id", c.clientID)
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	resp, err := c.backupService.ListFiles(ctx, req)
