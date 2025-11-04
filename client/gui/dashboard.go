@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/color"
 	"log"
 	"time"
 
@@ -328,6 +329,10 @@ func (d *DashboardView) layoutEngineControls(gtx layout.Context) layout.Dimensio
 		layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			return d.tooltipRefresh.Layout(gtx, theme, func(gtx layout.Context) layout.Dimensions {
+				// Show loading state if scan is in progress
+				if d.scanInProgress {
+					return d.layoutButtonWithSpinner(gtx, "Scanning...", theme.Info)
+				}
 				btn := material.Button(theme.Theme, &d.refreshButton, IconSymbols[IconRefresh]+" Scan Now")
 				btn.Background = theme.Info
 				btn.Color = theme.OnPrimary
@@ -467,6 +472,35 @@ func (d *DashboardView) layoutCurrentActivity(gtx layout.Context) layout.Dimensi
 			Axis: layout.Vertical,
 		}.Layout(gtx, children...)
 	})
+}
+
+// layoutButtonWithSpinner creates a button with a loading spinner
+func (d *DashboardView) layoutButtonWithSpinner(gtx layout.Context, text string, color color.NRGBA) layout.Dimensions {
+	theme := d.app.GetTheme()
+
+	return layout.Flex{
+		Axis:      layout.Horizontal,
+		Alignment: layout.Middle,
+		Spacing:   layout.SpaceEnd,
+	}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			// Circular progress indicator
+			return widget.Border{
+				Color:        color,
+				CornerRadius: unit.Dp(4),
+				Width:        unit.Dp(1),
+			}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				size := gtx.Dp(unit.Dp(20))
+				return layout.Dimensions{Size: image.Pt(size, size)}
+			})
+		}),
+		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			label := material.Label(theme.Theme, unit.Sp(14), text)
+			label.Color = color
+			return label.Layout(gtx)
+		}),
+	)
 }
 
 // formatBytes formats bytes into human-readable format

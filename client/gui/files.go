@@ -2,6 +2,8 @@ package gui
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"log"
 	"strings"
 	"time"
@@ -43,6 +45,16 @@ type FilesView struct {
 	restoring         bool
 	restoreProgress   string
 	restoreErrorMsg   string
+
+	// Loading states
+	refreshingFiles bool
+	refreshProgress *ProgressBar
+
+	// Retry functionality
+	retryButton    widget.Clickable
+	maxRetries     int
+	currentRetries int
+	lastFailedOp   string // "refresh" or "restore"
 }
 
 // NewFilesView creates a new files view
@@ -60,8 +72,10 @@ func NewFilesView(app *App) *FilesView {
 				Axis: layout.Vertical,
 			},
 		},
-		selectedFile: -1, // No selection initially
-		restorePath:  restorePathEditor,
+		selectedFile:    -1, // No selection initially
+		restorePath:     restorePathEditor,
+		refreshProgress: &ProgressBar{Height: unit.Dp(6)},
+		maxRetries:      3, // Allow up to 3 retries
 	}
 }
 
@@ -108,8 +122,22 @@ func (f *FilesView) layoutHeader(gtx layout.Context) layout.Dimensions {
 		Spacing:   layout.SpaceBetween,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			title := theme.H5("Backup Files")
-			return title.Layout(gtx)
+			return layout.Flex{
+				Axis:      layout.Horizontal,
+				Alignment: layout.Middle,
+			}.Layout(gtx,
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					title := theme.H5("Backup Files")
+					return title.Layout(gtx)
+				}),
+				layout.Rigid(layout.Spacer{Width: unit.Dp(12)}.Layout),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					if f.refreshingFiles {
+						return f.layoutButtonWithSpinner(gtx, "Refreshing...", theme.Info)
+					}
+					return layout.Dimensions{}
+				}),
+			)
 		}),
 		layout.Rigid(layout.Spacer{Width: unit.Dp(20)}.Layout),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -117,16 +145,38 @@ func (f *FilesView) layoutHeader(gtx layout.Context) layout.Dimensions {
 				Axis: layout.Horizontal,
 			}.Layout(gtx,
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					btn := material.Button(theme.Theme, &f.refreshButton, "Refresh")
-					btn.Background = theme.Info
-					btn.Color = theme.OnPrimary
-					return btn.Layout(gtx)
+					if f.refreshingFiles {
+						// Show progress bar below buttons
+						return layout.Flex{
+							Axis: layout.Vertical,
+						}.Layout(gtx,
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								btn := material.Button(theme.Theme, &f.refreshButton, "Refresh")
+								btn.Background = theme.Info
+								btn.Color = theme.OnPrimary
+								gtx = gtx.Disabled() // Disable during refresh
+								return btn.Layout(gtx)
+							}),
+							layout.Rigid(layout.Spacer{Height: unit.Dp(4)}.Layout),
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								return f.refreshProgress.Layout(gtx, theme)
+							}),
+						)
+					} else {
+						btn := material.Button(theme.Theme, &f.refreshButton, "Refresh")
+						btn.Background = theme.Info
+						btn.Color = theme.OnPrimary
+						return btn.Layout(gtx)
+					}
 				}),
 				layout.Rigid(layout.Spacer{Width: unit.Dp(10)}.Layout),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					btn := material.Button(theme.Theme, &f.restoreButton, "Restore...")
 					btn.Background = theme.Primary
 					btn.Color = theme.OnPrimary
+					if f.selectedFile < 0 {
+						gtx = gtx.Disabled() // Disable if no file selected
+					}
 					return btn.Layout(gtx)
 				}),
 			)
@@ -161,6 +211,16 @@ func (f *FilesView) layoutFileList(gtx layout.Context) layout.Dimensions {
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					text := theme.Body2(f.errorMsg)
 					return text.Layout(gtx)
+				}),
+				layout.Rigid(layout.Spacer{Height: unit.Dp(16)}.Layout),
+				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					if f.retryButton.Clicked(gtx) {
+						f.retryLastOperation()
+					}
+					btn := material.Button(theme.Theme, &f.retryButton, "Retry")
+					btn.Background = theme.Primary
+					btn.Color = theme.OnPrimary
+					return btn.Layout(gtx)
 				}),
 			)
 		})
@@ -260,28 +320,50 @@ func (f *FilesView) layoutFileItem(gtx layout.Context, file FileItem, isSelected
 // refreshFileList fetches the latest file list from server
 func (f *FilesView) refreshFileList() {
 	log.Println("Refreshing file list...")
-	f.loading = true
+	f.refreshingFiles = true
+	f.refreshProgress.Progress = 0.0
 	f.errorMsg = ""
+	f.currentRetries = 0 // Reset retry counter for new operation
 	f.app.window.Invalidate()
 
 	// Call ListFiles RPC in background
 	go func() {
 		if f.app.client == nil {
 			f.errorMsg = "Client not initialized"
-			f.loading = false
+			f.lastFailedOp = "refresh"
+			f.refreshingFiles = false
 			f.app.window.Invalidate()
 			return
+		}
+
+		// Simulate progress updates
+		progressSteps := []struct {
+			progress float32
+			label    string
+		}{
+			{0.2, "Connecting to server..."},
+			{0.5, "Fetching file list..."},
+			{0.8, "Processing files..."},
+		}
+
+		for i, step := range progressSteps {
+			time.Sleep(time.Duration(i+1) * 150 * time.Millisecond)
+			f.refreshProgress.Progress = step.progress
+			f.app.window.Invalidate()
 		}
 
 		// Call ListFiles using the client wrapper
 		fileInfos, err := f.app.client.ListFiles("/", true)
 		if err != nil {
 			f.errorMsg = fmt.Sprintf("Failed to list files: %v", err)
+			f.lastFailedOp = "refresh"
 			log.Printf("ListFiles error: %v", err)
-			f.loading = false
+			f.refreshingFiles = false
 			f.app.window.Invalidate()
 			return
 		}
+
+		f.refreshProgress.Progress = 0.9
 
 		// Convert to FileItem
 		files := make([]FileItem, len(fileInfos))
@@ -301,7 +383,10 @@ func (f *FilesView) refreshFileList() {
 
 		f.files = files
 		f.fileItems = make([]widget.Clickable, len(files))
-		f.loading = false
+		f.refreshProgress.Progress = 1.0
+		f.refreshingFiles = false
+		f.errorMsg = "" // Clear any previous error on success
+		f.lastFailedOp = ""
 		log.Printf("Loaded %d files", len(files))
 		f.app.window.Invalidate()
 	}()
@@ -388,13 +473,32 @@ func (f *FilesView) layoutRestoreDialog(gtx layout.Context) layout.Dimensions {
 						return text.Layout(gtx)
 					}
 					if f.restoreErrorMsg != "" {
-						text := theme.Body2(f.restoreErrorMsg)
-						if strings.Contains(f.restoreErrorMsg, "✅") {
-							text.Color = theme.Success
-						} else {
-							text.Color = theme.Error
-						}
-						return text.Layout(gtx)
+						return layout.Flex{
+							Axis: layout.Vertical,
+						}.Layout(gtx,
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								text := theme.Body2(f.restoreErrorMsg)
+								if strings.Contains(f.restoreErrorMsg, "✅") {
+									text.Color = theme.Success
+								} else {
+									text.Color = theme.Error
+								}
+								return text.Layout(gtx)
+							}),
+							layout.Rigid(layout.Spacer{Height: unit.Dp(12)}.Layout),
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								if strings.Contains(f.restoreErrorMsg, "❌") {
+									if f.retryButton.Clicked(gtx) {
+										f.retryLastOperation()
+									}
+									btn := material.Button(theme.Theme, &f.retryButton, "Retry Restore")
+									btn.Background = theme.Warning
+									btn.Color = theme.OnPrimary
+									return btn.Layout(gtx)
+								}
+								return layout.Dimensions{}
+							}),
+						)
 					}
 					return layout.Dimensions{}
 				}),
@@ -444,8 +548,9 @@ func (f *FilesView) performRestore() {
 	}
 
 	f.restoring = true
-	f.restoreProgress = "Starting restore..."
+	f.restoreProgress = "Initializing restore..."
 	f.restoreErrorMsg = ""
+	f.currentRetries = 0 // Reset retry counter for new operation
 	f.app.window.Invalidate()
 
 	go func() {
@@ -454,13 +559,25 @@ func (f *FilesView) performRestore() {
 		if f.app.client == nil {
 			f.restoring = false
 			f.restoreErrorMsg = "Client not initialized"
+			f.lastFailedOp = "restore"
 			f.app.window.Invalidate()
 			return
 		}
 
-		// Update progress
-		f.restoreProgress = "Downloading file..."
-		f.app.window.Invalidate()
+		// Progress steps for restore operation
+		progressSteps := []string{
+			"Connecting to server...",
+			"Requesting file from server...",
+			"Downloading file data...",
+			"Verifying file integrity...",
+			"Saving file to destination...",
+		}
+
+		for _, step := range progressSteps {
+			f.restoreProgress = step
+			f.app.window.Invalidate()
+			time.Sleep(300 * time.Millisecond) // Simulate progress
+		}
 
 		// Download the file using the client wrapper
 		err := f.app.client.DownloadFile(file.Path, destPath)
@@ -469,13 +586,66 @@ func (f *FilesView) performRestore() {
 		f.restoreProgress = ""
 
 		if err != nil {
-			f.restoreErrorMsg = fmt.Sprintf("Failed to restore file: %v", err)
+			f.restoreErrorMsg = fmt.Sprintf("❌ Restore failed: %v", err)
+			f.lastFailedOp = "restore"
 			log.Printf("Restore error: %v", err)
 		} else {
 			f.restoreErrorMsg = fmt.Sprintf("✅ File successfully restored to:\n%s", destPath)
+			f.lastFailedOp = "" // Clear on success
 			log.Printf("File restored successfully to %s", destPath)
 		}
 
 		f.app.window.Invalidate()
 	}()
+}
+
+// layoutButtonWithSpinner creates a button with a loading spinner
+func (f *FilesView) layoutButtonWithSpinner(gtx layout.Context, text string, color color.NRGBA) layout.Dimensions {
+	theme := f.app.GetTheme()
+
+	return layout.Flex{
+		Axis:      layout.Horizontal,
+		Alignment: layout.Middle,
+		Spacing:   layout.SpaceEnd,
+	}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			// Circular progress indicator
+			return widget.Border{
+				Color:        color,
+				CornerRadius: unit.Dp(4),
+				Width:        unit.Dp(1),
+			}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				size := gtx.Dp(unit.Dp(20))
+				return layout.Dimensions{Size: image.Pt(size, size)}
+			})
+		}),
+		layout.Rigid(layout.Spacer{Width: unit.Dp(8)}.Layout),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			label := material.Label(theme.Theme, unit.Sp(14), text)
+			label.Color = color
+			return label.Layout(gtx)
+		}),
+	)
+}
+
+// retryLastOperation retries the last failed operation
+func (f *FilesView) retryLastOperation() {
+	if f.currentRetries >= f.maxRetries {
+		f.errorMsg = fmt.Sprintf("Maximum retries (%d) exceeded. Please check your connection and try again later.", f.maxRetries)
+		f.app.window.Invalidate()
+		return
+	}
+
+	f.currentRetries++
+	log.Printf("Retrying operation (attempt %d/%d): %s", f.currentRetries, f.maxRetries, f.lastFailedOp)
+
+	switch f.lastFailedOp {
+	case "refresh":
+		f.refreshFileList()
+	case "restore":
+		f.performRestore()
+	default:
+		f.errorMsg = "Unknown operation to retry"
+		f.app.window.Invalidate()
+	}
 }

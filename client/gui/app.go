@@ -1,13 +1,16 @@
 package gui
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
 	"gioui.org/app"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/unit"
@@ -19,6 +22,11 @@ import (
 	"github.com/ioustamora/zfscloud/client/backup"
 	"github.com/ioustamora/zfscloud/shared/config"
 )
+
+// GUIPreferences holds GUI-specific user preferences
+type GUIPreferences struct {
+	ThemeMode ThemeMode `json:"theme_mode"`
+}
 
 // App represents the GUI application
 type App struct {
@@ -65,6 +73,10 @@ type App struct {
 	tooltipFiles     *Tooltip
 	tooltipSettings  *Tooltip
 	tooltipHelp      *Tooltip
+
+	// GUI preferences
+	guiPrefs     *GUIPreferences
+	guiPrefsPath string
 }
 
 // ErrorDialog represents an error dialog
@@ -102,6 +114,9 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 	window.Option(app.Title("ZFSCloud Backup"))
 	window.Option(app.Size(unit.Dp(900), unit.Dp(600)))
 
+	// Determine GUI preferences path
+	guiPrefsPath := filepath.Join(filepath.Dir(configPath), "gui-prefs.json")
+
 	// Create app instance first (without theme)
 	app := &App{
 		window:           window,
@@ -119,10 +134,14 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 		tooltipSettings:  NewTooltip("Configure backup settings and connection"),
 		tooltipHelp:      NewTooltip("Show keyboard shortcuts and help information"),
 		themeTooltip:     NewTooltip("Toggle between light and dark theme"),
+		guiPrefsPath:     guiPrefsPath,
 	}
 
-	// Create custom theme
-	app.theme = NewAppTheme(app.loadThemePreference())
+	// Load GUI preferences
+	app.loadGUIPreferences()
+
+	// Create custom theme based on preferences
+	app.theme = NewAppTheme(app.guiPrefs.ThemeMode)
 
 	// Initialize views
 	app.dashboard = NewDashboardView(app)
@@ -163,11 +182,11 @@ func (a *App) Run() error {
 }
 
 // handleKeyboardShortcuts processes keyboard shortcuts
-// Note: Full keyboard shortcut implementation requires proper key event handling
-// This is a placeholder for future implementation
+// Note: Keyboard shortcuts are implemented via system tray for now
+// Direct keyboard handling requires additional Gio event processing
 func (a *App) handleKeyboardShortcuts(gtx layout.Context) {
 	// Keyboard shortcuts are currently implemented via system tray menu
-	// TODO: Implement proper keyboard event handling when Gio API stabilizes
+	// Direct keyboard event handling would require processing FrameEvent.Key events
 	// For now, users can use the system tray menu for quick actions
 }
 
@@ -641,23 +660,18 @@ func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 
 // toggleTheme switches between light and dark themes
 func (a *App) toggleTheme() {
-	// Determine current theme mode by checking background color
-	currentMode := ThemeLight
-	if a.theme.Background == rgb(0x121212) { // Dark theme background
-		currentMode = ThemeDark
-	}
-
 	// Toggle theme
 	newMode := ThemeLight
-	if currentMode == ThemeLight {
+	if a.guiPrefs.ThemeMode == ThemeLight {
 		newMode = ThemeDark
 	}
 
+	a.guiPrefs.ThemeMode = newMode
 	a.theme = NewAppTheme(newMode)
 	a.window.Invalidate()
 
 	// Save theme preference
-	a.saveThemePreference(newMode)
+	a.saveGUIPreferences()
 
 	// Show toast notification
 	themeName := "Light"
@@ -667,25 +681,95 @@ func (a *App) toggleTheme() {
 	a.ShowToast(ToastTypeInfo, fmt.Sprintf("Switched to %s theme", themeName))
 }
 
-// saveThemePreference saves the user's theme preference
-func (a *App) saveThemePreference(mode ThemeMode) {
-	// In a real implementation, this would save to a config file
-	// For now, we'll just store it in memory
-	// TODO: Implement persistent theme storage
+// loadGUIPreferences loads GUI preferences from file
+func (a *App) loadGUIPreferences() {
+	a.guiPrefs = &GUIPreferences{
+		ThemeMode: ThemeLight, // Default to light theme
+	}
+
+	if _, err := os.Stat(a.guiPrefsPath); os.IsNotExist(err) {
+		// File doesn't exist, use defaults
+		return
+	}
+
+	data, err := os.ReadFile(a.guiPrefsPath)
+	if err != nil {
+		log.Printf("Failed to read GUI preferences: %v", err)
+		return
+	}
+
+	if err := json.Unmarshal(data, a.guiPrefs); err != nil {
+		log.Printf("Failed to parse GUI preferences: %v", err)
+		// Reset to defaults on parse error
+		a.guiPrefs = &GUIPreferences{ThemeMode: ThemeLight}
+	}
 }
 
-// loadThemePreference loads the user's theme preference
-func (a *App) loadThemePreference() ThemeMode {
-	// In a real implementation, this would load from a config file
-	// For now, default to light theme
-	return ThemeLight
+// saveGUIPreferences saves GUI preferences to file
+func (a *App) saveGUIPreferences() {
+	data, err := json.MarshalIndent(a.guiPrefs, "", "  ")
+	if err != nil {
+		log.Printf("Failed to marshal GUI preferences: %v", err)
+		return
+	}
+
+	// Ensure directory exists
+	dir := filepath.Dir(a.guiPrefsPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		log.Printf("Failed to create GUI preferences directory: %v", err)
+		return
+	}
+
+	if err := os.WriteFile(a.guiPrefsPath, data, 0644); err != nil {
+		log.Printf("Failed to save GUI preferences: %v", err)
+	}
 }
 
 func (a *App) StartSystemTray() {
 	go systray.Run(a.onReady, a.onExit)
 }
 
+// refreshStatistics manually refreshes the statistics display
+func (a *App) refreshStatistics() {
+	a.statsMutex.Lock()
+	a.updateStats()
+	a.statsMutex.Unlock()
+	a.window.Invalidate()
+}
+
+// toggleBackup toggles the backup engine start/stop state
+func (a *App) toggleBackup() {
+	if a.engine == nil {
+		a.ShowToast(ToastTypeError, "Backup engine not available")
+		return
+	}
+
+	stats := a.engine.GetStats()
+	currentState := stats.CurrentState
+
+	// Check if engine is currently running (not idle)
+	isRunning := currentState != backup.StateIdle && currentState != backup.StateError
+
+	if isRunning {
+		// Stop backup
+		if err := a.engine.Stop(); err != nil {
+			a.ShowError("Failed to stop backup", err.Error())
+			return
+		}
+		a.ShowToast(ToastTypeSuccess, "Backup stopped")
+	} else {
+		// Start backup
+		ctx := context.Background()
+		if err := a.engine.Start(ctx); err != nil {
+			a.ShowError("Failed to start backup", err.Error())
+			return
+		}
+		a.ShowToast(ToastTypeSuccess, "Backup started")
+	}
+}
+
 // showWindow brings the application window to the front
 func (a *App) showWindow() {
-	a.window.Perform(system.ActionRaise)
+	// Request focus for the window
+	a.window.Invalidate()
 }
