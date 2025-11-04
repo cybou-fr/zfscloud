@@ -62,6 +62,17 @@ zfscloud/
 
 The easiest way to test the system:
 
+**On Linux:**
+```bash
+# Interactive menu (recommended)
+./test-menu.sh
+
+# Or run specific tests
+./test-integration.sh           # Automated full workflow
+./test-performance.sh           # Performance benchmarks
+```
+
+**On Windows:**
 ```powershell
 # 1. Build server for Docker
 .\build-docker.ps1
@@ -74,7 +85,7 @@ docker-compose up -d
 .\bin\zfscloud-client.exe
 ```
 
-See **[docker/README.md](./docker/README.md)** for complete Docker testing guide.
+See **[LINUX_TESTING_GUIDE.md](./LINUX_TESTING_GUIDE.md)** for Linux testing or **[docker/README.md](./docker/README.md)** for complete Docker guide.
 
 ### Build
 
@@ -137,12 +148,17 @@ go test ./...
 - **[SETUP.md](./SETUP.md)** - Installation guide
 - **[QUICKREF.md](./QUICKREF.md)** - Command reference
 
+### Testing Guides
+
+- **[LINUX_TESTING_GUIDE.md](./LINUX_TESTING_GUIDE.md)** - Linux testing suite ⭐
+- **[docker/README.md](./docker/README.md)** - Docker deployment
+- **[DOCKER_TESTING_GUIDE.md](./DOCKER_TESTING_GUIDE.md)** - Windows Docker testing
+
 ### Key Documents
 
 - **[GUI_USER_GUIDE.md](./GUI_USER_GUIDE.md)** - GUI manual
 - **[SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)** - Encryption status
 - **[implementation-plan.md](./implementation-plan.md)** - Architecture
-- **[docker/README.md](./docker/README.md)** - Docker testing
 
 ## 🎯 Quick Start
 

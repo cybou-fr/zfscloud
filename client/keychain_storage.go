@@ -92,9 +92,3 @@ func deleteEncryptedDataFile(clientID string) error {
 
 	return nil
 }
-
-// hasStoredPassphrase checks if a passphrase is stored for the client ID
-func hasStoredPassphrase(clientID string) bool {
-	_, err := loadEncryptedDataFromFile(clientID)
-	return err == nil
-}

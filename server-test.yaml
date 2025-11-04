@@ -1,0 +1,27 @@
+server:
+  listen_address: "127.0.0.1:50051"
+
+database:
+  path: "/tmp/zfscloud-test/zfscloud.db"
+
+zfs:
+  pool: "tank"
+  compression: "lz4"
+  deduplication: false
+
+quotas:
+  default_quota_gb: 10
+  max_quota_gb: 100
+
+snapshots:
+  schedule:
+    hourly: 24
+    daily: 7
+    weekly: 4
+    monthly: 12
+
+security:
+  admin_token: "test-admin-token-12345"
+  nonce_timeout_minutes: 10
+  session_timeout_hours: 24
+  signature_timeout_minutes: 5
