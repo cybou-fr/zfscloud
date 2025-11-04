@@ -99,7 +99,7 @@ func (c *Client) IsConnected() bool {
 }
 
 // Register registers the client with the server
-func (c *Client) Register(metadata *proto.ClientMetadata, encryptedPassphrase []byte) error {
+func (c *Client) Register(clientMetadata *proto.ClientMetadata, encryptedPassphrase []byte) error {
 	nonce, err := crypto.GenerateNonce()
 	if err != nil {
 		return fmt.Errorf("failed to generate nonce: %w", err)
@@ -123,14 +123,20 @@ func (c *Client) Register(metadata *proto.ClientMetadata, encryptedPassphrase []
 	req := &proto.RegisterRequest{
 		ClientId:            c.clientID,
 		PublicKey:           c.keyPair.PublicKey,
-		Metadata:            metadata,
+		Metadata:            clientMetadata,
 		EncryptedPassphrase: encryptedPassphrase,
 		Signature:           signature,
 		Timestamp:           timestamp,
 		Nonce:               nonce,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Add client-id header
+	md := metadata.Pairs(
+		"client-id", c.clientID,
+	)
+
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	resp, err := c.backupService.Register(ctx, req)

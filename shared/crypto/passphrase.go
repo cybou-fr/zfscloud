@@ -98,7 +98,7 @@ func DecryptPassphrase(encryptedPassphrase []byte, privateKeyPEM []byte) ([]byte
 // DecryptWithPrivateKey decrypts a passphrase with an RSA private key
 func DecryptWithPrivateKey(encryptedPassphrase []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	decrypted, err := rsa.DecryptOAEP(
-		nil,
+		sha256.New(),
 		rand.Reader,
 		privateKey,
 		encryptedPassphrase,
