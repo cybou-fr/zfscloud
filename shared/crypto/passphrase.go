@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -61,7 +62,7 @@ func EncryptPassphrase(passphrase []byte, publicKeyPEM []byte) ([]byte, error) {
 	}
 
 	encrypted, err := rsa.EncryptOAEP(
-		nil,
+		sha256.New(),
 		rand.Reader,
 		rsaPublicKey,
 		passphrase,

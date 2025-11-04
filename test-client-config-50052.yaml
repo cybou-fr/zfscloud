@@ -1,0 +1,27 @@
+client:
+  server_address: "127.0.0.1:50052"
+  client_id: ""  # Will be auto-generated
+  keys_dir: "./test-data/keys"
+
+backup:
+  chunk_size: 1048576  # 1MB
+  folders:
+    - "/home/user/Téléchargements"
+  
+  schedule:
+    check_interval_minutes: 5
+    enabled: true
+  
+  exclude_patterns:
+    - "*.tmp"
+    - "*.temp"
+    - ".DS_Store"
+    - "Thumbs.db"
+
+tls:
+  enabled: false
+  ca_file: ""
+  cert_file: ""
+  key_file: ""
+  server_name: ""
+  insecure_skip_verify: false
