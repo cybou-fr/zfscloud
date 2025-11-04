@@ -202,3 +202,86 @@ func (m *Manager) DatasetExists(datasetName string) (bool, error) {
 	}
 	return true, nil
 }
+
+// GetPoolStatus returns the status of the ZFS pool
+func (m *Manager) GetPoolStatus() (*PoolStatus, error) {
+	cmd := exec.Command("zpool", "list", "-H", "-o", "name,size,alloc,free,health", m.pool)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pool status: %w, output: %s", err, string(output))
+	}
+
+	var name, size, alloc, free, health string
+	if _, err := fmt.Sscanf(strings.TrimSpace(string(output)), "%s\t%s\t%s\t%s\t%s", &name, &size, &alloc, &free, &health); err != nil {
+		return nil, fmt.Errorf("failed to parse pool status: %w", err)
+	}
+
+	// Parse sizes (they come in human-readable format like "10G", "500M")
+	totalBytes, err := parseSize(size)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse total size: %w", err)
+	}
+
+	usedBytes, err := parseSize(alloc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse used size: %w", err)
+	}
+
+	availableBytes, err := parseSize(free)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse free size: %w", err)
+	}
+
+	// Convert health to numeric value
+	var healthValue float64
+	switch strings.ToLower(health) {
+	case "online":
+		healthValue = 1.0
+	case "degraded":
+		healthValue = 0.7
+	case "faulted":
+		healthValue = 0.0
+	default:
+		healthValue = 0.5
+	}
+
+	return &PoolStatus{
+		Name:           name,
+		TotalBytes:     totalBytes,
+		UsedBytes:      usedBytes,
+		AvailableBytes: availableBytes,
+		Health:         healthValue,
+	}, nil
+}
+
+// PoolStatus represents the status of a ZFS pool
+type PoolStatus struct {
+	Name           string
+	TotalBytes     int64
+	UsedBytes      int64
+	AvailableBytes int64
+	Health         float64
+}
+
+// parseSize parses human-readable size strings like "10G", "500M", "1T"
+func parseSize(sizeStr string) (int64, error) {
+	var size int64
+	var unit string
+
+	if _, err := fmt.Sscanf(sizeStr, "%d%s", &size, &unit); err != nil {
+		return 0, err
+	}
+
+	switch strings.ToUpper(unit) {
+	case "K":
+		return size * 1024, nil
+	case "M":
+		return size * 1024 * 1024, nil
+	case "G":
+		return size * 1024 * 1024 * 1024, nil
+	case "T":
+		return size * 1024 * 1024 * 1024 * 1024, nil
+	default:
+		return size, nil // Assume bytes if no unit
+	}
+}

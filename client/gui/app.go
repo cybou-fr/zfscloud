@@ -3,7 +3,6 @@ package gui
 import (
 	"fmt"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -47,13 +46,13 @@ type App struct {
 	helpCloseButton widget.Clickable // Separate button for closing help dialog
 	showHelpDialog  bool
 
+	// Theme toggle
+	themeToggleButton widget.Clickable
+	themeTooltip      *Tooltip
+
 	// Error dialog
 	errorDialog     ErrorDialog
 	showErrorDialog bool
-
-	// Loading overlay
-	loadingOverlay *LoadingOverlay
-	showLoading    bool
 
 	// Toast notifications
 	toastManager *ToastManager
@@ -103,12 +102,9 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 	window.Option(app.Title("ZFSCloud Backup"))
 	window.Option(app.Size(unit.Dp(900), unit.Dp(600)))
 
-	// Create custom theme
-	theme := NewAppTheme(ThemeLight)
-
+	// Create app instance first (without theme)
 	app := &App{
 		window:           window,
-		theme:            theme,
 		client:           client,
 		engine:           engine,
 		config:           cfg,
@@ -122,7 +118,11 @@ func NewApp(client *client.Client, engine *backup.Engine, cfg *config.ClientConf
 		tooltipFiles:     NewTooltip("Browse and manage backed up files"),
 		tooltipSettings:  NewTooltip("Configure backup settings and connection"),
 		tooltipHelp:      NewTooltip("Show keyboard shortcuts and help information"),
+		themeTooltip:     NewTooltip("Toggle between light and dark theme"),
 	}
+
+	// Create custom theme
+	app.theme = NewAppTheme(app.loadThemePreference())
 
 	// Initialize views
 	app.dashboard = NewDashboardView(app)
@@ -163,11 +163,12 @@ func (a *App) Run() error {
 }
 
 // handleKeyboardShortcuts processes keyboard shortcuts
-// Note: Simplified placeholder for future full implementation
+// Note: Full keyboard shortcut implementation requires proper key event handling
+// This is a placeholder for future implementation
 func (a *App) handleKeyboardShortcuts(gtx layout.Context) {
-	// Keyboard shortcuts will be fully implemented with proper
-	// input focus management in a future update
-	// For now, see keyboard.go for planned shortcuts
+	// Keyboard shortcuts are currently implemented via system tray menu
+	// TODO: Implement proper keyboard event handling when Gio API stabilizes
+	// For now, users can use the system tray menu for quick actions
 }
 
 // Layout renders the main application layout
@@ -265,6 +266,11 @@ func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
 		a.showHelpDialog = true
 	}
 
+	// Handle theme toggle click
+	if a.themeToggleButton.Clicked(gtx) {
+		a.toggleTheme()
+	}
+
 	return layout.Flex{
 		Axis:    axis,
 		Spacing: layout.SpaceEnd,
@@ -292,6 +298,20 @@ func (a *App) layoutNavButtons(gtx layout.Context) layout.Dimensions {
 				// Help button (info icon)
 				btn := material.Button(a.theme.Theme, &a.helpButton, IconSymbols[IconInfo]+" Help")
 				btn.Background = a.theme.Info
+				btn.Color = a.theme.OnPrimary
+				return btn.Layout(gtx)
+			})
+		}),
+		layout.Rigid(spacer.Layout),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			return a.themeTooltip.Layout(gtx, a.theme, func(gtx layout.Context) layout.Dimensions {
+				// Theme toggle button
+				themeIcon := "☀" // Light mode icon
+				if a.theme == NewAppTheme(ThemeDark) {
+					themeIcon = "🌙" // Dark mode icon
+				}
+				btn := material.Button(a.theme.Theme, &a.themeToggleButton, themeIcon)
+				btn.Background = a.theme.Secondary
 				btn.Color = a.theme.OnPrimary
 				return btn.Layout(gtx)
 			})
@@ -619,9 +639,46 @@ func (a *App) layoutErrorDialog(gtx layout.Context) layout.Dimensions {
 	)
 }
 
-// Quit closes the application
-func (a *App) Quit() {
-	os.Exit(0)
+// toggleTheme switches between light and dark themes
+func (a *App) toggleTheme() {
+	// Determine current theme mode by checking background color
+	currentMode := ThemeLight
+	if a.theme.Background == rgb(0x121212) { // Dark theme background
+		currentMode = ThemeDark
+	}
+
+	// Toggle theme
+	newMode := ThemeLight
+	if currentMode == ThemeLight {
+		newMode = ThemeDark
+	}
+
+	a.theme = NewAppTheme(newMode)
+	a.window.Invalidate()
+
+	// Save theme preference
+	a.saveThemePreference(newMode)
+
+	// Show toast notification
+	themeName := "Light"
+	if newMode == ThemeDark {
+		themeName = "Dark"
+	}
+	a.ShowToast(ToastTypeInfo, fmt.Sprintf("Switched to %s theme", themeName))
+}
+
+// saveThemePreference saves the user's theme preference
+func (a *App) saveThemePreference(mode ThemeMode) {
+	// In a real implementation, this would save to a config file
+	// For now, we'll just store it in memory
+	// TODO: Implement persistent theme storage
+}
+
+// loadThemePreference loads the user's theme preference
+func (a *App) loadThemePreference() ThemeMode {
+	// In a real implementation, this would load from a config file
+	// For now, default to light theme
+	return ThemeLight
 }
 
 func (a *App) StartSystemTray() {

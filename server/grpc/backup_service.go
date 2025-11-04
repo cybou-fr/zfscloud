@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -158,10 +160,31 @@ func (s *BackupServiceServer) GetHashIndex(ctx context.Context, req *proto.HashI
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
 
-	// TODO: Implement actual hash index retrieval from ZFS dataset
-	// For now, return empty list
+	// Get dataset mount point
+	datasetPath, err := s.zfsManager.GetMountpoint(user.ZFSDataset)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to get dataset mountpoint: %v", err))
+	}
+
+	// Get all files with their hashes
+	reader := storage.NewFileReader(datasetPath)
+	files, err := reader.ListFiles("")
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to list files: %v", err))
+	}
+
+	// Convert to hash index format
+	hashes := make([]*proto.FileHash, len(files))
+	for i, file := range files {
+		hashes[i] = &proto.FileHash{
+			Path: file.Path,
+			Hash: file.Hash, // Already []byte from storage package
+			Size: file.Size,
+		}
+	}
+
 	return &proto.HashIndexResponse{
-		Hashes: []*proto.FileHash{},
+		Hashes: hashes,
 	}, nil
 }
 
@@ -324,13 +347,20 @@ func (s *BackupServiceServer) DownloadFile(req *proto.DownloadFileRequest, strea
 		return status.Error(codes.NotFound, fmt.Sprintf("file not found: %v", err))
 	}
 
+	// Get actual file modification time
+	fullPath := filepath.Join(datasetPath, req.FilePath)
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to get file info: %v", err))
+	}
+
 	// Send metadata first
 	if err := stream.Send(&proto.DownloadFileResponse{
 		Data: &proto.DownloadFileResponse_Metadata{
 			Metadata: &proto.FileMetadata{
 				Path:         fileInfo.Path,
 				Size:         fileInfo.Size,
-				ModifiedTime: timestamppb.Now(), // TODO: Get actual modified time
+				ModifiedTime: timestamppb.New(info.ModTime()),
 				Hash:         fileInfo.Hash,
 			},
 		},

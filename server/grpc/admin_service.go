@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/ioustamora/zfscloud/proto"
@@ -24,15 +25,17 @@ type AdminServiceServer struct {
 	database      *db.Database
 	zfsManager    *zfs.Manager
 	config        *config.ServerConfig
+	configPath    string // Path to the config file for saving changes
 	rsaPrivateKey []byte // Server's RSA private key for decrypting user passphrases
 }
 
 // NewAdminServiceServer creates a new admin service server
-func NewAdminServiceServer(database *db.Database, zfsManager *zfs.Manager, cfg *config.ServerConfig, rsaPrivateKey []byte) *AdminServiceServer {
+func NewAdminServiceServer(database *db.Database, zfsManager *zfs.Manager, cfg *config.ServerConfig, configPath string, rsaPrivateKey []byte) *AdminServiceServer {
 	return &AdminServiceServer{
 		database:      database,
 		zfsManager:    zfsManager,
 		config:        cfg,
+		configPath:    configPath,
 		rsaPrivateKey: rsaPrivateKey,
 	}
 }
@@ -296,8 +299,7 @@ func (s *AdminServiceServer) ListAllSnapshots(ctx context.Context, req *proto.Li
 	if req.UserId != "" {
 		snapshots, err = s.database.ListSnapshotsByUserID(req.UserId)
 	} else {
-		// TODO: Implement listing all snapshots for all users
-		snapshots = []*db.Snapshot{}
+		snapshots, err = s.database.ListAllSnapshots()
 	}
 
 	if err != nil {
@@ -402,7 +404,11 @@ func (s *AdminServiceServer) UpdateSnapshotPolicy(ctx context.Context, req *prot
 	s.config.Snapshots.Schedule.Weekly = int(req.Policy.WeeklyRetention)
 	s.config.Snapshots.Schedule.Monthly = int(req.Policy.MonthlyRetention)
 
-	// TODO: Save config to file
+	// Save config to file
+	if err := config.SaveServerConfig(s.config, s.configPath); err != nil {
+		log.Printf("Failed to save config: %v", err)
+		// Don't fail the request, just log the error
+	}
 
 	// Log action
 	if err := s.database.LogAction("", "", "snapshot_policy_updated", fmt.Sprintf("Policy: hourly=%d, daily=%d, weekly=%d, monthly=%d",
@@ -441,17 +447,34 @@ func (s *AdminServiceServer) GetSystemStatus(ctx context.Context, req *proto.Sys
 		usedStorage += user.UsedBytes
 	}
 
-	// TODO: Get actual snapshot count
-	totalSnapshots := int64(0)
+	// Get actual snapshot count
+	totalSnapshots, err := s.database.CountAllSnapshots()
+	if err != nil {
+		log.Printf("Failed to count snapshots: %v", err)
+		totalSnapshots = 0
+	}
 
-	// TODO: Get ZFS pool status
+	// Get ZFS pool status
+	poolStatus, err := s.zfsManager.GetPoolStatus()
+	if err != nil {
+		// Log error but don't fail the request
+		log.Printf("Failed to get pool status: %v", err)
+		poolStatus = &zfs.PoolStatus{
+			Name:           s.config.ZFS.Pool,
+			TotalBytes:     0,
+			UsedBytes:      0,
+			AvailableBytes: 0,
+			Health:         0.0,
+		}
+	}
+
 	pools := []*proto.PoolStatus{
 		{
-			PoolName:       s.config.ZFS.Pool,
-			TotalBytes:     0,   // TODO: Get from ZFS
-			UsedBytes:      0,   // TODO: Get from ZFS
-			AvailableBytes: 0,   // TODO: Get from ZFS
-			Health:         1.0, // TODO: Get from ZFS
+			PoolName:       poolStatus.Name,
+			TotalBytes:     poolStatus.TotalBytes,
+			UsedBytes:      poolStatus.UsedBytes,
+			AvailableBytes: poolStatus.AvailableBytes,
+			Health:         poolStatus.Health,
 		},
 	}
 

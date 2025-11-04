@@ -34,7 +34,7 @@ A secure client-server backup system built in Go with ZFS backend storage and us
 
 ## Project Structure
 
-```
+```text
 zfscloud/
 ├── client/          # Client application (Gio UI)
 ├── server/          # Server application (ZFS backend)

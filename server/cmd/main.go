@@ -177,7 +177,7 @@ func main() {
 	backupService := grpc.NewBackupServiceServer(database, zfsManager, cfg, rsaPrivateKey, rsaPublicKeyPEM)
 	proto.RegisterBackupServiceServer(grpcServer, backupService)
 
-	adminService := grpc.NewAdminServiceServer(database, zfsManager, cfg, rsaPrivateKey)
+	adminService := grpc.NewAdminServiceServer(database, zfsManager, cfg, *configPath, rsaPrivateKey)
 	proto.RegisterAdminServiceServer(grpcServer, adminService)
 
 	log.Println("gRPC services registered successfully")

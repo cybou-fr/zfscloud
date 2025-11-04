@@ -554,6 +554,46 @@ func (db *Database) ListSnapshotsByUserID(userID string) ([]*Snapshot, error) {
 	return snapshots, rows.Err()
 }
 
+// CountAllSnapshots returns the total count of all snapshots across all users
+func (db *Database) CountAllSnapshots() (int64, error) {
+	var count int64
+	err := db.conn.QueryRow(`SELECT COUNT(*) FROM snapshots`).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count snapshots: %w", err)
+	}
+	return count, nil
+}
+
+// ListAllSnapshots retrieves all snapshots for all users
+func (db *Database) ListAllSnapshots() ([]*Snapshot, error) {
+	query := `
+		SELECT id, snapshot_id, user_id, zfs_snapshot_name, size_bytes, created_at
+		FROM snapshots
+		ORDER BY created_at DESC
+	`
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list all snapshots: %w", err)
+	}
+	defer rows.Close()
+
+	var snapshots []*Snapshot
+	for rows.Next() {
+		snapshot := &Snapshot{}
+		err := rows.Scan(
+			&snapshot.ID, &snapshot.SnapshotID, &snapshot.UserID,
+			&snapshot.ZFSSnapshotName, &snapshot.SizeBytes, &snapshot.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan snapshot: %w", err)
+		}
+		snapshots = append(snapshots, snapshot)
+	}
+
+	return snapshots, rows.Err()
+}
+
 // DeleteSnapshot deletes a snapshot record
 func (db *Database) DeleteSnapshot(snapshotID string) error {
 	_, err := db.conn.Exec(`DELETE FROM snapshots WHERE snapshot_id = ?`, snapshotID)
