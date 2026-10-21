@@ -4,55 +4,38 @@
 package client
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/zalando/go-keyring"
+    "github.com/zalando/go-keyring"
 )
 
-const (
-	keyringService = "zfscloud"
-)
+const keyringService = "zfscloud"
 
-// storePassphraseInKeychain stores the passphrase securely using Linux Secret Service
+// A keyring failure must not save a raw passphrase to a local file.
+// Legacy fallback files remain untouched for explicit safe migration.
 func storePassphraseInKeychain(clientID string, passphrase []byte) error {
-	err := keyring.Set(keyringService, clientID, string(passphrase))
-	if err != nil {
-		fmt.Printf("⚠️  WARNING: Could not store passphrase in Linux keychain: %v\n", err)
-		fmt.Println("⚠️  Passphrase will be stored in encrypted file instead")
-		return storeEncryptedDataToFile(clientID, passphrase)
-	}
-	return nil
+    if err := keyring.Set(keyringService, clientID, string(passphrase)); err != nil {
+        return fmt.Errorf("Linux keychain unavailable; refusing plaintext fallback: %w", err)
+    }
+    return nil
 }
 
-// loadPassphraseFromKeychain loads the passphrase from Linux Secret Service
 func loadPassphraseFromKeychain(clientID string) ([]byte, error) {
-	secret, err := keyring.Get(keyringService, clientID)
-	if err != nil {
-		fmt.Printf("⚠️  WARNING: Could not load passphrase from Linux keychain: %v\n", err)
-		fmt.Println("⚠️  Attempting to load from encrypted file instead")
-		return loadEncryptedDataFromFile(clientID)
-	}
-	return []byte(secret), nil
+    value, err := keyring.Get(keyringService, clientID)
+    if err != nil {
+        return nil, fmt.Errorf("Linux keychain unavailable or passphrase missing; legacy plaintext fallback disabled: %w", err)
+    }
+    return []byte(value), nil
 }
 
-// deletePassphraseFromKeychain removes the stored passphrase
 func deletePassphraseFromKeychain(clientID string) error {
-	err := keyring.Delete(keyringService, clientID)
-	if err != nil {
-		fmt.Printf("⚠️  WARNING: Could not delete passphrase from Linux keychain: %v\n", err)
-		fmt.Println("⚠️  Attempting to delete from encrypted file instead")
-		return deleteEncryptedDataFile(clientID)
-	}
-	return nil
+    if err := keyring.Delete(keyringService, clientID); err != nil {
+        return fmt.Errorf("Linux keychain deletion failed: %w", err)
+    }
+    return nil
 }
 
-// hasStoredPassphrase checks if a passphrase is stored for the client ID
 func hasStoredPassphrase(clientID string) bool {
-	_, err := keyring.Get(keyringService, clientID)
-	if err == nil {
-		return true
-	}
-	// If not in keyring, check file as fallback
-	_, err = loadEncryptedDataFromFile(clientID)
-	return err == nil
+    _, err := keyring.Get(keyringService, clientID)
+    return err == nil
 }
