@@ -47,3 +47,9 @@ data/
 # Logs
 *.log
 logs/
+
+# Generated identity material must stay local
+/client-keys.dat
+/test-client-keys.json
+/client-keys*.dat
+/test-client-keys*.json
