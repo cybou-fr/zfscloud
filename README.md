@@ -1,5 +1,7 @@
 # ZFSCloud - Encrypted Backup System
 
+**🇫🇷 [Étude de cas — Go, gRPC et ZFS](docs/CASE_STUDY_FR.md)** — Architecture client–serveur et compromis techniques.
+
 A secure client-server backup system built in Go with ZFS backend storage and user-controlled encryption.
 
 ## 🚀 Status
