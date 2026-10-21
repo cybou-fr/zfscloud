@@ -1,3 +1,7 @@
+//go:build ignore
+
+// Standalone developer tool; run explicitly: go run quick-test.go
+
 package main
 
 import (
