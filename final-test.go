@@ -1,3 +1,7 @@
+//go:build ignore
+
+// Standalone developer tool; run explicitly: go run final-test.go
+
 package main
 import ("crypto/ed25519"; "encoding/base64"; "fmt"; "log"; "time"; "github.com/ioustamora/zfscloud/client"; "github.com/ioustamora/zfscloud/proto"; "github.com/ioustamora/zfscloud/shared/config"; "github.com/ioustamora/zfscloud/shared/crypto")
 func main() {

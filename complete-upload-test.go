@@ -1,3 +1,7 @@
+//go:build ignore
+
+// Standalone developer tool; run explicitly: go run complete-upload-test.go
+
 package main
 
 import (
