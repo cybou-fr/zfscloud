@@ -1,4 +1,8 @@
-# ZFSCloud - Encrypted Backup System
+# ZFSCloud — Encrypted Backup System
+
+**Étude de cas pour clients :** [architecture Go / gRPC / ZFS et compromis](docs/CASE_STUDY_FR.md) · [Portfolio de l'architecte](https://github.com/cybou-fr)
+
+> **Engineering case:** a GUI/CLI client, RPC contracts, Linux backend and ZFS storage working as one architecture. **Status:** personal R&D, not a client delivery.
 
 **🇫🇷 [Étude de cas — Go, gRPC et ZFS](docs/CASE_STUDY_FR.md)** — Architecture client–serveur et compromis techniques.
 
@@ -6,7 +10,7 @@ A secure client-server backup system built in Go with ZFS backend storage and us
 
 ## 🚀 Status
 
-**Production Ready** ✅ - All core features implemented
+**Advanced R&D prototype — not qualified for production deployment without further validation.** Features listed below are documented in source and guides; their presence does not establish complete release qualification.
 
 **Core Features:**
 - ✅ gRPC protocol with 28 RPC methods
@@ -21,7 +25,7 @@ A secure client-server backup system built in Go with ZFS backend storage and us
 - ✅ File system watcher with incremental backups
 - ✅ Docker deployment support
 
-**Security Status:** ✅ Passphrase encryption complete (server + client), ⏳ OS keychain storage pending (see [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md))
+**Security status:** design and test scenarios are documented; OS keychain integration for secret storage is still pending (see [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)). No independent security audit is claimed.
 
 ## Features
 
