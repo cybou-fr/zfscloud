@@ -2,7 +2,7 @@
 
 **Étude de cas pour clients :** [architecture Go / gRPC / ZFS et compromis](docs/CASE_STUDY_FR.md) · [Portfolio de l'architecte](https://github.com/cybou-fr)
 
-> **Ce que démontre ce projet :** l'intégration d'un client GUI/CLI, de contrats RPC, d'un serveur Linux et du stockage ZFS. **Statut :** R&D, pas une référence client.
+> **Engineering case:** a GUI/CLI client, RPC contracts, Linux backend and ZFS storage working as one architecture. **Status:** personal R&D, not a client delivery.
 
 **🇫🇷 [Étude de cas — Go, gRPC et ZFS](docs/CASE_STUDY_FR.md)** — Architecture client–serveur et compromis techniques.
 
@@ -10,7 +10,7 @@ A secure client-server backup system built in Go with ZFS backend storage and us
 
 ## 🚀 Status
 
-**R&D / prototype avancé — non qualifié pour un déploiement de production sans validation complémentaire.** Les fonctionnalités ci-dessous sont décrites dans le code et les guides; leur présence ne constitue pas une preuve de qualification complète.
+**Advanced R&D prototype — not qualified for production deployment without further validation.** Features listed below are documented in source and guides; their presence does not establish complete release qualification.
 
 **Core Features:**
 - ✅ gRPC protocol with 28 RPC methods
@@ -25,7 +25,7 @@ A secure client-server backup system built in Go with ZFS backend storage and us
 - ✅ File system watcher with incremental backups
 - ✅ Docker deployment support
 
-**Security status:** revue de conception et scénarios documentés; stockage sécurisé des secrets dans le trousseau OS encore à terminer (voir [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)). Aucun audit indépendant n'est revendiqué.
+**Security status:** design and test scenarios are documented; OS keychain integration for secret storage is still pending (see [SECURITY_FIX_PROGRESS.md](./SECURITY_FIX_PROGRESS.md)). No independent security audit is claimed.
 
 ## Features
 
